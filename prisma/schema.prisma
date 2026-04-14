@@ -1,0 +1,276 @@
+// Premasse Business Services — Prisma Schema
+// Database: PostgreSQL (Neon DB)
+// ORM: Prisma
+// Last updated: Phase 4 — Paynow payments added
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────
+
+enum Role {
+  ADMIN   // Premasse staff — full dashboard access
+  CLIENT  // Future: clients who track their own requests
+}
+
+enum RequestStatus {
+  PENDING           // Newly submitted, not yet reviewed
+  IN_REVIEW         // Admin has opened and is reviewing
+  IN_PROGRESS       // Actively being worked on
+  AWAITING_DOCS     // Blocked — waiting for client to upload documents
+  AWAITING_PAYMENT  // Invoice sent — waiting for client to pay
+  COMPLETED         // Service delivered
+  CANCELLED         // Cancelled by admin or client
+}
+
+enum ServiceCategory {
+  TAX_ACCOUNTING  // Registered Tax Accountant Consultations
+  COMPANY_REG     // Company Registration
+  ZIMRA_TAX_REG   // ZIMRA / Tax Registration
+  TAX_CLEARANCE   // Tax Clearance Services
+  SME_ACCOUNTING  // Accounting Services for SMEs
+}
+
+enum PaymentStatus {
+  PENDING           // Payment record created, not yet sent to Paynow
+  AWAITING_PAYMENT  // Sent to Paynow, waiting for client to pay
+  PAID              // Confirmed paid via Paynow webhook
+  FAILED            // Paynow reported failure
+  CANCELLED         // Cancelled by admin or client
+}
+
+// ─────────────────────────────────────────
+// USER
+// Handles both ADMIN and CLIENT roles.
+// Phase 1: only ADMIN users exist.
+// Phase 3+: CLIENT accounts added.
+// ─────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  phone         String?
+  role          Role      @default(CLIENT)
+
+  // NextAuth fields (required for session management)
+  emailVerified DateTime?
+  image         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  requests          ServiceRequest[] @relation("UserRequests")
+  auditLogs         AuditLog[]       @relation("AuditedBy")
+  initiatedPayments Payment[]        @relation("InitiatedPayments")
+
+  // NextAuth: accounts & sessions
+  accounts Account[]
+  sessions Session[]
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────
+// NEXTAUTH TABLES
+// Required by NextAuth.js v5 (Auth.js)
+// Do not remove — auth breaks without these
+// ─────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─────────────────────────────────────────
+// SERVICE
+// Each Premasse service is a row here.
+// Managed via admin CRUD — no code changes
+// needed to add/edit/remove services.
+// ─────────────────────────────────────────
+
+model Service {
+  id          String          @id @default(cuid())
+  name        String          // e.g. "Tax Clearance Certificate"
+  slug        String          @unique // e.g. "tax-clearance" — used in URLs
+  description String          @db.Text
+  category    ServiceCategory
+  price       Float?          // Optional — most services are quote-based
+  isActive    Boolean         @default(true) // Soft disable without deleting
+  sortOrder   Int             @default(0)    // Controls display order on site
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  requests ServiceRequest[]
+
+  @@map("services")
+}
+
+// ─────────────────────────────────────────
+// SERVICE REQUEST
+// Core entity — every client submission
+// creates one of these.
+// ─────────────────────────────────────────
+
+model ServiceRequest {
+  id        String        @id @default(cuid())
+
+  // Anonymous requests (Phase 1) — userId nullable.
+  // Once client portal launches (Phase 3), link to account.
+  userId    String?
+  serviceId String
+
+  // Client-provided info
+  clientName  String        // Captured on form — no auth required in Phase 1
+  clientEmail String
+  clientPhone String?
+  notes       String?       @db.Text // Client's description of their situation
+
+  // Admin-managed fields
+  status     RequestStatus @default(PENDING)
+  adminNotes String?       @db.Text // Internal notes, never shown to client
+  assignedTo String?       // Future: assign to specific staff member
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User?      @relation("UserRequests", fields: [userId], references: [id])
+  service   Service    @relation(fields: [serviceId], references: [id])
+  documents Document[]
+  auditLogs AuditLog[]
+  payments  Payment[]
+
+  @@index([status])       // Fast filtering by status in admin dashboard
+  @@index([clientEmail])  // Look up requests by client email
+  @@index([createdAt])    // Sort by date
+  @@map("service_requests")
+}
+
+// ─────────────────────────────────────────
+// DOCUMENT
+// Files uploaded by client for a request.
+// Stored on Cloudinary — only metadata here.
+// ─────────────────────────────────────────
+
+model Document {
+  id         String   @id @default(cuid())
+  requestId  String
+  fileUrl    String   // Cloudinary secure_url
+  publicId   String   // Cloudinary public_id (needed for deletion)
+  fileName   String   // Original file name shown in UI
+  fileType   String   // MIME type e.g. "application/pdf"
+  fileSize   Int      // Bytes — for display and validation
+  uploadedAt DateTime @default(now())
+
+  // Relations
+  request ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+// ─────────────────────────────────────────
+// AUDIT LOG
+// Immutable record of every status change.
+// Powers the activity timeline in the admin
+// dashboard and future client status tracking.
+// ─────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  requestId  String
+  changedBy  String   // User id of the admin who made the change
+  fromStatus String?  // Null on first log entry (creation)
+  toStatus   String
+  note       String?  // Optional admin comment at time of change
+  createdAt  DateTime @default(now())
+
+  // Relations
+  request ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  admin   User           @relation("AuditedBy", fields: [changedBy], references: [id])
+
+  @@index([requestId])
+  @@map("audit_logs")
+}
+
+// ─────────────────────────────────────────
+// PAYMENT
+// One payment record per Paynow transaction.
+// A request can have multiple payments if
+// earlier ones fail or are cancelled.
+// The most recent PAID record is authoritative.
+// ─────────────────────────────────────────
+
+model Payment {
+  id       String        @id @default(cuid())
+  requestId String
+  amount   Float         // Amount in USD
+  currency String        @default("USD")
+  status   PaymentStatus @default(PENDING)
+
+  // Paynow-specific fields
+  paynowRef   String?   // Paynow's own reference number (from webhook)
+  pollUrl     String?   @db.Text // URL to poll for status updates
+  redirectUrl String?   @db.Text // Web checkout redirect URL for client
+  method      String?   // "web" | "ecocash" | "onemoney"
+  phone       String?   // Phone number used for mobile payments
+
+  // Audit
+  initiatedBy String    // Admin user id who triggered the payment
+  paidAt      DateTime? // Set when Paynow webhook confirms payment
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  request ServiceRequest @relation(fields: [requestId], references: [id])
+  admin   User           @relation("InitiatedPayments", fields: [initiatedBy], references: [id])
+
+  @@index([requestId])
+  @@index([status])
+  @@map("payments")
+}

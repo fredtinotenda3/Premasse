@@ -1,0 +1,53 @@
+// validators/request.schema.ts
+// Single source of truth for service request validation.
+// Imported by both the form (client) and the API route (server).
+
+import { z } from "zod";
+
+const ZIMBABWE_PHONE_REGEX = /^(\+263|0)[0-9]{9}$/;
+
+export const serviceRequestSchema = z.object({
+  // Client identity
+  clientName: z
+    .string()
+    .min(2, "Full name must be at least 2 characters")
+    .max(100, "Name is too long")
+    .trim(),
+
+  clientEmail: z
+    .string()
+    .email("Please enter a valid email address")
+    .max(255, "Email is too long")
+    .trim()
+    .toLowerCase(),
+
+  clientPhone: z
+    .string()
+    .regex(
+      ZIMBABWE_PHONE_REGEX,
+      "Enter a valid Zimbabwean number (e.g. +263 77 123 4567 or 077 123 4567)"
+    )
+    .optional()
+    .or(z.literal("")),
+
+  // Which service
+  serviceId: z
+    .string()
+    .min(1, "Please select a service")
+    .cuid("Invalid service selection"),
+
+  // Client's description
+  notes: z
+    .string()
+    .min(10, "Please provide at least a brief description of your situation")
+    .max(2000, "Notes must be under 2000 characters")
+    .trim(),
+});
+
+// TypeScript type inferred from schema — use this everywhere
+export type ServiceRequestInput = z.infer<typeof serviceRequestSchema>;
+
+// API response shape — consistent across success and error
+export type ServiceRequestResponse =
+  | { success: true;  requestId: string; message: string }
+  | { success: false; error: string; fieldErrors?: Record<string, string[]> };
