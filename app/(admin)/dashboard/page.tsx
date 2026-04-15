@@ -67,10 +67,10 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="max-w-4xl">
+    <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Greeting */}
-      <div className="mb-8">
-        <h1 className="font-display text-navy text-2xl font-semibold mb-1">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="font-display text-navy text-xl sm:text-2xl font-semibold mb-1">
           Good {getTimeOfDay()}, {session.user.name?.split(" ")[0] ?? "Admin"}
         </h1>
         <p className="font-body text-slate/60 text-sm">
@@ -78,26 +78,26 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+      {/* Stat cards - responsive grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8 sm:mb-10">
         {STAT_CARDS.map(({ label, value, href, accent }) => (
           <Link
             key={label}
             href={href}
-            className={`bg-white border border-gray-100 border-l-4 ${accent} rounded-sm p-5 hover:shadow-sm transition-shadow duration-150`}
+            className={`bg-white border border-gray-100 border-l-4 ${accent} rounded-sm p-4 sm:p-5 hover:shadow-sm transition-shadow duration-150`}
           >
-            <p className="font-display text-navy text-3xl font-bold mb-1">
+            <p className="font-display text-navy text-2xl sm:text-3xl font-bold mb-1">
               {value}
             </p>
-            <p className="font-body text-slate/60 text-sm">{label}</p>
+            <p className="font-body text-slate/60 text-xs sm:text-sm">{label}</p>
           </Link>
         ))}
       </div>
 
       {/* Recent requests */}
       <div className="bg-white border border-gray-100 rounded-sm">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50">
-          <h2 className="font-display text-navy text-base font-semibold">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-50">
+          <h2 className="font-display text-navy text-sm sm:text-base font-semibold">
             Recent requests
           </h2>
           <Link
@@ -109,8 +109,8 @@ export default async function DashboardPage() {
         </div>
 
         {recentRequests.length === 0 ? (
-          <div className="px-6 py-10 text-center">
-            <p className="font-body text-slate/40 text-sm italic">
+          <div className="px-4 sm:px-6 py-8 sm:py-10 text-center">
+            <p className="font-body text-slate/40 text-xs sm:text-sm italic">
               No requests yet. They'll appear here once clients submit the form.
             </p>
           </div>
@@ -120,10 +120,10 @@ export default async function DashboardPage() {
               <li key={req.id}>
                 <Link
                   href={`/dashboard/requests/${req.id}`}
-                  className="flex items-center justify-between px-6 py-4 hover:bg-gray-50/60 transition-colors duration-100"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 sm:px-6 py-3 sm:py-4 hover:bg-gray-50/60 transition-colors duration-100"
                 >
-                  <div>
-                    <p className="font-body text-navy text-sm font-medium">
+                  <div className="flex-1">
+                    <p className="font-body text-navy text-sm font-medium mb-0.5 sm:mb-0">
                       {req.clientName}
                     </p>
                     <p className="font-body text-slate/50 text-xs">
@@ -133,7 +133,9 @@ export default async function DashboardPage() {
                       })}
                     </p>
                   </div>
-                  <StatusBadge status={req.status} size="sm" />
+                  <div className="self-start sm:self-center">
+                    <StatusBadge status={req.status} size="sm" />
+                  </div>
                 </Link>
               </li>
             ))}

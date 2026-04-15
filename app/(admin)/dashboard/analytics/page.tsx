@@ -146,12 +146,11 @@ export default async function AnalyticsPage({
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-6xl">
-
+    <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Page header + range selector */}
-      <div className="flex items-start justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="font-display text-navy text-2xl font-semibold mb-1">
+          <h1 className="font-display text-navy text-xl sm:text-2xl font-semibold mb-1">
             Analytics
           </h1>
           <p className="font-body text-slate/60 text-sm">
@@ -159,12 +158,12 @@ export default async function AnalyticsPage({
           </p>
         </div>
 
-        <div className="flex gap-1 bg-gray-100 rounded-sm p-1 flex-shrink-0">
+        <div className="flex gap-1 bg-gray-100 rounded-sm p-1 self-start sm:self-auto">
           {VALID_RANGES.map((r) => (
             <Link
               key={r}
               href={`/dashboard/analytics?range=${r}`}
-              className={`font-body text-xs px-3 py-1.5 rounded-sm transition-colors duration-150 ${
+              className={`font-body text-xs px-2 sm:px-3 py-1.5 rounded-sm transition-colors duration-150 whitespace-nowrap ${
                 range === r
                   ? "bg-white text-navy shadow-sm"
                   : "text-slate/60 hover:text-navy"
@@ -177,7 +176,7 @@ export default async function AnalyticsPage({
       </div>
 
       {/* Summary stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         {[
           {
             label:  "Total requests",
@@ -211,8 +210,8 @@ export default async function AnalyticsPage({
           },
         ].map(({ label, value, sub, accent, href }) => {
           const card = (
-            <div className={`bg-white border border-gray-100 border-l-4 ${accent} rounded-sm p-5 ${href ? "hover:shadow-sm transition-shadow duration-150" : ""}`}>
-              <p className="font-display text-navy text-3xl font-bold mb-1">{value}</p>
+            <div className={`bg-white border border-gray-100 border-l-4 ${accent} rounded-sm p-4 sm:p-5 ${href ? "hover:shadow-sm transition-shadow duration-150" : ""}`}>
+              <p className="font-display text-navy text-2xl sm:text-3xl font-bold mb-1">{value}</p>
               <p className="font-body text-navy text-sm font-medium mb-0.5">{label}</p>
               <p className="font-body text-slate/50 text-xs">{sub}</p>
             </div>
@@ -226,42 +225,57 @@ export default async function AnalyticsPage({
       </div>
 
       {/* Charts 2×2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        <div className="bg-white border border-gray-100 rounded-sm p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-white border border-gray-100 rounded-sm p-4 sm:p-6">
           <div className="mb-4">
-            <h2 className="font-display text-navy text-base font-semibold">Requests over time</h2>
+            <h2 className="font-display text-navy text-sm sm:text-base font-semibold">Requests over time</h2>
             <p className="font-body text-slate/50 text-xs mt-0.5">Last {range} days</p>
           </div>
-          <RequestsLineChart data={timeData} />
+          <div className="w-full overflow-x-auto">
+            <div className="min-w-75">
+              <RequestsLineChart data={timeData} />
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white border border-gray-100 rounded-sm p-6">
+        <div className="bg-white border border-gray-100 rounded-sm p-4 sm:p-6">
           <div className="mb-4">
-            <h2 className="font-display text-navy text-base font-semibold">Revenue over time</h2>
+            <h2 className="font-display text-navy text-sm sm:text-base font-semibold">Revenue over time</h2>
             <p className="font-body text-slate/50 text-xs mt-0.5">Monthly USD · last 12 months</p>
           </div>
-          <RevenueBarChart data={revenueData} />
+          <div className="w-full overflow-x-auto">
+            <div className="min-w-75">
+              <RevenueBarChart data={revenueData} />
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white border border-gray-100 rounded-sm p-6">
+        <div className="bg-white border border-gray-100 rounded-sm p-4 sm:p-6">
           <div className="mb-4">
-            <h2 className="font-display text-navy text-base font-semibold">Requests by service</h2>
+            <h2 className="font-display text-navy text-sm sm:text-base font-semibold">Requests by service</h2>
             <p className="font-body text-slate/50 text-xs mt-0.5">Last {range} days</p>
           </div>
-          <RequestsByServiceChart data={serviceData} />
+          <div className="w-full overflow-x-auto">
+            <div className="min-w-75">
+              <RequestsByServiceChart data={serviceData} />
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white border border-gray-100 rounded-sm p-6">
+        <div className="bg-white border border-gray-100 rounded-sm p-4 sm:p-6">
           <div className="mb-4">
-            <h2 className="font-display text-navy text-base font-semibold">Status breakdown</h2>
+            <h2 className="font-display text-navy text-sm sm:text-base font-semibold">Status breakdown</h2>
             <p className="font-body text-slate/50 text-xs mt-0.5">All requests · current distribution</p>
           </div>
-          <StatusDonutChart data={statusData} />
+          <div className="w-full overflow-x-auto">
+            <div className="min-w-75">
+              <StatusDonutChart data={statusData} />
+            </div>
+          </div>
         </div>
       </div>
 
-      <p className="font-body text-slate/35 text-xs text-center mt-8">
+      <p className="font-body text-slate/35 text-xs text-center mt-6 sm:mt-8">
         Analytics refresh on every page load · Revenue figures in USD
       </p>
     </div>
