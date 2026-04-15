@@ -33,8 +33,8 @@ const STATUS_CONFIG: Record<
         classes: "bg-gray-100 text-gray-500 border-gray-200",
     },
     AWAITING_PAYMENT: {
-        label: "",
-        classes: ""
+        label: "Awaiting payment",
+        classes: "bg-pink-50 text-pink-800 border-pink-200",
     }
 };
 
