@@ -1,0 +1,1259 @@
+﻿
+==== FILE: C:\Users\user\Desktop\premasse\lib\auth-helpers.ts ====
+
+// lib/auth-helpers.ts
+// Reusable server-side utilities for reading the session.
+// Import these in Server Components and API routes instead of
+// calling auth() directly â€” keeps auth logic in one place.
+
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import type { Session } from "next-auth";
+
+// â”€â”€ requireAdmin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Use at the top of any Server Component or server action that needs an admin.
+// Redirects to /login if unauthenticated, throws if role is wrong.
+//
+// Usage:
+//   const session = await requireAdmin();
+//   console.log(session.user.id); // fully typed
+
+export async function requireAdmin(): Promise<Session> {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  if (session.user.role !== "ADMIN") {
+    redirect("/");
+  }
+
+  return session;
+}
+
+// â”€â”€ getSessionUser â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Returns the current user without redirecting.
+// Use in layouts or components that render differently for auth vs unauth.
+
+export async function getSessionUser() {
+  const session = await auth();
+  return session?.user ?? null;
+}
+
+// â”€â”€ isAdminSession â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Boolean check â€” useful for conditional rendering.
+
+export async function isAdminSession(): Promise<boolean> {
+  const session = await auth();
+  return session?.user?.role === "ADMIN";
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\lib\cloudinary.ts ====
+
+// lib/cloudinary.ts
+// Cloudinary v2 SDK configured from env vars.
+// Import { cloudinary } from here â€” never instantiate directly.
+// Used server-side only (API routes, server actions).
+
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+  api_key:    process.env.CLOUDINARY_API_KEY!,
+  api_secret: process.env.CLOUDINARY_API_SECRET!,
+  secure:     true,
+});
+
+export { cloudinary };
+
+// â”€â”€ Upload helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Uploads a file buffer to a specific folder in Cloudinary.
+// Returns the secure_url and public_id needed to store in the DB.
+
+export async function uploadToCloudinary(
+  buffer: Buffer,
+  options: {
+    folder:   string;       // e.g. "premasse/requests/clx123"
+    filename: string;       // original file name, used as public_id
+    mimeType: string;
+  }
+): Promise<{ secureUrl: string; publicId: string }> {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder:           options.folder,
+        public_id:        sanitizeFilename(options.filename),
+        resource_type:    "auto",   // handles PDFs, images, Word docs
+        allowed_formats:  ["pdf", "jpg", "jpeg", "png", "doc", "docx"],
+        // Prevent execution of uploaded files
+        type:             "upload",
+        // Tag for easy bulk management in Cloudinary console
+        tags:             ["premasse", "request-document"],
+      },
+      (error, result) => {
+        if (error || !result) {
+          reject(error ?? new Error("Cloudinary upload returned no result"));
+        } else {
+          resolve({
+            secureUrl: result.secure_url,
+            publicId:  result.public_id,
+          });
+        }
+      }
+    );
+
+    uploadStream.end(buffer);
+  });
+}
+
+// â”€â”€ Delete helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Deletes a file from Cloudinary by its public_id.
+// Called when admin or client removes a document.
+
+export async function deleteFromCloudinary(publicId: string): Promise<void> {
+  await cloudinary.uploader.destroy(publicId, { resource_type: "raw" });
+}
+
+// â”€â”€ Sanitize filename â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Cloudinary public_ids can't contain special chars.
+
+function sanitizeFilename(name: string): string {
+  return name
+    .replace(/\.[^.]+$/, "")          // strip extension
+    .replace(/[^a-zA-Z0-9_-]/g, "_")  // replace special chars
+    .slice(0, 100);                    // cap at 100 chars
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\lib\email.ts ====
+
+// lib/email.ts
+// Server-side email sending functions.
+// Each function renders a React Email template and sends via Resend.
+// Import these in API routes and server actions â€” never call resend.emails.send directly.
+
+import { render } from "@react-email/render";
+import { resend, EMAIL_FROM, EMAIL_ADMIN, SITE_URL } from "./resend";
+import ClientConfirmation from "@/emails/ClientConfirmation";
+import AdminNewRequest    from "@/emails/AdminNewRequest";
+
+// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+type EmailResult =
+  | { success: true;  messageId: string }
+  | { success: false; error: string };
+
+// â”€â”€ Client confirmation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Sent to the client right after their request is created.
+
+export async function sendClientConfirmation(params: {
+  clientName:  string;
+  clientEmail: string;
+  serviceName: string;
+  requestId:   string;
+  notes:       string;
+}): Promise<EmailResult> {
+  try {
+    const html = await render(
+      ClientConfirmation({
+        clientName:  params.clientName,
+        serviceName: params.serviceName,
+        requestId:   params.requestId,
+        notes:       params.notes,
+        siteUrl:     SITE_URL,
+      })
+    );
+
+    const { data, error } = await resend.emails.send({
+      from:    EMAIL_FROM,
+      to:      [params.clientEmail],
+      subject: `Request received: ${params.serviceName} â€” Premasse`,
+      html,
+    });
+
+    if (error || !data) {
+      console.error("[email:clientConfirmation] Resend error:", error);
+      return { success: false, error: error?.message ?? "Unknown Resend error" };
+    }
+
+    console.info(
+      `[email:clientConfirmation] Sent to ${params.clientEmail} (id=${data.id})`
+    );
+    return { success: true, messageId: data.id };
+  } catch (err) {
+    console.error("[email:clientConfirmation] Unexpected error:", err);
+    return { success: false, error: String(err) };
+  }
+}
+
+// â”€â”€ Admin alert â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Sent to the Premasse admin when a new request arrives.
+
+export async function sendAdminAlert(params: {
+  clientName:  string;
+  clientEmail: string;
+  clientPhone: string | null;
+  serviceName: string;
+  notes:       string;
+  requestId:   string;
+}): Promise<EmailResult> {
+  const dashboardUrl = `${SITE_URL}/dashboard/requests/${params.requestId}`;
+  const submittedAt  = new Date().toLocaleString("en-ZW", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone:  "Africa/Harare",
+  });
+
+  try {
+    const html = await render(
+      AdminNewRequest({
+        clientName:   params.clientName,
+        clientEmail:  params.clientEmail,
+        clientPhone:  params.clientPhone,
+        serviceName:  params.serviceName,
+        notes:        params.notes,
+        requestId:    params.requestId,
+        submittedAt,
+        dashboardUrl,
+      })
+    );
+
+    const { data, error } = await resend.emails.send({
+      from:    EMAIL_FROM,
+      to:      [EMAIL_ADMIN],
+      subject: `New request: ${params.serviceName} from ${params.clientName}`,
+      html,
+    });
+
+    if (error || !data) {
+      console.error("[email:adminAlert] Resend error:", error);
+      return { success: false, error: error?.message ?? "Unknown Resend error" };
+    }
+
+    console.info(
+      `[email:adminAlert] Sent to ${EMAIL_ADMIN} (id=${data.id})`
+    );
+    return { success: true, messageId: data.id };
+  } catch (err) {
+    console.error("[email:adminAlert] Unexpected error:", err);
+    return { success: false, error: String(err) };
+  }
+}
+
+// â”€â”€ Send both in parallel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Convenience wrapper used in the API route â€” fires both emails at once.
+// Neither failure blocks the request from being saved.
+
+export async function sendRequestEmails(params: {
+  clientName:  string;
+  clientEmail: string;
+  clientPhone: string | null;
+  serviceName: string;
+  notes:       string;
+  requestId:   string;
+}): Promise<void> {
+  const [clientResult, adminResult] = await Promise.allSettled([
+    sendClientConfirmation({
+      clientName:  params.clientName,
+      clientEmail: params.clientEmail,
+      serviceName: params.serviceName,
+      requestId:   params.requestId,
+      notes:       params.notes,
+    }),
+    sendAdminAlert(params),
+  ]);
+
+  if (clientResult.status === "rejected" || !clientResult.value.success) {
+    console.warn("[email] Client confirmation failed â€” request still saved.");
+  }
+  if (adminResult.status === "rejected" || !adminResult.value.success) {
+    console.warn("[email] Admin alert failed â€” request still saved.");
+  }
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\lib\invoice.ts ====
+
+// lib/invoice.ts
+// Generates professional PDF invoices using @react-pdf/renderer.
+// Called from /api/invoice/[id] which is admin-only.
+//
+// Install: npm install @react-pdf/renderer
+//          npm install -D @types/react-pdf
+
+import React from "react";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  Font,
+  renderToBuffer,
+} from "@react-pdf/renderer";
+
+// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+export type InvoiceData = {
+  invoiceNumber: string;      // e.g. "PRE-2024-001"
+  issueDate:     string;      // e.g. "15 January 2025"
+  dueDate?:      string;
+  status:        "PAID" | "PENDING" | "OVERDUE";
+
+  // Billed to
+  clientName:    string;
+  clientEmail:   string;
+  clientPhone?:  string;
+
+  // Line items
+  items: {
+    description: string;
+    quantity:    number;
+    unitPrice:   number;
+  }[];
+
+  subtotal:      number;
+  taxRate?:      number;      // e.g. 15 for 15% VAT. Optional.
+  taxAmount?:    number;
+  total:         number;
+  currency:      string;      // "USD"
+
+  // Payment info
+  paymentMethod?: string;     // "EcoCash / Paynow"
+  paidAt?:        string;     // Date paid (if PAID)
+  notes?:         string;     // e.g. "Thank you for your business."
+
+  requestId:     string;      // For reference
+};
+
+// â”€â”€ Styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+const NAVY = "#0A2540";
+const GOLD = "#C9A84C";
+const SLATE = "#4A5568";
+const LIGHT_GRAY = "#F8FAFC";
+const BORDER = "#E2E8F0";
+
+const styles = StyleSheet.create({
+  page: {
+    fontFamily:   "Helvetica",
+    fontSize:     10,
+    color:        NAVY,
+    paddingTop:   48,
+    paddingBottom:48,
+    paddingLeft:  56,
+    paddingRight: 56,
+    lineHeight:   1.5,
+  },
+
+  // Header
+  header: {
+    flexDirection:  "row",
+    justifyContent: "space-between",
+    alignItems:     "flex-start",
+    marginBottom:   40,
+    paddingBottom:  24,
+    borderBottomWidth: 2,
+    borderBottomColor: GOLD,
+  },
+  logoBlock: {
+    flexDirection: "column",
+  },
+  logoText: {
+    fontSize:   22,
+    fontFamily: "Helvetica-Bold",
+    color:      NAVY,
+    letterSpacing: 0.5,
+  },
+  logoSub: {
+    fontSize:      8,
+    color:         GOLD,
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    marginTop:     2,
+  },
+  invoiceTitle: {
+    flexDirection:  "column",
+    alignItems:     "flex-end",
+  },
+  invoiceTitleText: {
+    fontSize:   24,
+    fontFamily: "Helvetica-Bold",
+    color:      NAVY,
+  },
+  invoiceNumber: {
+    fontSize: 11,
+    color:    SLATE,
+    marginTop: 4,
+  },
+  statusBadge: {
+    marginTop:    8,
+    paddingHorizontal: 10,
+    paddingVertical:   4,
+    borderRadius: 2,
+  },
+  statusText: {
+    fontSize:   8,
+    fontFamily: "Helvetica-Bold",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+
+  // Meta row (dates)
+  metaRow: {
+    flexDirection:  "row",
+    marginBottom:   32,
+    gap:            40,
+  },
+  metaBlock: {
+    flexDirection: "column",
+  },
+  metaLabel: {
+    fontSize:      8,
+    color:         SLATE,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginBottom:  3,
+  },
+  metaValue: {
+    fontSize:   11,
+    color:      NAVY,
+    fontFamily: "Helvetica-Bold",
+  },
+
+  // Parties (Billed From / Billed To)
+  partiesRow: {
+    flexDirection:  "row",
+    justifyContent: "space-between",
+    marginBottom:   32,
+    gap:            40,
+  },
+  partyBlock: {
+    flexDirection: "column",
+    flex:          1,
+  },
+  partySectionLabel: {
+    fontSize:      8,
+    color:         GOLD,
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+    marginBottom:  8,
+    fontFamily:    "Helvetica-Bold",
+  },
+  partyName: {
+    fontSize:   12,
+    fontFamily: "Helvetica-Bold",
+    color:      NAVY,
+    marginBottom: 3,
+  },
+  partyDetail: {
+    fontSize: 10,
+    color:    SLATE,
+  },
+
+  // Items table
+  table: {
+    marginBottom: 24,
+  },
+  tableHeader: {
+    flexDirection:   "row",
+    backgroundColor: NAVY,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius:    2,
+    marginBottom:    1,
+  },
+  tableHeaderText: {
+    fontSize:   8,
+    color:      "#C9A84C",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    fontFamily: "Helvetica-Bold",
+  },
+  tableRow: {
+    flexDirection: "row",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: BORDER,
+  },
+  tableRowAlt: {
+    backgroundColor: LIGHT_GRAY,
+  },
+  colDescription: { flex: 4 },
+  colQty:         { flex: 1, textAlign: "center" },
+  colPrice:       { flex: 2, textAlign: "right" },
+  colTotal:       { flex: 2, textAlign: "right" },
+  cellText: {
+    fontSize: 10,
+    color:    NAVY,
+  },
+  cellTextMuted: {
+    fontSize: 10,
+    color:    SLATE,
+  },
+
+  // Totals
+  totalsBlock: {
+    alignSelf:    "flex-end",
+    width:        220,
+    marginBottom: 32,
+  },
+  totalRow: {
+    flexDirection:  "row",
+    justifyContent: "space-between",
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: BORDER,
+  },
+  totalLabel: {
+    fontSize: 10,
+    color:    SLATE,
+  },
+  totalValue: {
+    fontSize: 10,
+    color:    NAVY,
+  },
+  grandTotalRow: {
+    flexDirection:  "row",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    marginTop:      4,
+    borderTopWidth: 2,
+    borderTopColor: NAVY,
+  },
+  grandTotalLabel: {
+    fontSize:   13,
+    fontFamily: "Helvetica-Bold",
+    color:      NAVY,
+  },
+  grandTotalValue: {
+    fontSize:   13,
+    fontFamily: "Helvetica-Bold",
+    color:      NAVY,
+  },
+
+  // Payment info
+  paymentBox: {
+    backgroundColor: LIGHT_GRAY,
+    borderLeftWidth: 3,
+    borderLeftColor: GOLD,
+    padding:         12,
+    marginBottom:    24,
+    borderRadius:    2,
+  },
+  paymentLabel: {
+    fontSize:      8,
+    color:         GOLD,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    fontFamily:    "Helvetica-Bold",
+    marginBottom:  6,
+  },
+  paymentText: {
+    fontSize: 10,
+    color:    NAVY,
+  },
+
+  // Notes
+  notesBlock: {
+    marginBottom: 24,
+  },
+  notesLabel: {
+    fontSize:      8,
+    color:         SLATE,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginBottom:  4,
+  },
+  notesText: {
+    fontSize: 10,
+    color:    SLATE,
+    lineHeight: 1.6,
+  },
+
+  // Footer
+  footer: {
+    position:       "absolute",
+    bottom:         40,
+    left:           56,
+    right:          56,
+    borderTopWidth: 1,
+    borderTopColor: BORDER,
+    paddingTop:     12,
+    flexDirection:  "row",
+    justifyContent: "space-between",
+  },
+  footerText: {
+    fontSize: 8,
+    color:    SLATE,
+  },
+});
+
+// â”€â”€ Status config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+const STATUS_STYLE = {
+  PAID:    { bg: "#D1FAE5", text: "#065F46" },
+  PENDING: { bg: "#FEF3C7", text: "#92400E" },
+  OVERDUE: { bg: "#FEE2E2", text: "#991B1B" },
+};
+
+// â”€â”€ Invoice Document Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function InvoiceDocument({ data }: { data: InvoiceData }) {
+  const statusStyle = STATUS_STYLE[data.status];
+
+  return React.createElement(
+    Document,
+    {
+      title:    `Invoice ${data.invoiceNumber} â€” Premasse`,
+      author:   "Premasse Business Services",
+      subject:  `Invoice for ${data.clientName}`,
+      keywords: "invoice premasse zimbabwe",
+    },
+    React.createElement(
+      Page,
+      { size: "A4", style: styles.page },
+
+      // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      React.createElement(
+        View,
+        { style: styles.header },
+        React.createElement(
+          View,
+          { style: styles.logoBlock },
+          React.createElement(Text, { style: styles.logoText }, "Premasse"),
+          React.createElement(Text, { style: styles.logoSub }, "Business Services"),
+          React.createElement(Text, { style: { fontSize: 9, color: SLATE, marginTop: 6 } }, "Harare, Zimbabwe"),
+          React.createElement(Text, { style: { fontSize: 9, color: SLATE } }, "info@premasse.co.zw"),
+        ),
+        React.createElement(
+          View,
+          { style: styles.invoiceTitle },
+          React.createElement(Text, { style: styles.invoiceTitleText }, "INVOICE"),
+          React.createElement(Text, { style: styles.invoiceNumber }, data.invoiceNumber),
+          React.createElement(
+            View,
+            { style: [styles.statusBadge, { backgroundColor: statusStyle.bg }] },
+            React.createElement(
+              Text,
+              { style: [styles.statusText, { color: statusStyle.text }] },
+              data.status
+            )
+          ),
+        )
+      ),
+
+      // â”€â”€ Meta (dates) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      React.createElement(
+        View,
+        { style: styles.metaRow },
+        React.createElement(
+          View,
+          { style: styles.metaBlock },
+          React.createElement(Text, { style: styles.metaLabel }, "Issue date"),
+          React.createElement(Text, { style: styles.metaValue }, data.issueDate),
+        ),
+        data.dueDate ? React.createElement(
+          View,
+          { style: styles.metaBlock },
+          React.createElement(Text, { style: styles.metaLabel }, "Due date"),
+          React.createElement(Text, { style: styles.metaValue }, data.dueDate),
+        ) : null,
+        data.paidAt ? React.createElement(
+          View,
+          { style: styles.metaBlock },
+          React.createElement(Text, { style: styles.metaLabel }, "Date paid"),
+          React.createElement(Text, { style: styles.metaValue }, data.paidAt),
+        ) : null,
+        React.createElement(
+          View,
+          { style: styles.metaBlock },
+          React.createElement(Text, { style: styles.metaLabel }, "Reference"),
+          React.createElement(Text, { style: styles.metaValue }, data.requestId.slice(-8).toUpperCase()),
+        ),
+      ),
+
+      // â”€â”€ Billed from / to â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      React.createElement(
+        View,
+        { style: styles.partiesRow },
+        React.createElement(
+          View,
+          { style: styles.partyBlock },
+          React.createElement(Text, { style: styles.partySectionLabel }, "From"),
+          React.createElement(Text, { style: styles.partyName }, "Premasse Business Services"),
+          React.createElement(Text, { style: styles.partyDetail }, "Registered Tax Practitioners"),
+          React.createElement(Text, { style: styles.partyDetail }, "PAAB Registered Â· Zimbabwe"),
+          React.createElement(Text, { style: styles.partyDetail }, "info@premasse.co.zw"),
+          React.createElement(Text, { style: styles.partyDetail }, "Harare, Zimbabwe"),
+        ),
+        React.createElement(
+          View,
+          { style: styles.partyBlock },
+          React.createElement(Text, { style: styles.partySectionLabel }, "Billed to"),
+          React.createElement(Text, { style: styles.partyName }, data.clientName),
+          React.createElement(Text, { style: styles.partyDetail }, data.clientEmail),
+          data.clientPhone ? React.createElement(Text, { style: styles.partyDetail }, data.clientPhone) : null,
+        ),
+      ),
+
+      // â”€â”€ Line items table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      React.createElement(
+        View,
+        { style: styles.table },
+        // Header
+        React.createElement(
+          View,
+          { style: styles.tableHeader },
+          React.createElement(Text, { style: [styles.tableHeaderText, styles.colDescription] }, "Description"),
+          React.createElement(Text, { style: [styles.tableHeaderText, styles.colQty] }, "Qty"),
+          React.createElement(Text, { style: [styles.tableHeaderText, styles.colPrice] }, "Unit price"),
+          React.createElement(Text, { style: [styles.tableHeaderText, styles.colTotal] }, "Total"),
+        ),
+        // Rows
+        ...data.items.map((item, i) =>
+          React.createElement(
+            View,
+            { key: i, style: [styles.tableRow, i % 2 === 1 ? styles.tableRowAlt : {}] },
+            React.createElement(Text, { style: [styles.cellText, styles.colDescription] }, item.description),
+            React.createElement(Text, { style: [styles.cellTextMuted, styles.colQty] }, String(item.quantity)),
+            React.createElement(Text, { style: [styles.cellTextMuted, styles.colPrice] }, `${data.currency} ${item.unitPrice.toFixed(2)}`),
+            React.createElement(Text, { style: [styles.cellText, styles.colTotal] }, `${data.currency} ${(item.quantity * item.unitPrice).toFixed(2)}`),
+          )
+        ),
+      ),
+
+      // â”€â”€ Totals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      React.createElement(
+        View,
+        { style: styles.totalsBlock },
+        React.createElement(
+          View,
+          { style: styles.totalRow },
+          React.createElement(Text, { style: styles.totalLabel }, "Subtotal"),
+          React.createElement(Text, { style: styles.totalValue }, `${data.currency} ${data.subtotal.toFixed(2)}`),
+        ),
+        ...(data.taxAmount && data.taxRate ? [
+          React.createElement(
+            View,
+            { style: styles.totalRow, key: "tax" },
+            React.createElement(Text, { style: styles.totalLabel }, `VAT (${data.taxRate}%)`),
+            React.createElement(Text, { style: styles.totalValue }, `${data.currency} ${data.taxAmount.toFixed(2)}`),
+          )
+        ] : []),
+        React.createElement(
+          View,
+          { style: styles.grandTotalRow },
+          React.createElement(Text, { style: styles.grandTotalLabel }, "Total due"),
+          React.createElement(Text, { style: styles.grandTotalValue }, `${data.currency} ${data.total.toFixed(2)}`),
+        ),
+      ),
+
+      // â”€â”€ Payment info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      React.createElement(
+        View,
+        { style: styles.paymentBox },
+        React.createElement(Text, { style: styles.paymentLabel }, "Payment information"),
+        React.createElement(
+          Text,
+          { style: styles.paymentText },
+          data.status === "PAID"
+            ? `Payment received${data.paidAt ? ` on ${data.paidAt}` : ""} via ${data.paymentMethod ?? "Paynow"}.`
+            : `Payment accepted via EcoCash, OneMoney, or Paynow. Contact info@premasse.co.zw for bank transfer details.`
+        ),
+      ),
+
+      // â”€â”€ Notes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      data.notes ? React.createElement(
+        View,
+        { style: styles.notesBlock },
+        React.createElement(Text, { style: styles.notesLabel }, "Notes"),
+        React.createElement(Text, { style: styles.notesText }, data.notes),
+      ) : null,
+
+      // â”€â”€ Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      React.createElement(
+        View,
+        { style: styles.footer, fixed: true },
+        React.createElement(Text, { style: styles.footerText }, "Premasse Business Services Â· Harare, Zimbabwe Â· info@premasse.co.zw"),
+        React.createElement(
+          Text,
+          { style: styles.footerText, render: ({ pageNumber, totalPages }: { pageNumber: number; totalPages: number }) => `Page ${pageNumber} of ${totalPages}` },
+          ""
+        ),
+      ),
+    )
+  );
+}
+
+// â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+export async function generateInvoicePDF(data: InvoiceData): Promise<Buffer> {
+  const doc    = React.createElement(InvoiceDocument, { data });
+  const buffer = await renderToBuffer(doc as any);
+  return buffer;
+}
+
+// â”€â”€ Invoice number generator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Format: PRE-YYYY-NNN (e.g. PRE-2025-042)
+
+export async function getNextInvoiceNumber(
+  prisma: any
+): Promise<string> {
+  const year = new Date().getFullYear();
+
+  // Count payments this year to get sequence number
+  const count = await prisma.payment.count({
+    where: {
+      status:    "PAID",
+      createdAt: { gte: new Date(`${year}-01-01`) },
+    },
+  });
+
+  const seq = String(count + 1).padStart(3, "0");
+  return `PRE-${year}-${seq}`;
+}
+
+// â”€â”€ Build invoice data from DB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+export async function buildInvoiceData(
+  requestId: string,
+  paymentId:  string,
+  prisma:     any
+): Promise<InvoiceData | null> {
+  const payment = await prisma.payment.findUnique({
+    where:   { id: paymentId },
+    include: {
+      request: {
+        include: { service: true },
+      },
+    },
+  });
+
+  if (!payment || payment.request.id !== requestId) return null;
+
+  const invoiceNumber = await getNextInvoiceNumber(prisma);
+  const issueDate     = new Date().toLocaleDateString("en-ZW", {
+    day: "numeric", month: "long", year: "numeric",
+  });
+  const paidAt = payment.paidAt
+    ? new Date(payment.paidAt).toLocaleDateString("en-ZW", {
+        day: "numeric", month: "long", year: "numeric",
+      })
+    : undefined;
+
+  return {
+    invoiceNumber,
+    issueDate,
+    paidAt,
+    status:   payment.status === "PAID" ? "PAID" : "PENDING",
+    currency: payment.currency ?? "USD",
+
+    clientName:  payment.request.clientName,
+    clientEmail: payment.request.clientEmail,
+    clientPhone: payment.request.clientPhone ?? undefined,
+
+    items: [
+      {
+        description: payment.request.service.name,
+        quantity:    1,
+        unitPrice:   payment.amount,
+      },
+    ],
+
+    subtotal:      payment.amount,
+    total:         payment.amount,
+    paymentMethod: payment.method ? `${payment.method.charAt(0).toUpperCase() + payment.method.slice(1)} via Paynow` : "Paynow",
+
+    notes:     "Thank you for choosing Premasse Business Services. All work is carried out by PAAB-registered practitioners.",
+    requestId: payment.requestId,
+  };
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\lib\paynow.ts ====
+
+// lib/paynow.ts
+// Paynow client factory and payment helpers.
+// Server-side only â€” never import this in client components.
+
+// @ts-expect-error: paynow package has no TypeScript types
+import { Paynow } from "paynow";
+import crypto from "crypto";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+// â”€â”€ Client factory â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Creates a configured Paynow instance for a specific request.
+// resultUrl receives webhook POSTs from Paynow when payment status changes.
+// returnUrl is where the client lands after paying on Paynow's site.
+
+export function createPaynowClient(requestId: string): Paynow {
+  if (!process.env.PAYNOW_INTEGRATION_ID || !process.env.PAYNOW_INTEGRATION_KEY) {
+    throw new Error(
+      "PAYNOW_INTEGRATION_ID and PAYNOW_INTEGRATION_KEY must be set in .env.local"
+    );
+  }
+
+  const paynow = new Paynow(
+    process.env.PAYNOW_INTEGRATION_ID,
+    process.env.PAYNOW_INTEGRATION_KEY
+  );
+
+  paynow.resultUrl = `${SITE_URL}/api/paynow/webhook`;
+  paynow.returnUrl = `${SITE_URL}/payment/complete?ref=${requestId}`;
+
+  return paynow;
+}
+
+// â”€â”€ Merchant reference â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Paynow requires a unique merchant reference per payment.
+// We use the Payment record's id so it's traceable end-to-end.
+
+export function buildMerchantRef(paymentId: string): string {
+  return `PREMASSE-${paymentId}`;
+}
+
+// â”€â”€ Hash verification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Paynow signs every webhook POST with a SHA512 HMAC of the payload.
+// ALWAYS verify this before updating any DB records.
+// If verification fails, the request is either a replay or forgery.
+
+export function verifyPaynowHash(
+  payload: Record<string, string>
+): boolean {
+  const integrationKey = process.env.PAYNOW_INTEGRATION_KEY;
+  if (!integrationKey) return false;
+
+  // Extract the hash Paynow sent
+  const receivedHash = payload["hash"];
+  if (!receivedHash) return false;
+
+  // Rebuild the string to hash: all fields except "hash", sorted by key,
+  // concatenated as key=value pairs, then append the integration key.
+  const hashString =
+    Object.keys(payload)
+      .filter((k) => k !== "hash")
+      .sort()
+      .map((k) => `${payload[k]}`)
+      .join("") + integrationKey;
+
+  const expectedHash = crypto
+    .createHash("sha512")
+    .update(hashString)
+    .digest("hex")
+    .toUpperCase();
+
+  return receivedHash.toUpperCase() === expectedHash;
+}
+
+// â”€â”€ Parse webhook body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Paynow sends URL-encoded form data to the webhook endpoint.
+// Returns a plain object of key-value pairs.
+
+export function parseWebhookBody(
+  body: string
+): Record<string, string> {
+  return Object.fromEntries(new URLSearchParams(body));
+}
+
+// â”€â”€ Map Paynow status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Paynow uses its own status strings â€” map them to our PaymentStatus enum.
+
+export function mapPaynowStatus(
+  paynowStatus: string
+): "AWAITING_PAYMENT" | "PAID" | "FAILED" | "CANCELLED" {
+  switch (paynowStatus.toLowerCase()) {
+    case "paid":
+    case "awaiting delivery":
+      return "PAID";
+    case "cancelled":
+      return "CANCELLED";
+    case "failed":
+    case "disputed":
+      return "FAILED";
+    default:
+      return "AWAITING_PAYMENT";
+  }
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\lib\prisma.ts ====
+
+// lib/prisma.ts
+// Singleton pattern prevents exhausting DB connections during hot-reload.
+// Every file that touches the DB imports from here â€” never `new PrismaClient()`.
+
+import { PrismaClient } from "@prisma/client";
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log:
+      process.env.NODE_ENV === "development"
+        ? ["query", "error", "warn"]
+        : ["error"],
+  });
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\lib\resend.ts ====
+
+// lib/resend.ts
+// Resend client singleton â€” import from here, never instantiate directly.
+// Used server-side only (API routes, server actions).
+
+import { Resend } from "resend";
+
+if (!process.env.RESEND_API_KEY) {
+  throw new Error(
+    "RESEND_API_KEY is not set. Add it to .env.local before sending emails."
+  );
+}
+
+export const resend = new Resend(process.env.RESEND_API_KEY);
+
+// â”€â”€ Sender addresses â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Update FROM_ADDRESS once you've verified your domain in Resend.
+// Until then, use the Resend sandbox address for testing.
+
+export const EMAIL_FROM    = process.env.EMAIL_FROM    ?? "Premasse <onboarding@resend.dev>";
+export const EMAIL_ADMIN   = process.env.EMAIL_ADMIN   ?? "admin@premasse.co.zw";
+export const SITE_URL      = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+==== FILE: C:\Users\user\Desktop\premasse\lib\whatsapp.ts ====
+
+// lib/whatsapp.ts
+// WhatsApp notification sender.
+// Uses Twilio WhatsApp API â€” the most reliable option for Zimbabwe.
+// Alternative: Africa's Talking (has local Zimbabwe presence, cheaper rates).
+//
+// Setup:
+//   1. Create a Twilio account at twilio.com
+//   2. Enable WhatsApp Sandbox (free for testing) or buy a WhatsApp-enabled number
+//   3. Add to .env.local:
+//      TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//      TWILIO_AUTH_TOKEN=your_auth_token
+//      TWILIO_WHATSAPP_FROM=whatsapp:+14155238886  (sandbox) or your number
+//
+// Cost: ~$0.005 per message sent. For 100 clients/month = ~$0.50.
+
+import twilio from "twilio";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://premasse.co.zw";
+
+// â”€â”€ Client singleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function getTwilioClient() {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken  = process.env.TWILIO_AUTH_TOKEN;
+
+  if (!accountSid || !authToken) {
+    throw new Error(
+      "TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN must be set in .env.local"
+    );
+  }
+
+  return twilio(accountSid, authToken);
+}
+
+// â”€â”€ Phone normalisation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Converts Zimbabwean format (0771234567, +263771234567) to E.164 (+263771234567)
+
+export function normaliseZimbabwePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+
+  // Already has 263 prefix
+  if (digits.startsWith("263") && digits.length === 12) {
+    return `+${digits}`;
+  }
+
+  // Local format: 07xxxxxxxx â†’ +2637xxxxxxxx
+  if (digits.startsWith("0") && digits.length === 10) {
+    return `+263${digits.slice(1)}`;
+  }
+
+  // Assume it's already correct
+  return phone.startsWith("+") ? phone : `+${digits}`;
+}
+
+// â”€â”€ Message templates â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// WhatsApp requires pre-approved templates for business-initiated messages.
+// These plain-text messages work in the sandbox and for session messages
+// (within 24h of client contacting you first).
+// For production: submit templates at business.whatsapp.com
+
+export type WhatsAppResult =
+  | { success: true;  sid: string }
+  | { success: false; error: string };
+
+// â”€â”€ Send a WhatsApp message â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+async function sendWhatsApp(
+  to:   string,
+  body: string
+): Promise<WhatsAppResult> {
+  const fromNumber = process.env.TWILIO_WHATSAPP_FROM;
+  if (!fromNumber) {
+    console.warn("[whatsapp] TWILIO_WHATSAPP_FROM not set â€” skipping WhatsApp");
+    return { success: false, error: "WhatsApp not configured" };
+  }
+
+  try {
+    const client  = getTwilioClient();
+    const message = await client.messages.create({
+      from: fromNumber,
+      to:   `whatsapp:${normaliseZimbabwePhone(to)}`,
+      body,
+    });
+
+    console.info(`[whatsapp] Sent to ${to} â€” SID: ${message.sid}`);
+    return { success: true, sid: message.sid };
+  } catch (err: any) {
+    console.error("[whatsapp] Send failed:", err?.message ?? err);
+    return { success: false, error: err?.message ?? "Unknown error" };
+  }
+}
+
+// â”€â”€ Notification: request received â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+export async function sendRequestReceivedWhatsApp(params: {
+  clientName:  string;
+  clientPhone: string;
+  serviceName: string;
+  requestId:   string;
+}): Promise<WhatsAppResult> {
+  const body = [
+    `Hello ${params.clientName.split(" ")[0]},`,
+    ``,
+    `Thank you for contacting *Premasse Business Services*.`,
+    ``,
+    `We have received your request for *${params.serviceName}* and a registered practitioner will review it shortly.`,
+    ``,
+    `We will be in touch within *1 business day* via WhatsApp or email.`,
+    ``,
+    `Reference: ${params.requestId.slice(-8).toUpperCase()}`,
+    ``,
+    `â€” Premasse Business Services`,
+    `ðŸ“ Harare, Zimbabwe`,
+    `ðŸŒ ${SITE_URL}`,
+  ].join("\n");
+
+  return sendWhatsApp(params.clientPhone, body);
+}
+
+// â”€â”€ Notification: status updated â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+const STATUS_MESSAGES: Record<string, string> = {
+  IN_REVIEW:        "Our team is currently reviewing your request.",
+  IN_PROGRESS:      "Work on your request has begun. We will keep you updated.",
+  AWAITING_DOCS:    "We need additional documents from you to continue. Please check your email or log in to your portal to see what is required.",
+  AWAITING_PAYMENT: "A payment request has been sent to you. Please check your email for the payment link.",
+  COMPLETED:        "Great news! Your request has been completed. Please check your email for details.",
+  CANCELLED:        "Your request has been cancelled. Please contact us if you have any questions.",
+};
+
+export async function sendStatusUpdateWhatsApp(params: {
+  clientName:  string;
+  clientPhone: string;
+  serviceName: string;
+  newStatus:   string;
+  requestId:   string;
+  adminNote?:  string;
+}): Promise<WhatsAppResult> {
+  const statusMessage = STATUS_MESSAGES[params.newStatus];
+  if (!statusMessage) {
+    return { success: false, error: "No WhatsApp template for this status" };
+  }
+
+  // Don't send WhatsApp for internal-only status changes
+  if (["PENDING", "IN_REVIEW"].includes(params.newStatus) && !params.adminNote) {
+    return { success: false, error: "Status change does not require WhatsApp notification" };
+  }
+
+  const lines = [
+    `Hello ${params.clientName.split(" ")[0]},`,
+    ``,
+    `*Update on your ${params.serviceName} request:*`,
+    ``,
+    statusMessage,
+  ];
+
+  if (params.adminNote && !params.adminNote.startsWith("[internal]")) {
+    lines.push(``, `Message from our team:`, `"${params.adminNote}"`);
+  }
+
+  if (params.newStatus === "AWAITING_DOCS" || params.newStatus === "AWAITING_PAYMENT") {
+    lines.push(``, `Log in to your client portal: ${SITE_URL}/portal`);
+  }
+
+  lines.push(
+    ``,
+    `Reference: ${params.requestId.slice(-8).toUpperCase()}`,
+    ``,
+    `â€” Premasse Business Services`
+  );
+
+  return sendWhatsApp(params.clientPhone, lines.join("\n"));
+}
+
+// â”€â”€ Notification: payment confirmed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+export async function sendPaymentConfirmedWhatsApp(params: {
+  clientName:  string;
+  clientPhone: string;
+  serviceName: string;
+  amount:      number;
+  requestId:   string;
+}): Promise<WhatsAppResult> {
+  const body = [
+    `Hello ${params.clientName.split(" ")[0]},`,
+    ``,
+    `âœ… *Payment confirmed!*`,
+    ``,
+    `We have received your payment of *$${params.amount.toFixed(2)} USD* for *${params.serviceName}*.`,
+    ``,
+    `Our team will now process your request. We will be in touch with an update shortly.`,
+    ``,
+    `Reference: ${params.requestId.slice(-8).toUpperCase()}`,
+    ``,
+    `You can track your request at: ${SITE_URL}/portal`,
+    ``,
+    `â€” Premasse Business Services`,
+  ].join("\n");
+
+  return sendWhatsApp(params.clientPhone, body);
+}
+
+// â”€â”€ Admin: new request alert â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Sends a WhatsApp to the admin when a new request arrives.
+// Much faster than email for a one-person operation.
+
+export async function sendAdminNewRequestWhatsApp(params: {
+  clientName:  string;
+  clientPhone: string;
+  serviceName: string;
+  requestId:   string;
+}): Promise<WhatsAppResult> {
+  const adminPhone = process.env.ADMIN_WHATSAPP_PHONE;
+  if (!adminPhone) {
+    return { success: false, error: "ADMIN_WHATSAPP_PHONE not set" };
+  }
+
+  const body = [
+    `ðŸ”” *New service request received*`,
+    ``,
+    `*Service:* ${params.serviceName}`,
+    `*Client:* ${params.clientName}`,
+    `*Phone:* ${params.clientPhone}`,
+    `*Reference:* ${params.requestId.slice(-8).toUpperCase()}`,
+    ``,
+    `Open in dashboard: ${SITE_URL}/dashboard/requests/${params.requestId}`,
+  ].join("\n");
+
+  return sendWhatsApp(adminPhone, body);
+}

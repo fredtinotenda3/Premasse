@@ -122,7 +122,7 @@ export default async function ServicesPage() {
           <div className="mx-auto max-w-7xl flex flex-col md:flex-row items-center justify-between gap-8">
             <div>
               <h2 className="font-display text-white text-2xl font-semibold mb-2">Not sure which service you need?</h2>
-              <p className="font-body text-white/60 text-base">Submit a request and describe your situation — we'll figure it out together.</p>
+              <p className="font-body text-white/60 text-base">Submit a request and describe your situation — we&apos;ll figure it out together.</p>
             </div>
             <Link href="/request" className="btn-gold font-body font-semibold text-navy px-8 py-4 rounded-sm text-base tracking-wide shrink-0">
               Request a service

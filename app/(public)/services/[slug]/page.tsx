@@ -384,7 +384,7 @@ export default async function ServiceDetailPage({
               <div className="bg-white border border-gray-100 rounded-sm p-6 sticky top-6">
                 <h3 className="font-display text-navy text-lg font-semibold mb-2">Get started today</h3>
                 <p className="font-body text-slate/70 text-sm leading-relaxed mb-6">
-                  Submit a request and we'll be in touch within one business day.
+                  Submit a request and we&apos;ll be in touch within one business day.
                 </p>
 
                 <Link

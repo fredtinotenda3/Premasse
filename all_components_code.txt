@@ -1,0 +1,3376 @@
+﻿
+==== FILE: C:\Users\user\Desktop\premasse\components\dashboard\AnalyticsCharts.tsx ====
+
+"use client";
+
+// components/dashboard/AnalyticsCharts.tsx
+// All four chart components in one file â€” avoids four separate client bundles.
+// Uses Recharts (already a peer dep via react) for clean, responsive charts.
+// Each chart is exported individually so the page can import only what it needs.
+
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
+
+// â”€â”€ Design tokens (match the Premasse palette) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+const NAVY  = "#0A2540";
+const GOLD  = "#C9A84C";
+const SLATE = "#4A5568";
+const MUTED = "#E2E8F0";
+
+const STATUS_COLORS: Record<string, string> = {
+  PENDING:          "#F59E0B",
+  IN_REVIEW:        "#3B82F6",
+  IN_PROGRESS:      "#8B5CF6",
+  AWAITING_DOCS:    "#F97316",
+  AWAITING_PAYMENT: "#EC4899",
+  COMPLETED:        "#10B981",
+  CANCELLED:        "#9CA3AF",
+};
+
+// â”€â”€ Shared tooltip style â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+const tooltipStyle = {
+  backgroundColor: "#fff",
+  border:          "1px solid #E2E8F0",
+  borderRadius:    "2px",
+  fontSize:        "12px",
+  fontFamily:      "var(--font-body, sans-serif)",
+  color:           NAVY,
+  boxShadow:       "0 2px 8px rgba(0,0,0,0.06)",
+};
+
+// â”€â”€ 1. Requests over time (line chart) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+type TimePoint = { date: string; count: number };
+
+export function RequestsLineChart({ data }: { data: TimePoint[] }) {
+  if (data.length === 0) return <EmptyChart label="No request data for this period" />;
+
+  return (
+    <ResponsiveContainer width="100%" height={220}>
+      <LineChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke={MUTED} vertical={false} />
+        <XAxis
+          dataKey="date"
+          tick={{ fontSize: 11, fill: SLATE, fontFamily: "var(--font-body, sans-serif)" }}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={(v) => {
+            const d = new Date(v);
+            return `${d.getDate()} ${d.toLocaleString("default", { month: "short" })}`;
+          }}
+          interval="preserveStartEnd"
+        />
+        <YAxis
+          tick={{ fontSize: 11, fill: SLATE, fontFamily: "var(--font-body, sans-serif)" }}
+          tickLine={false}
+          axisLine={false}
+          allowDecimals={false}
+        />
+        <Tooltip
+          contentStyle={tooltipStyle}
+          labelFormatter={(v) => new Date(v).toLocaleDateString("en-ZW", { dateStyle: "medium" })}
+          formatter={(v) => [v ?? 0, "Requests"]}
+        />
+        <Line
+          type="monotone"
+          dataKey="count"
+          stroke={NAVY}
+          strokeWidth={2}
+          dot={false}
+          activeDot={{ r: 4, fill: GOLD, stroke: NAVY, strokeWidth: 1.5 }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
+// â”€â”€ 2. Revenue over time (bar chart) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+type RevenuePoint = { month: string; total: number; count: number };
+
+export function RevenueBarChart({ data }: { data: RevenuePoint[] }) {
+  if (data.length === 0) return <EmptyChart label="No revenue data yet" />;
+
+  return (
+    <ResponsiveContainer width="100%" height={220}>
+      <BarChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke={MUTED} vertical={false} />
+        <XAxis
+          dataKey="month"
+          tick={{ fontSize: 11, fill: SLATE, fontFamily: "var(--font-body, sans-serif)" }}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={(v) => {
+            const [year, month] = v.split("-");
+            return new Date(parseInt(year), parseInt(month) - 1).toLocaleString("default", { month: "short" });
+          }}
+        />
+        <YAxis
+          tick={{ fontSize: 11, fill: SLATE, fontFamily: "var(--font-body, sans-serif)" }}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={(v) => `$${v}`}
+        />
+        <Tooltip
+          contentStyle={tooltipStyle}
+          labelFormatter={(v) => {
+            const [year, month] = v.split("-");
+            return new Date(parseInt(year), parseInt(month) - 1).toLocaleString("default", { month: "long", year: "numeric" });
+          }}
+          formatter={(v) => [`$${Number(v ?? 0).toFixed(2)}`, "Revenue"]}
+        />
+        <Bar
+          dataKey="total"
+          fill={GOLD}
+          radius={[2, 2, 0, 0]}
+          maxBarSize={40}
+        />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+// â”€â”€ 3. Requests by service (horizontal bar) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+type ServicePoint = { service: string; count: number };
+
+export function RequestsByServiceChart({ data }: { data: ServicePoint[] }) {
+  if (data.length === 0) return <EmptyChart label="No service data for this period" />;
+
+  // Sort descending
+  const sorted = [...data].sort((a, b) => b.count - a.count);
+
+  return (
+    <ResponsiveContainer width="100%" height={220}>
+      <BarChart
+        data={sorted}
+        layout="vertical"
+        margin={{ top: 8, right: 16, left: 8, bottom: 0 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke={MUTED} horizontal={false} />
+        <XAxis
+          type="number"
+          tick={{ fontSize: 11, fill: SLATE, fontFamily: "var(--font-body, sans-serif)" }}
+          tickLine={false}
+          axisLine={false}
+          allowDecimals={false}
+        />
+        <YAxis
+          type="category"
+          dataKey="service"
+          tick={{ fontSize: 11, fill: SLATE, fontFamily: "var(--font-body, sans-serif)" }}
+          tickLine={false}
+          axisLine={false}
+          width={130}
+          tickFormatter={(v: string) =>
+            v.length > 20 ? v.slice(0, 18) + "â€¦" : v
+          }
+        />
+        <Tooltip
+          contentStyle={tooltipStyle}
+          formatter={(v) => [v ?? 0, "Requests"]}
+        />
+        <Bar
+          dataKey="count"
+          fill={NAVY}
+          radius={[0, 2, 2, 0]}
+          maxBarSize={18}
+        />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+// â”€â”€ 4. Status breakdown (donut) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+type StatusPoint = { status: string; count: number };
+
+export function StatusDonutChart({ data }: { data: StatusPoint[] }) {
+  if (data.length === 0) return <EmptyChart label="No status data yet" />;
+
+  const total = data.reduce((sum, d) => sum + d.count, 0);
+
+  return (
+    <ResponsiveContainer width="100%" height={220}>
+      <PieChart>
+        <Pie
+          data={data}
+          dataKey="count"
+          nameKey="status"
+          cx="40%"
+          cy="50%"
+          innerRadius={55}
+          outerRadius={85}
+          paddingAngle={2}
+          strokeWidth={0}
+        >
+          {data.map((entry) => (
+            <Cell
+              key={entry.status}
+              fill={STATUS_COLORS[entry.status] ?? "#CBD5E0"}
+            />
+          ))}
+        </Pie>
+        <Tooltip
+          contentStyle={tooltipStyle}
+          formatter={(v, name) => [
+            `${v} (${Math.round((Number(v) / total) * 100)}%)`,
+            String(name).replace("_", " ").toLowerCase().replace(/^\w/, c => c.toUpperCase()),
+          ]}
+        />
+        <Legend
+          layout="vertical"
+          align="right"
+          verticalAlign="middle"
+          iconType="circle"
+          iconSize={8}
+          formatter={(value) =>
+            String(value).replace(/_/g, " ").toLowerCase().replace(/^\w/, c => c.toUpperCase())
+          }
+          wrapperStyle={{
+            fontSize: "11px",
+            fontFamily: "var(--font-body, sans-serif)",
+            color: SLATE,
+          }}
+        />
+      </PieChart>
+    </ResponsiveContainer>
+  );
+}
+
+// â”€â”€ Empty state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function EmptyChart({ label }: { label: string }) {
+  return (
+    <div className="h-55 flex items-center justify-center">
+      <p className="font-body text-slate/40 text-sm italic">{label}</p>
+    </div>
+  );
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\components\dashboard\AuditTimeline.tsx ====
+
+// components/dashboard/AuditTimeline.tsx
+// Renders the audit log for a request as a vertical timeline.
+// Each entry shows who changed the status, from what, to what, and when.
+
+import { formatDistanceToNow } from "date-fns";
+
+type AuditEntry = {
+  id: string;
+  fromStatus: string | null;
+  toStatus: string;
+  note: string | null;
+  createdAt: Date;
+  admin: {
+    name: string;
+    email: string;
+  };
+};
+
+type Props = {
+  entries: AuditEntry[];
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  PENDING:       "Pending",
+  IN_REVIEW:     "In review",
+  IN_PROGRESS:   "In progress",
+  AWAITING_DOCS: "Awaiting docs",
+  COMPLETED:     "Completed",
+  CANCELLED:     "Cancelled",
+};
+
+export default function AuditTimeline({ entries }: Props) {
+  if (entries.length === 0) {
+    return (
+      <p className="font-body text-slate/50 text-sm italic">
+        No activity recorded yet.
+      </p>
+    );
+  }
+
+  return (
+    <ol className="relative space-y-0">
+      {entries.map((entry, i) => {
+        const isLast = i === entries.length - 1;
+        return (
+          <li key={entry.id} className="relative flex gap-4 pb-6">
+            {/* Vertical connector line */}
+            {!isLast && (
+              <div className="absolute left-2.75 top-6 bottom-0 w-px bg-gray-100" />
+            )}
+
+            {/* Dot */}
+            <div
+              className={`relative z-10 shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center mt-0.5 ${
+                i === 0
+                  ? "bg-navy border-navy"
+                  : "bg-white border-gray-200"
+              }`}
+            >
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  i === 0 ? "bg-gold" : "bg-gray-300"
+                }`}
+              />
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0 pt-0.5">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mb-1">
+                {/* Status transition */}
+                <span className="font-body text-navy text-sm font-medium">
+                  {entry.fromStatus
+                    ? `${STATUS_LABELS[entry.fromStatus] ?? entry.fromStatus} â†’ ${STATUS_LABELS[entry.toStatus] ?? entry.toStatus}`
+                    : `Set to ${STATUS_LABELS[entry.toStatus] ?? entry.toStatus}`}
+                </span>
+                {/* Time */}
+                <span className="font-body text-slate/50 text-xs">
+                  {formatDistanceToNow(new Date(entry.createdAt), {
+                    addSuffix: true,
+                  })}
+                </span>
+              </div>
+
+              {/* Who did it */}
+              <p className="font-body text-slate/60 text-xs mb-1">
+                by {entry.admin.name}
+              </p>
+
+              {/* Optional note */}
+              {entry.note && (
+                <p className="font-body text-slate text-sm bg-gray-50 border border-gray-100 rounded-sm px-3 py-2 mt-2">
+                  {entry.note}
+                </p>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\components\dashboard\DashboardNav.tsx ====
+
+// components/dashboard/DashboardNav.tsx
+
+"use client";
+
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import { signOut } from "next-auth/react";
+import { usePathname } from "next/navigation";
+
+const NAV_ITEMS = [
+  {
+    label: "Overview",
+    href: "/dashboard",
+    exact: true,
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
+        <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
+        <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
+        <rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
+      </svg>
+    ),
+  },
+  {
+    label: "Requests",
+    href: "/dashboard/requests",
+    exact: false,
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="2" y="2" width="12" height="3" rx="1" stroke="currentColor" strokeWidth="1.3"/>
+        <rect x="2" y="7" width="12" height="3" rx="1" stroke="currentColor" strokeWidth="1.3"/>
+        <rect x="2" y="12" width="7" height="2" rx="1" stroke="currentColor" strokeWidth="1.3"/>
+      </svg>
+    ),
+  },
+  {
+    label: "Analytics",
+    href: "/dashboard/analytics",
+    exact: false,
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path
+          d="M2 12L6 7l3 3 3-4 2-2"
+          stroke="currentColor"
+          strokeWidth="1.3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path d="M2 14h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+  {
+    label: "Services",
+    href: "/dashboard/services",
+    exact: false,
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3"/>
+        <path d="M8 5v3l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+];
+
+export default function DashboardNav({ 
+  session 
+}: { 
+  session: any;
+}) {
+  const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Close menu when clicking escape key
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsMobileMenuOpen(false);
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, []);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isMobileMenuOpen]);
+
+  const isActive = (href: string, exact: boolean) => {
+    return exact ? pathname === href : pathname.startsWith(href);
+  };
+
+  return (
+    <>
+      {/* Mobile menu button - visible only on mobile */}
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-navy/95 backdrop-blur-sm rounded-md shadow-lg"
+        aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+      >
+        {isMobileMenuOpen ? (
+          // Close icon
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <line x1="3" y1="3" x2="19" y2="19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1="19" y1="3" x2="3" y2="19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        ) : (
+          // Hamburger icon
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <line x1="2" y1="5" x2="20" y2="5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1="2" y1="11" x2="20" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1="2" y1="17" x2="20" y2="17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        )}
+      </button>
+
+      {/* Mobile menu overlay */}
+      <div
+        className={`fixed inset-0 bg-navy/95 backdrop-blur-sm transition-all duration-300 lg:hidden ${
+          isMobileMenuOpen 
+            ? "opacity-100 visible" 
+            : "opacity-0 invisible pointer-events-none"
+        }`}
+        onClick={() => setIsMobileMenuOpen(false)}
+      />
+
+      {/* Mobile menu panel */}
+      <div
+        className={`fixed left-0 right-0 bg-navy transition-all duration-300 lg:hidden ${
+          isMobileMenuOpen 
+            ? "opacity-100 visible translate-y-0" 
+            : "opacity-0 invisible -translate-y-4"
+        }`}
+        style={{ top: "80px" }}
+      >
+        <div className="flex flex-col p-6 gap-4">
+          {NAV_ITEMS.map(({ label, href, exact, icon }) => {
+            const active = isActive(href, exact);
+            return (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-3 text-base font-body py-2 border-b border-white/10 transition-colors duration-200 ${
+                  active ? "text-gold" : "text-white/80 hover:text-white"
+                }`}
+              >
+                <span className={active ? "text-gold" : ""}>{icon}</span>
+                {label}
+              </Link>
+            );
+          })}
+          
+          {/* User info in mobile menu */}
+          <div className="pt-4 mt-2 border-t border-white/10">
+            <p className="font-body text-white text-sm font-medium truncate mb-1">
+              {session?.user?.name ?? "Admin"}
+            </p>
+            <p className="font-body text-white/40 text-xs truncate mb-4">
+              {session?.user?.email}
+            </p>
+            
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="w-full flex items-center gap-3 text-base font-body text-white/80 hover:text-white transition-colors duration-200 py-2"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 11l3-3-3-3M13 8H6"
+                  stroke="currentColor"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Sign out
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Sidebar navigation - Full height */}
+      <aside className="hidden lg:flex lg:flex-col lg:h-screen w-64 bg-navy shadow-2xl fixed lg:relative">
+        <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="px-6 py-6 border-b border-white/10 shrink-0">
+            <Link href="/" className="flex flex-col leading-none">
+              <span className="font-display text-lg font-bold text-white tracking-wide">
+                Premasse
+              </span>
+              <span className="text-[9px] tracking-[0.2em] uppercase text-gold font-body font-medium mt-0.5">
+                Admin
+              </span>
+            </Link>
+          </div>
+
+          {/* Nav links - Scrollable if needed */}
+          <div className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
+            {NAV_ITEMS.map(({ label, href, exact, icon }) => {
+              const active = isActive(href, exact);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body transition-colors duration-150 ${
+                    active
+                      ? "bg-white/10 text-white"
+                      : "text-white/55 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <span className={active ? "text-gold" : ""}>{icon}</span>
+                  <span className="truncate">{label}</span>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* User info + sign out - Sticky at bottom */}
+          <div className="px-3 py-4 border-t border-white/10 shrink-0">
+            <div className="px-3 py-2 mb-1">
+              <p className="font-body text-white text-sm font-medium truncate">
+                {session?.user?.name ?? "Admin"}
+              </p>
+              <p className="font-body text-white/40 text-xs truncate">
+                {session?.user?.email}
+              </p>
+            </div>
+
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body text-white/45 hover:text-white hover:bg-white/5 transition-colors duration-150"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 11l3-3-3-3M13 8H6"
+                  stroke="currentColor"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Sign out
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\components\dashboard\InvoiceButton.tsx ====
+
+"use client";
+
+// components/dashboard/InvoiceButton.tsx
+// Admin button to download a PDF invoice for a paid payment.
+// Placed in the request detail page alongside the PaymentPanel.
+
+import { useState } from "react";
+
+type Props = {
+  paymentId:    string;
+  clientName:   string;
+  amount:       number;
+  status:       string;
+};
+
+export default function InvoiceButton({ paymentId, clientName, amount, status }: Props) {
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState("");
+
+  if (status !== "PAID") return null;
+
+  async function handleDownload() {
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch(`/api/invoice/${paymentId}`);
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        setError(json.error ?? "Failed to generate invoice.");
+        return;
+      }
+
+      // Trigger download
+      const blob = await res.blob();
+      const url  = window.URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+
+      // Get filename from Content-Disposition header
+      const disposition = res.headers.get("Content-Disposition") ?? "";
+      const match        = disposition.match(/filename="(.+)"/);
+      a.download         = match ? match[1] : `Invoice-${paymentId}.pdf`;
+
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <button
+        onClick={handleDownload}
+        disabled={loading}
+        className="w-full flex items-center justify-center gap-2 font-body text-sm text-navy border border-navy/20 hover:border-navy/50 px-4 py-2.5 rounded-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {loading ? (
+          <>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="animate-spin">
+              <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.25"/>
+              <path d="M12 7a5 5 0 00-5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            Generating PDFâ€¦
+          </>
+        ) : (
+          <>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M3 1h6l3 3v9a1 1 0 01-1 1H3a1 1 0 01-1-1V2a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/>
+              <path d="M9 1v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+              <path d="M7 6v4M5 8l2 2 2-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Download invoice (${amount.toFixed(2)} USD)
+          </>
+        )}
+      </button>
+
+      {error && (
+        <p className="font-body text-red-600 text-xs text-center">{error}</p>
+      )}
+    </div>
+  );
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\components\dashboard\PaymentPanel.tsx ====
+
+"use client";
+
+// components/dashboard/PaymentPanel.tsx
+// Admin UI for initiating and tracking a payment on a service request.
+// Embedded in the request detail page alongside the status update form.
+
+import { useState } from "react";
+
+// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+type PaymentStatus =
+  | "PENDING"
+  | "AWAITING_PAYMENT"
+  | "PAID"
+  | "FAILED"
+  | "CANCELLED";
+
+type ExistingPayment = {
+  id:          string;
+  amount:      number;
+  status:      PaymentStatus;
+  method:      string | null;
+  redirectUrl: string | null;
+  createdAt:   string;
+  paidAt:      string | null;
+};
+
+type Props = {
+  requestId:       string;
+  existingPayment: ExistingPayment | null;
+};
+
+// â”€â”€ Status config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+const STATUS_CONFIG: Record<PaymentStatus, { label: string; classes: string }> = {
+  PENDING:          { label: "Pending",          classes: "bg-gray-100 text-gray-500 border-gray-200" },
+  AWAITING_PAYMENT: { label: "Awaiting payment", classes: "bg-amber-50 text-amber-800 border-amber-200" },
+  PAID:             { label: "Paid",             classes: "bg-green-50 text-green-800 border-green-200" },
+  FAILED:           { label: "Failed",           classes: "bg-red-50 text-red-700 border-red-200" },
+  CANCELLED:        { label: "Cancelled",        classes: "bg-gray-100 text-gray-500 border-gray-200" },
+};
+
+// â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+export default function PaymentPanel({ requestId, existingPayment }: Props) {
+  const [payment,    setPayment]    = useState<ExistingPayment | null>(existingPayment);
+  const [amount,     setAmount]     = useState<string>("");
+  const [method,     setMethod]     = useState<"web" | "ecocash" | "onemoney">("web");
+  const [phone,      setPhone]      = useState<string>("");
+  const [loading,    setLoading]    = useState(false);
+  const [polling,    setPolling]    = useState(false);
+  const [error,      setError]      = useState<string>("");
+  const [result,     setResult]     = useState<{
+    redirectUrl?: string;
+    instructions?: string;
+  } | null>(null);
+
+  // â”€â”€ Initiate payment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  async function handleInitiate() {
+    setError("");
+    setResult(null);
+
+    const amountNum = parseFloat(amount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      setError("Enter a valid amount greater than 0.");
+      return;
+    }
+    if (method !== "web" && !phone.match(/^(\+263|0)[0-9]{9}$/)) {
+      setError("Enter a valid Zimbabwean phone number for mobile payment.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res  = await fetch("/api/paynow/initiate", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ requestId, amount: amountNum, method, phone: phone || undefined }),
+      });
+      const json = await res.json();
+
+      if (!json.success) {
+        setError(json.error ?? "Failed to initiate payment.");
+        return;
+      }
+
+      // Update local payment state
+      setPayment({
+        id:          json.paymentId,
+        amount:      amountNum,
+        status:      "AWAITING_PAYMENT",
+        method,
+        redirectUrl: json.redirectUrl ?? null,
+        createdAt:   new Date().toISOString(),
+        paidAt:      null,
+      });
+
+      setResult({
+        redirectUrl:  json.redirectUrl,
+        instructions: json.instructions,
+      });
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // â”€â”€ Poll for status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  async function handlePoll() {
+    if (!payment) return;
+    setPolling(true);
+    try {
+      const res  = await fetch(`/api/paynow/poll?paymentId=${payment.id}`);
+      const json = await res.json();
+      if (json.success && json.changed) {
+        setPayment(prev => prev ? { ...prev, status: json.status } : prev);
+      }
+    } catch {
+      // Silent fail â€” polling is best-effort
+    } finally {
+      setPolling(false);
+    }
+  }
+
+  // â”€â”€ Render: existing payment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  if (payment) {
+    const config = STATUS_CONFIG[payment.status];
+    const isPending  = payment.status === "AWAITING_PAYMENT";
+    const isTerminal = ["PAID", "FAILED", "CANCELLED"].includes(payment.status);
+
+    return (
+      <div className="bg-white border border-gray-100 rounded-sm p-6 space-y-5">
+        <h2 className="font-display text-navy text-base font-semibold">Payment</h2>
+
+        {/* Status + amount */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-body text-slate/50 text-xs uppercase tracking-wider mb-1">
+              Amount
+            </p>
+            <p className="font-display text-navy text-2xl font-bold">
+              ${payment.amount.toFixed(2)}
+              <span className="font-body text-slate/40 text-sm font-normal ml-1">USD</span>
+            </p>
+          </div>
+          <span className={`inline-block font-body font-semibold text-xs px-2.5 py-1 rounded-sm border uppercase tracking-widest ${config.classes}`}>
+            {config.label}
+          </span>
+        </div>
+
+        {/* Method */}
+        <div className="flex gap-4 font-body text-sm">
+          <div>
+            <p className="text-slate/40 text-xs mb-0.5">Method</p>
+            <p className="text-navy capitalize">{payment.method ?? "â€”"}</p>
+          </div>
+          {payment.paidAt && (
+            <div>
+              <p className="text-slate/40 text-xs mb-0.5">Paid at</p>
+              <p className="text-navy">
+                {new Date(payment.paidAt).toLocaleString("en-ZW", {
+                  dateStyle: "medium", timeStyle: "short",
+                })}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Result box â€” redirect link or mobile instructions */}
+        {result?.redirectUrl && isPending && (
+          <div className="bg-gold-pale border border-gold/20 rounded-sm p-4 space-y-3">
+            <p className="font-body text-navy text-sm font-medium">
+              Payment link ready
+            </p>
+            <p className="font-body text-slate text-xs leading-relaxed">
+              Send this link to the client so they can complete payment on Paynow:
+            </p>
+            <div className="flex items-center gap-2">
+              <input
+                readOnly
+                value={result.redirectUrl}
+                className="font-mono text-xs bg-white border border-gray-200 rounded-sm px-3 py-2 flex-1 text-slate/70 truncate"
+              />
+              <button
+                onClick={() => navigator.clipboard.writeText(result.redirectUrl!)}
+                className="font-body text-xs text-navy border border-navy/20 hover:border-navy/50 px-3 py-2 rounded-sm transition-colors shrink-0"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+        )}
+
+        {result?.instructions && isPending && (
+          <div className="bg-blue-50 border border-blue-100 rounded-sm p-4">
+            <p className="font-body text-navy text-sm font-medium mb-2">
+              Mobile payment instructions
+            </p>
+            <p className="font-body text-slate text-sm leading-relaxed whitespace-pre-wrap">
+              {result.instructions}
+            </p>
+          </div>
+        )}
+
+        {/* Poll button for pending payments */}
+        {isPending && (
+          <button
+            onClick={handlePoll}
+            disabled={polling}
+            className="w-full font-body text-sm text-slate/60 border border-gray-200 hover:border-gray-300 px-4 py-2.5 rounded-sm transition-colors flex items-center justify-center gap-2"
+          >
+            {polling ? (
+              <>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="animate-spin">
+                  <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.25"/>
+                  <path d="M12 7a5 5 0 00-5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                Checkingâ€¦
+              </>
+            ) : (
+              "Check payment status"
+            )}
+          </button>
+        )}
+
+        {/* Terminal state message */}
+        {payment.status === "PAID" && (
+          <p className="font-body text-green-700 text-sm text-center">
+            Payment confirmed. Request status has been advanced to In Progress.
+          </p>
+        )}
+        {payment.status === "FAILED" && (
+          <p className="font-body text-red-600 text-sm text-center">
+            Payment failed. You can initiate a new payment request.
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // â”€â”€ Render: initiation form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-sm p-6 space-y-5">
+      <h2 className="font-display text-navy text-base font-semibold">Initiate payment</h2>
+      <p className="font-body text-slate/60 text-sm leading-relaxed">
+        Set the agreed amount and payment method. For web checkout, you&apos;ll get a
+        link to send to the client. For EcoCash/OneMoney, the client gets a prompt
+        on their phone.
+      </p>
+
+      {/* Amount */}
+      <div className="flex flex-col gap-1.5">
+        <label className="font-body text-navy text-sm font-medium">
+          Amount (USD) <span className="text-gold">*</span>
+        </label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 font-body text-slate/40 text-sm">$</span>
+          <input
+            type="number"
+            min="0.01"
+            step="0.01"
+            value={amount}
+            onChange={e => setAmount(e.target.value)}
+            placeholder="0.00"
+            className="font-body text-navy text-sm w-full bg-white border border-gray-200 rounded-sm pl-7 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/20 focus:border-gold transition-colors"
+          />
+        </div>
+      </div>
+
+      {/* Method */}
+      <div className="flex flex-col gap-1.5">
+        <label className="font-body text-navy text-sm font-medium">
+          Payment method <span className="text-gold">*</span>
+        </label>
+        <div className="grid grid-cols-3 gap-2">
+          {(["web", "ecocash", "onemoney"] as const).map(m => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMethod(m)}
+              className={`font-body text-sm py-2.5 px-3 rounded-sm border transition-colors capitalize ${
+                method === m
+                  ? "bg-navy text-white border-navy"
+                  : "bg-white text-slate border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              {m === "web" ? "Web / Card" : m === "ecocash" ? "EcoCash" : "OneMoney"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Phone (mobile only) */}
+      {method !== "web" && (
+        <div className="flex flex-col gap-1.5">
+          <label className="font-body text-navy text-sm font-medium">
+            Client phone number <span className="text-gold">*</span>
+          </label>
+          <input
+            type="tel"
+            value={phone}
+            onChange={e => setPhone(e.target.value)}
+            placeholder="+263 77 123 4567"
+            className="font-body text-navy text-sm w-full bg-white border border-gray-200 rounded-sm px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/20 focus:border-gold transition-colors"
+          />
+          <p className="font-body text-slate/50 text-xs">
+            {method === "ecocash" ? "Econet" : "NetOne"} number only.
+          </p>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-sm px-4 py-3 flex gap-2 items-start">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-red-500 shrink-0 mt-0.5">
+            <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M7 4v3M7 9.5h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          <p className="font-body text-red-700 text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Submit */}
+      <button
+        onClick={handleInitiate}
+        disabled={loading}
+        className="btn-gold w-full font-body font-semibold text-navy px-4 py-3 rounded-sm text-sm tracking-wide disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+      >
+        {loading ? (
+          <>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="animate-spin">
+              <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.25"/>
+              <path d="M12 7a5 5 0 00-5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            Sending to Paynowâ€¦
+          </>
+        ) : (
+          "Send payment request"
+        )}
+      </button>
+    </div>
+  );
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\components\dashboard\RequestDocuments.tsx ====
+
+// components/dashboard/RequestDocuments.tsx
+// Document section for the admin request detail page.
+// Shows uploaded documents + allows admin to delete them.
+// Extracted as a client component so deletion updates the list without page reload.
+
+"use client";
+
+import { useState } from "react";
+
+type Doc = {
+  id:         string;
+  fileName:   string;
+  fileUrl:    string;
+  fileType:   string;
+  fileSize:   number;
+  uploadedAt: Date | string;
+};
+
+type Props = {
+  requestId:         string;
+  initialDocuments:  Doc[];
+};
+
+export default function RequestDocuments({ requestId, initialDocuments }: Props) {
+  const [documents, setDocuments] = useState<Doc[]>(initialDocuments);
+  const [deleting,  setDeleting]  = useState<string | null>(null);
+
+  async function handleDelete(docId: string) {
+    if (!confirm("Permanently delete this document?")) return;
+    setDeleting(docId);
+    try {
+      const res = await fetch(`/api/documents/${docId}`, { method: "DELETE" });
+      if (res.ok) {
+        setDocuments(prev => prev.filter(d => d.id !== docId));
+      } else {
+        alert("Failed to delete document.");
+      }
+    } catch {
+      alert("Network error. Please try again.");
+    } finally {
+      setDeleting(null);
+    }
+  }
+
+  if (documents.length === 0) {
+    return (
+      <p className="font-body text-slate/40 text-sm italic">
+        No documents uploaded yet.
+      </p>
+    );
+  }
+
+  return (
+    <ul className="space-y-2">
+      {documents.map(doc => {
+        const isPdf = doc.fileType.includes("pdf");
+        const isImg = doc.fileType.includes("image");
+        const isDeleting = deleting === doc.id;
+
+        return (
+          <li
+            key={doc.id}
+            className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-sm px-4 py-3"
+          >
+            {/* Icon */}
+            <div className={`w-8 h-8 rounded-sm flex items-center justify-center shrink-0 ${
+              isPdf ? "bg-red-50" : isImg ? "bg-blue-50" : "bg-gray-100"
+            }`}>
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none"
+                className={isPdf ? "text-red-400" : isImg ? "text-blue-400" : "text-slate/40"}>
+                <path d="M3 1h6l3 3v9a1 1 0 01-1 1H3a1 1 0 01-1-1V2a1 1 0 011-1z"
+                  stroke="currentColor" strokeWidth="1.2"/>
+                <path d="M9 1v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+              </svg>
+            </div>
+
+            {/* File info */}
+            <div className="flex-1 min-w-0">
+              <a
+                href={doc.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-body text-navy text-sm font-medium truncate block hover:underline underline-offset-2 decoration-gold"
+              >
+                {doc.fileName}
+              </a>
+              <p className="font-body text-slate/40 text-xs">
+                {formatBytes(doc.fileSize)} Â·{" "}
+                {new Date(doc.uploadedAt).toLocaleDateString("en-ZW", {
+                  day: "numeric", month: "short", year: "numeric",
+                })}
+              </p>
+            </div>
+
+            {/* Delete */}
+            <button
+              onClick={() => handleDelete(doc.id)}
+              disabled={isDeleting}
+              className="text-slate/25 hover:text-red-400 transition-colors shrink-0 disabled:opacity-50"
+              aria-label="Delete document"
+            >
+              {isDeleting ? (
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="animate-spin">
+                  <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.25"/>
+                  <path d="M12 7a5 5 0 00-5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 3.5h10M5.5 3.5V2.5h3v1M6 6v4M8 6v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                  <rect x="3" y="3.5" width="8" height="9" rx="1" stroke="currentColor" strokeWidth="1.3"/>
+                </svg>
+              )}
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024)        return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\components\dashboard\StatusBadge.tsx ====
+
+// components/dashboard/StatusBadge.tsx
+// Renders a colour-coded pill for each RequestStatus value.
+// Used in both the requests table and the detail page.
+
+import { RequestStatus } from "@prisma/client";
+
+const STATUS_CONFIG: Record<
+  RequestStatus,
+  { label: string; classes: string }
+> = {
+    PENDING: {
+        label: "Pending",
+        classes: "bg-amber-50 text-amber-800 border-amber-200",
+    },
+    IN_REVIEW: {
+        label: "In review",
+        classes: "bg-blue-50 text-blue-800 border-blue-200",
+    },
+    IN_PROGRESS: {
+        label: "In progress",
+        classes: "bg-purple-50 text-purple-800 border-purple-200",
+    },
+    AWAITING_DOCS: {
+        label: "Awaiting docs",
+        classes: "bg-orange-50 text-orange-800 border-orange-200",
+    },
+    COMPLETED: {
+        label: "Completed",
+        classes: "bg-green-50 text-green-800 border-green-200",
+    },
+    CANCELLED: {
+        label: "Cancelled",
+        classes: "bg-gray-100 text-gray-500 border-gray-200",
+    },
+    AWAITING_PAYMENT: {
+        label: "Awaiting payment",
+        classes: "bg-pink-50 text-pink-800 border-pink-200",
+    }
+};
+
+type Props = {
+  status: RequestStatus;
+  size?: "sm" | "md";
+};
+
+export default function StatusBadge({ status, size = "md" }: Props) {
+  const { label, classes } = STATUS_CONFIG[status];
+  const sizeClasses =
+    size === "sm"
+      ? "text-[10px] px-2 py-0.5 tracking-[0.12em]"
+      : "text-xs px-2.5 py-1 tracking-[0.1em]";
+
+  return (
+    <span
+      className={`inline-block font-body font-semibold uppercase border rounded-sm ${sizeClasses} ${classes}`}
+    >
+      {label}
+    </span>
+  );
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\components\forms\DocumentUploader.tsx ====
+
+/* eslint-disable react-hooks/preserve-manual-memoization */
+"use client";
+
+// components/forms/DocumentUploader.tsx
+// Drag-and-drop file uploader for service request documents.
+// Uploads to /api/upload, shows per-file progress, allows deletion.
+// Used on the request form (client-facing) and optionally in admin detail page.
+
+import { useState, useCallback, useRef } from "react";
+
+// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+type UploadedDoc = {
+  id:         string;
+  fileName:   string;
+  fileUrl:    string;
+  fileType:   string;
+  fileSize:   number;
+  uploadedAt: string;
+};
+
+type FileEntry = {
+  localId:   string;       // temporary ID before upload completes
+  file:      File;
+  status:    "queued" | "uploading" | "done" | "error";
+  progress:  number;       // 0â€“100
+  error?:    string;
+  uploaded?: UploadedDoc;
+};
+
+type Props = {
+  requestId:           string;
+  initialDocuments?:   UploadedDoc[];
+  onUploadComplete?:   (doc: UploadedDoc) => void;
+  onDeleteComplete?:   (docId: string) => void;
+  maxFiles?:           number;
+  showDeleteButton?:   boolean;  // false on client-facing form, true in admin
+};
+
+const MAX_SIZE_MB    = 10;
+const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+const ALLOWED_TYPES  = new Set([
+  "application/pdf",
+  "image/jpeg", "image/jpg", "image/png",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]);
+const ALLOWED_LABEL  = "PDF, JPG, PNG, DOC, DOCX";
+
+// â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+export default function DocumentUploader({
+  requestId,
+  initialDocuments = [],
+  onUploadComplete,
+  onDeleteComplete,
+  maxFiles = 10,
+  showDeleteButton = false,
+}: Props) {
+  const [entries,    setEntries]    = useState<FileEntry[]>([]);
+  const [uploaded,   setUploaded]   = useState<UploadedDoc[]>(initialDocuments);
+  const [isDragging, setIsDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const totalCount = uploaded.length + entries.filter(e => e.status !== "error").length;
+  const atMax      = totalCount >= maxFiles;
+
+  // â”€â”€ File validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  function validateFile(file: File): string | null {
+    if (!ALLOWED_TYPES.has(file.type)) {
+      return `${file.name}: file type not allowed. Use ${ALLOWED_LABEL}.`;
+    }
+    if (file.size > MAX_SIZE_BYTES) {
+      return `${file.name}: file exceeds ${MAX_SIZE_MB} MB limit.`;
+    }
+    return null;
+  }
+
+  // â”€â”€ Upload a single file â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  async function uploadFile(entry: FileEntry) {
+    const formData = new FormData();
+    formData.append("file",      entry.file);
+    formData.append("requestId", requestId);
+
+    // Set to uploading
+    setEntries(prev =>
+      prev.map(e =>
+        e.localId === entry.localId
+          ? { ...e, status: "uploading", progress: 10 }
+          : e
+      )
+    );
+
+    // Fake progress ticks while waiting for server
+    const progressInterval = setInterval(() => {
+      setEntries(prev =>
+        prev.map(e =>
+          e.localId === entry.localId && e.status === "uploading" && e.progress < 85
+            ? { ...e, progress: e.progress + 15 }
+            : e
+        )
+      );
+    }, 400);
+
+    try {
+      const res  = await fetch("/api/upload", { method: "POST", body: formData });
+      const json = await res.json();
+
+      clearInterval(progressInterval);
+
+      if (!json.success) {
+        setEntries(prev =>
+          prev.map(e =>
+            e.localId === entry.localId
+              ? { ...e, status: "error", progress: 0, error: json.error }
+              : e
+          )
+        );
+        return;
+      }
+
+      // Move to uploaded list, remove from entries
+      const doc: UploadedDoc = json.document;
+      setUploaded(prev => [...prev, doc]);
+      setEntries(prev => prev.filter(e => e.localId !== entry.localId));
+      onUploadComplete?.(doc);
+    } catch {
+      clearInterval(progressInterval);
+      setEntries(prev =>
+        prev.map(e =>
+          e.localId === entry.localId
+            ? { ...e, status: "error", progress: 0, error: "Network error. Please try again." }
+            : e
+        )
+      );
+    }
+  }
+
+  // â”€â”€ Add files â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  const addFiles = useCallback(
+    (files: FileList | File[]) => {
+      const fileArray = Array.from(files);
+      const remaining = maxFiles - totalCount;
+      const toAdd     = fileArray.slice(0, remaining);
+
+      const newEntries: FileEntry[] = toAdd.map(file => {
+        const error = validateFile(file);
+        return {
+          localId:  crypto.randomUUID(),
+          file,
+          status:   error ? "error" : "queued",
+          progress: 0,
+          error:    error ?? undefined,
+        };
+      });
+
+      setEntries(prev => [...prev, ...newEntries]);
+
+      // Start uploading valid files immediately
+      newEntries
+        .filter(e => e.status === "queued")
+        .forEach(e => uploadFile(e));
+    },
+    [totalCount, maxFiles, requestId] // eslint-disable-line
+  );
+
+  // â”€â”€ Drag handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  function onDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(true);
+  }
+  function onDragLeave() { setIsDragging(false); }
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+    if (!atMax) addFiles(e.dataTransfer.files);
+  }
+
+  // â”€â”€ Delete uploaded doc â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  async function deleteDoc(docId: string) {
+    if (!confirm("Remove this document?")) return;
+    try {
+      const res = await fetch(`/api/documents/${docId}`, { method: "DELETE" });
+      if (res.ok) {
+        setUploaded(prev => prev.filter(d => d.id !== docId));
+        onDeleteComplete?.(docId);
+      }
+    } catch {
+      alert("Failed to delete document. Please try again.");
+    }
+  }
+
+  // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  return (
+    <div className="space-y-4">
+
+      {/* Drop zone */}
+      {!atMax && (
+        <div
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+          onClick={() => inputRef.current?.click()}
+          className={`
+            relative border-2 border-dashed rounded-sm px-6 py-10 text-center cursor-pointer
+            transition-colors duration-200
+            ${isDragging
+              ? "border-gold bg-gold-pale"
+              : "border-gray-200 hover:border-gold/50 hover:bg-gray-50/50"
+            }
+          `}
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            multiple
+            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            className="sr-only"
+            onChange={e => e.target.files && addFiles(e.target.files)}
+          />
+
+          {/* Upload icon */}
+          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-slate/50">
+              <path d="M9 12V4M9 4L6 7M9 4l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M3 14h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
+
+          <p className="font-body text-navy text-sm font-medium mb-1">
+            {isDragging ? "Drop files here" : "Drag files here or click to browse"}
+          </p>
+          <p className="font-body text-slate/50 text-xs">
+            {ALLOWED_LABEL} Â· Max {MAX_SIZE_MB} MB per file Â· Up to {maxFiles} files
+          </p>
+          {totalCount > 0 && (
+            <p className="font-body text-slate/40 text-xs mt-1">
+              {totalCount} of {maxFiles} uploaded
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* In-progress entries */}
+      {entries.length > 0 && (
+        <ul className="space-y-2">
+          {entries.map(entry => (
+            <FileRow
+              key={entry.localId}
+              name={entry.file.name}
+              size={entry.file.size}
+              status={entry.status}
+              progress={entry.progress}
+              error={entry.error}
+              onRetry={() => {
+                if (entry.status === "error" && !entry.error?.includes("type") && !entry.error?.includes("exceeds")) {
+                  setEntries(prev =>
+                    prev.map(e =>
+                      e.localId === entry.localId
+                        ? { ...e, status: "queued", error: undefined, progress: 0 }
+                        : e
+                    )
+                  );
+                  uploadFile({ ...entry, status: "queued", error: undefined });
+                }
+              }}
+              onDismiss={() =>
+                setEntries(prev => prev.filter(e => e.localId !== entry.localId))
+              }
+            />
+          ))}
+        </ul>
+      )}
+
+      {/* Successfully uploaded documents */}
+      {uploaded.length > 0 && (
+        <ul className="space-y-2">
+          {uploaded.map(doc => (
+            <div
+              key={doc.id}
+              className="flex items-center gap-3 bg-white border border-gray-100 rounded-sm px-4 py-3"
+            >
+              <FileTypeIcon mimeType={doc.fileType} />
+              <div className="flex-1 min-w-0">
+                <a
+                  href={doc.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-body text-navy text-sm font-medium truncate block hover:underline underline-offset-2 decoration-gold"
+                >
+                  {doc.fileName}
+                </a>
+                <p className="font-body text-slate/40 text-xs">
+                  {formatBytes(doc.fileSize)}
+                </p>
+              </div>
+              {showDeleteButton && (
+                <button
+                  onClick={() => deleteDoc(doc.id)}
+                  className="text-slate/30 hover:text-red-500 transition-colors shrink-0"
+                  aria-label="Delete document"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              )}
+            </div>
+          ))}
+        </ul>
+      )}
+
+      {atMax && (
+        <p className="font-body text-slate/50 text-xs text-center">
+          Maximum of {maxFiles} documents reached.
+        </p>
+      )}
+    </div>
+  );
+}
+
+// â”€â”€ Sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function FileRow({
+  name, size, status, progress, error, onRetry, onDismiss,
+}: {
+  name: string; size: number;
+  status: FileEntry["status"]; progress: number;
+  error?: string;
+  onRetry: () => void; onDismiss: () => void;
+}) {
+  return (
+    <div className={`bg-white border rounded-sm px-4 py-3 ${
+      status === "error" ? "border-red-200 bg-red-50/30" : "border-gray-100"
+    }`}>
+      <div className="flex items-center gap-3">
+        <FileTypeIcon mimeType="" />
+        <div className="flex-1 min-w-0">
+          <p className="font-body text-navy text-sm font-medium truncate">{name}</p>
+          <p className="font-body text-slate/40 text-xs">{formatBytes(size)}</p>
+        </div>
+        {status === "uploading" && (
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="animate-spin text-gold shrink-0">
+            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeOpacity="0.25"/>
+            <path d="M14 8a6 6 0 00-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        )}
+        {status === "done" && (
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-green-500 shrink-0">
+            <path d="M3 8l4 4 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        )}
+        {status === "error" && (
+          <div className="flex items-center gap-2 shrink-0">
+            {!error?.includes("type") && !error?.includes("exceeds") && (
+              <button onClick={onRetry} className="font-body text-xs text-navy underline">
+                Retry
+              </button>
+            )}
+            <button onClick={onDismiss} className="text-slate/30 hover:text-red-500 transition-colors">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Progress bar */}
+      {status === "uploading" && (
+        <div className="mt-2 h-1 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gold rounded-full transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
+
+      {/* Error message */}
+      {status === "error" && error && (
+        <p className="font-body text-red-600 text-xs mt-1.5">{error}</p>
+      )}
+    </div>
+  );
+}
+
+function FileTypeIcon({ mimeType }: { mimeType: string }) {
+  const isPdf = mimeType.includes("pdf");
+  const isImg = mimeType.includes("image");
+
+  return (
+    <div className={`w-8 h-8 rounded-sm flex items-center justify-center shrink-0 ${
+      isPdf ? "bg-red-50"   :
+      isImg ? "bg-blue-50"  :
+              "bg-gray-100"
+    }`}>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+        className={isPdf ? "text-red-500" : isImg ? "text-blue-500" : "text-slate/50"}
+      >
+        <path
+          d="M3 1h6l3 3v9a1 1 0 01-1 1H3a1 1 0 01-1-1V2a1 1 0 011-1z"
+          stroke="currentColor" strokeWidth="1.2"
+        />
+        <path d="M9 1v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      </svg>
+    </div>
+  );
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024)        return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\components\forms\ServiceRequestForm.tsx ====
+
+"use client";
+
+// components/forms/ServiceRequestForm.tsx
+// Client component â€” uses React Hook Form + Zod resolver.
+// Receives `services` as a prop (fetched server-side on the page).
+
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  serviceRequestSchema,
+  type ServiceRequestInput,
+  type ServiceRequestResponse,
+} from "@/validators/request.schema";
+
+// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+type Service = {
+  id: string;
+  name: string;
+  slug: string;
+  category: string;
+  description: string;
+  price: number | null;
+};
+
+type Props = {
+  services: Service[];
+  preselectedServiceId?: string;
+};
+
+type SubmitState = "idle" | "submitting" | "success" | "error";
+
+// â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+export default function ServiceRequestForm({
+  services,
+  preselectedServiceId,
+}: Props) {
+  const [submitState, setSubmitState] = useState<SubmitState>("idle");
+  const [serverMessage, setServerMessage] = useState<string>("");
+  const [requestId, setRequestId] = useState<string>("");
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<ServiceRequestInput>({
+    resolver: zodResolver(serviceRequestSchema),
+    defaultValues: {
+      serviceId: preselectedServiceId ?? "",
+      clientName: "",
+      clientEmail: "",
+      clientPhone: "",
+      notes: "",
+    },
+  });
+
+  // â”€â”€ Submit handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  const onSubmit = async (data: ServiceRequestInput) => {
+    setSubmitState("submitting");
+    setServerMessage("");
+
+    try {
+      const res = await fetch("/api/requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const json: ServiceRequestResponse = await res.json();
+
+      if (!json.success) {
+        // Map server-side field errors back onto the form
+        if (json.fieldErrors) {
+          Object.entries(json.fieldErrors).forEach(([field, messages]) => {
+            setError(field as keyof ServiceRequestInput, {
+              message: messages[0],
+            });
+          });
+        }
+        setServerMessage(json.error);
+        setSubmitState("error");
+        return;
+      }
+
+      setRequestId(json.requestId);
+      setServerMessage(json.message);
+      setSubmitState("success");
+      reset();
+    } catch {
+      setServerMessage(
+        "A network error occurred. Please check your connection and try again."
+      );
+      setSubmitState("error");
+    }
+  };
+
+  // â”€â”€ Success state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  if (submitState === "success") {
+    return (
+      <div className="bg-white border border-green-200 rounded-sm p-10 text-center">
+        {/* Checkmark */}
+        <div className="w-14 h-14 rounded-full bg-green-50 border border-green-200 flex items-center justify-center mx-auto mb-6">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            className="text-green-600"
+          >
+            <path
+              d="M5 13l4 4L19 7"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+
+        <h3 className="font-display text-navy text-2xl font-semibold mb-3">
+          Request received
+        </h3>
+        <p className="font-body text-slate text-base leading-relaxed mb-2 max-w-sm mx-auto">
+          {serverMessage}
+        </p>
+        {requestId && (
+          <p className="font-body text-slate/60 text-xs mt-4">
+            Reference: <span className="font-mono">{requestId}</span>
+          </p>
+        )}
+
+        <button
+          onClick={() => {
+            setSubmitState("idle");
+            setServerMessage("");
+            setRequestId("");
+          }}
+          className="mt-8 font-body text-navy border border-navy/25 hover:border-navy transition-colors duration-200 px-6 py-2.5 rounded-sm text-sm"
+        >
+          Submit another request
+        </button>
+      </div>
+    );
+  }
+
+  // â”€â”€ Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+
+      {/* Service select */}
+      <Field label="Service required" error={errors.serviceId?.message} required>
+        <select
+          {...register("serviceId")}
+          className={inputCls(!!errors.serviceId)}
+          defaultValue=""
+        >
+          <option value="" disabled>
+            Select a serviceâ€¦
+          </option>
+          {services.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      {/* Name + Email side by side on desktop */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <Field label="Full name" error={errors.clientName?.message} required>
+          <input
+            {...register("clientName")}
+            type="text"
+            placeholder="Tatenda Moyo"
+            autoComplete="name"
+            className={inputCls(!!errors.clientName)}
+          />
+        </Field>
+
+        <Field label="Email address" error={errors.clientEmail?.message} required>
+          <input
+            {...register("clientEmail")}
+            type="email"
+            placeholder="you@example.com"
+            autoComplete="email"
+            className={inputCls(!!errors.clientEmail)}
+          />
+        </Field>
+      </div>
+
+      {/* Phone */}
+      <Field
+        label="Phone number"
+        error={errors.clientPhone?.message}
+        hint="Optional â€” Zimbabwean numbers only (e.g. +263 77 123 4567)"
+      >
+        <input
+          {...register("clientPhone")}
+          type="tel"
+          placeholder="+263 77 123 4567"
+          autoComplete="tel"
+          className={inputCls(!!errors.clientPhone)}
+        />
+      </Field>
+
+      {/* Notes */}
+      <Field
+        label="Tell us about your situation"
+        error={errors.notes?.message}
+        hint="The more detail you provide, the faster we can help."
+        required
+      >
+        <textarea
+          {...register("notes")}
+          rows={5}
+          placeholder="e.g. I need to register a new private limited company and get a BP number before the end of the monthâ€¦"
+          className={`${inputCls(!!errors.notes)} resize-none`}
+        />
+      </Field>
+
+      {/* Server error banner */}
+      {submitState === "error" && serverMessage && (
+        <div className="bg-red-50 border border-red-200 rounded-sm px-4 py-3 flex gap-3 items-start">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            className="text-red-500 shrink-0 mt-0.5"
+          >
+            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+            <path
+              d="M8 5v3.5M8 11h.01"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          </svg>
+          <p className="font-body text-red-700 text-sm leading-relaxed">
+            {serverMessage}
+          </p>
+        </div>
+      )}
+
+      {/* Submit */}
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="btn-gold w-full font-body font-semibold text-navy px-8 py-4 rounded-sm text-base tracking-wide disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+      >
+        {isSubmitting ? (
+          <span className="flex items-center justify-center gap-2">
+            <Spinner />
+            Submittingâ€¦
+          </span>
+        ) : (
+          "Submit request"
+        )}
+      </button>
+
+      <p className="font-body text-slate/60 text-xs text-center leading-relaxed">
+        We respond within one business day. Your information is kept strictly
+        confidential.
+      </p>
+    </form>
+  );
+}
+
+// â”€â”€ Sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function Field({
+  label,
+  error,
+  hint,
+  required,
+  children,
+}: {
+  label: string;
+  error?: string;
+  hint?: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="font-body text-navy text-sm font-medium">
+        {label}
+        {required && (
+          <span className="text-gold ml-1" aria-hidden="true">
+            *
+          </span>
+        )}
+      </label>
+      {children}
+      {hint && !error && (
+        <p className="font-body text-slate/60 text-xs">{hint}</p>
+      )}
+      {error && (
+        <p className="font-body text-red-600 text-xs" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      className="animate-spin"
+    >
+      <circle
+        cx="8"
+        cy="8"
+        r="6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeOpacity="0.25"
+      />
+      <path
+        d="M14 8a6 6 0 00-6-6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+// â”€â”€ Shared input class builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function inputCls(hasError: boolean): string {
+  return [
+    "font-body text-navy text-sm w-full",
+    "bg-white border rounded-sm px-4 py-3",
+    "placeholder:text-slate/40",
+    "focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors duration-150",
+    hasError
+      ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+      : "border-gray-200 focus:border-gold focus:ring-gold/20",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\components\forms\ServiceRequestFormWithUpload.tsx ====
+
+"use client";
+
+// components/forms/ServiceRequestFormWithUpload.tsx
+// Extends the base ServiceRequestForm with an optional document upload step.
+// Two-step flow: (1) submit request â†’ get requestId â†’ (2) optionally upload docs.
+// Replaces ServiceRequestForm on the /request page in Phase 3.
+
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  serviceRequestSchema,
+  type ServiceRequestInput,
+  type ServiceRequestResponse,
+} from "@/validators/request.schema";
+import DocumentUploader from "./DocumentUploader";
+
+type Service = {
+  id: string;
+  name: string;
+  slug: string;
+  category: string;
+  description: string;
+  price: number | null;
+};
+
+type Props = {
+  services: Service[];
+  preselectedServiceId?: string;
+};
+
+type Step = "form" | "upload" | "done";
+
+export default function ServiceRequestFormWithUpload({
+  services,
+  preselectedServiceId,
+}: Props) {
+  const [step,          setStep]          = useState<Step>("form");
+  const [requestId,     setRequestId]     = useState<string>("");
+  const [serverMessage, setServerMessage] = useState<string>("");
+  const [submitError,   setSubmitError]   = useState<string>("");
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<ServiceRequestInput>({
+    resolver: zodResolver(serviceRequestSchema),
+    defaultValues: {
+      serviceId:   preselectedServiceId ?? "",
+      clientName:  "",
+      clientEmail: "",
+      clientPhone: "",
+      notes:       "",
+    },
+  });
+
+  // â”€â”€ Step 1: submit request â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  const onSubmit = async (data: ServiceRequestInput) => {
+    setSubmitError("");
+
+    const res  = await fetch("/api/requests", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(data),
+    });
+    const json: ServiceRequestResponse = await res.json();
+
+    if (!json.success) {
+      if (json.fieldErrors) {
+        Object.entries(json.fieldErrors).forEach(([field, messages]) => {
+          setError(field as keyof ServiceRequestInput, { message: messages[0] });
+        });
+      }
+      setSubmitError(json.error);
+      return;
+    }
+
+    setRequestId(json.requestId);
+    setServerMessage(json.message);
+    setStep("upload");
+  };
+
+  // â”€â”€ Step 2: upload docs (optional) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  if (step === "upload") {
+    return (
+      <div className="space-y-6">
+        {/* Success confirmation */}
+        <div className="bg-green-50 border border-green-200 rounded-sm px-4 py-4 flex gap-3 items-start">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-green-600 shrink-0 mt-0.5">
+            <path d="M2.5 8l4 4 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <div>
+            <p className="font-body text-green-800 text-sm font-medium mb-0.5">
+              Request submitted
+            </p>
+            <p className="font-body text-green-700/70 text-xs">{serverMessage}</p>
+          </div>
+        </div>
+
+        {/* Upload section */}
+        <div>
+          <h3 className="font-display text-navy text-lg font-semibold mb-1">
+            Upload supporting documents
+          </h3>
+          <p className="font-body text-slate/60 text-sm mb-5">
+            Optional â€” attach any relevant documents (ID, existing registration
+            certificates, previous tax returns, etc.) to help us process your
+            request faster.
+          </p>
+
+          <DocumentUploader
+            requestId={requestId}
+            maxFiles={10}
+            showDeleteButton={false}
+          />
+        </div>
+
+        {/* Skip / finish */}
+        <div className="flex items-center justify-between pt-2">
+          <button
+            onClick={() => setStep("done")}
+            className="font-body text-slate/50 text-sm hover:text-navy transition-colors"
+          >
+            Skip for now
+          </button>
+          <button
+            onClick={() => setStep("done")}
+            className="btn-gold font-body font-semibold text-navy px-6 py-2.5 rounded-sm text-sm tracking-wide"
+          >
+            Done â€” finish submission
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // â”€â”€ Step 3: all done â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  if (step === "done") {
+    return (
+      <div className="bg-white border border-green-200 rounded-sm p-10 text-center">
+        <div className="w-14 h-14 rounded-full bg-green-50 border border-green-200 flex items-center justify-center mx-auto mb-6">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-green-600">
+            <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <h3 className="font-display text-navy text-2xl font-semibold mb-3">
+          All done
+        </h3>
+        <p className="font-body text-slate text-base leading-relaxed max-w-sm mx-auto mb-2">
+          {serverMessage}
+        </p>
+        {requestId && (
+          <p className="font-body text-slate/50 text-xs mt-4">
+            Reference: <span className="font-mono">{requestId}</span>
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // â”€â”€ Step 1: request form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+      <Field label="Service required" error={errors.serviceId?.message} required>
+        <select
+          {...register("serviceId")}
+          className={inputCls(!!errors.serviceId)}
+          defaultValue=""
+        >
+          <option value="" disabled>Select a serviceâ€¦</option>
+          {services.map((s) => (
+            <option key={s.id} value={s.id}>{s.name}</option>
+          ))}
+        </select>
+      </Field>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <Field label="Full name" error={errors.clientName?.message} required>
+          <input
+            {...register("clientName")}
+            type="text"
+            placeholder="Tatenda Moyo"
+            autoComplete="name"
+            className={inputCls(!!errors.clientName)}
+          />
+        </Field>
+        <Field label="Email address" error={errors.clientEmail?.message} required>
+          <input
+            {...register("clientEmail")}
+            type="email"
+            placeholder="you@example.com"
+            autoComplete="email"
+            className={inputCls(!!errors.clientEmail)}
+          />
+        </Field>
+      </div>
+
+      <Field
+        label="Phone number"
+        error={errors.clientPhone?.message}
+        hint="Optional â€” Zimbabwean numbers only (e.g. +263 77 123 4567)"
+      >
+        <input
+          {...register("clientPhone")}
+          type="tel"
+          placeholder="+263 77 123 4567"
+          autoComplete="tel"
+          className={inputCls(!!errors.clientPhone)}
+        />
+      </Field>
+
+      <Field
+        label="Tell us about your situation"
+        error={errors.notes?.message}
+        hint="The more detail you provide, the faster we can help."
+        required
+      >
+        <textarea
+          {...register("notes")}
+          rows={5}
+          placeholder="e.g. I need to register a new private limited companyâ€¦"
+          className={`${inputCls(!!errors.notes)} resize-none`}
+        />
+      </Field>
+
+      {submitError && (
+        <div className="bg-red-50 border border-red-200 rounded-sm px-4 py-3 flex gap-3 items-start">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="text-red-500 shrink-0 mt-0.5">
+            <circle cx="7.5" cy="7.5" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M7.5 4.5v3M7.5 10h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          <p className="font-body text-red-700 text-sm leading-relaxed">{submitError}</p>
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="btn-gold w-full font-body font-semibold text-navy px-8 py-4 rounded-sm text-base tracking-wide disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        {isSubmitting ? (
+          <span className="flex items-center justify-center gap-2">
+            <Spinner /> Submittingâ€¦
+          </span>
+        ) : (
+          "Submit request"
+        )}
+      </button>
+
+      <p className="font-body text-slate/60 text-xs text-center">
+        You&apos;ll be able to attach documents after submitting.
+      </p>
+    </form>
+  );
+}
+
+// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function Field({ label, error, hint, required, children }: {
+  label: string; error?: string; hint?: string; required?: boolean; children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="font-body text-navy text-sm font-medium">
+        {label}
+        {required && <span className="text-gold ml-1" aria-hidden="true">*</span>}
+      </label>
+      {children}
+      {hint && !error && <p className="font-body text-slate/60 text-xs">{hint}</p>}
+      {error && <p className="font-body text-red-600 text-xs" role="alert">{error}</p>}
+    </div>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="animate-spin">
+      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeOpacity="0.25"/>
+      <path d="M14 8a6 6 0 00-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function inputCls(hasError: boolean): string {
+  return [
+    "font-body text-navy text-sm w-full bg-white border rounded-sm px-4 py-3",
+    "placeholder:text-slate/40 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors",
+    hasError
+      ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+      : "border-gray-200 focus:border-gold focus:ring-gold/20",
+  ].join(" ");
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\components\layout\Footer.tsx ====
+
+import Link from "next/link";
+
+export default function Footer() {
+  const year = new Date().getFullYear();
+
+  return (
+    <footer className="bg-navy text-white/70">
+      <div className="mx-auto max-w-7xl px-6 lg:px-12 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+          {/* Brand */}
+          <div>
+            <div className="flex flex-col leading-none mb-4">
+              <span className="font-display text-lg font-bold text-white tracking-wide">
+                Premasse
+              </span>
+              <span className="text-[10px] tracking-[0.2em] uppercase text-gold font-body font-medium">
+                Business Services
+              </span>
+            </div>
+            <p className="text-sm leading-relaxed text-white/60 max-w-xs">
+              Registered tax accountants and business services specialists
+              serving SMEs across Zimbabwe.
+            </p>
+          </div>
+
+          {/* Services */}
+          <div>
+            <h4 className="text-xs tracking-[0.15em] uppercase text-gold font-body font-semibold mb-4">
+              Services
+            </h4>
+            <ul className="space-y-2 text-sm">
+              {[
+                "Tax Accountant Consultation",
+                "Company Registration",
+                "ZIMRA / Tax Registration",
+                "Tax Clearance Certificate",
+                "SME Accounting",
+              ].map((s) => (
+                <li key={s}>
+                  <Link
+                    href="/services"
+                    className="hover:text-white transition-colors duration-200"
+                  >
+                    {s}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <h4 className="text-xs tracking-[0.15em] uppercase text-gold font-body font-semibold mb-4">
+              Contact
+            </h4>
+            <ul className="space-y-2 text-sm text-white/60">
+              <li>Harare, Zimbabwe</li>
+              <li>
+                <a
+                  href="mailto:info@premasse.co.zw"
+                  className="hover:text-white transition-colors duration-200"
+                >
+                  info@premasse.co.zw
+                </a>
+              </li>
+            </ul>
+
+            <Link
+              href="/request"
+              className="inline-block mt-6 btn-gold text-navy text-sm font-body font-semibold px-5 py-2.5 rounded-sm tracking-wide"
+            >
+              Request a service
+            </Link>
+          </div>
+        </div>
+
+        <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-xs text-white/40">
+          <p>Â© {year} Premasse Business Services. All rights reserved.</p>
+          <div className="flex gap-6">
+            <Link href="/about"   className="hover:text-white/70 transition-colors">About</Link>
+            <Link href="/contact" className="hover:text-white/70 transition-colors">Contact</Link>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\components\layout\Navbar.tsx ====
+
+"use client";
+
+import Link from "next/link";
+import { useState, useEffect } from "react";
+
+export default function Navbar() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Close menu when clicking escape key
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsMenuOpen(false);
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, []);
+
+  // Handle scroll effect for mobile menu background
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isMenuOpen]);
+
+  const navLinks = [
+    { label: "Services", href: "/services" },
+    { label: "About", href: "/about" },
+    { label: "Contact", href: "/contact" },
+    { label: "Client portal", href: "/portal/login" },
+  ];
+
+  return (
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      isScrolled || isMenuOpen ? "bg-navy shadow-lg" : "absolute bg-transparent"
+    }`}>
+      <nav className="mx-auto max-w-7xl px-6 lg:px-12 flex items-center justify-between h-20">
+        {/* Logo */}
+        <Link href="/" className="flex flex-col leading-none group relative z-50">
+          <span className="font-display text-xl font-bold text-white tracking-wide">
+            Premasse
+          </span>
+          <span className="text-[10px] tracking-[0.2em] uppercase text-gold font-body font-medium">
+            Business Services
+          </span>
+        </Link>
+
+        {/* Desktop nav */}
+        <div className="hidden md:flex items-center gap-8">
+          {navLinks.map(({ label, href }) => (
+            <Link
+              key={href}
+              href={href}
+              className="text-sm font-body text-white/80 hover:text-white transition-colors duration-200 tracking-wide"
+            >
+              {label}
+            </Link>
+          ))}
+
+          <Link
+            href="/request"
+            className="btn-gold text-navy text-sm font-body font-semibold px-5 py-2.5 rounded-sm tracking-wide"
+          >
+            Request a service
+          </Link>
+        </div>
+
+        {/* Mobile menu button */}
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="md:hidden text-white p-2 relative z-50"
+          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+        >
+          {isMenuOpen ? (
+            // Close icon
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <line x1="3" y1="3" x2="19" y2="19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="19" y1="3" x2="3" y2="19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          ) : (
+            // Hamburger icon
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <line x1="2" y1="5"  x2="20" y2="5"  stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="2" y1="11" x2="20" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="2" y1="17" x2="20" y2="17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          )}
+        </button>
+
+        {/* Mobile menu overlay */}
+        <div
+          className={`fixed inset-0 bg-navy/95 backdrop-blur-sm transition-all duration-300 md:hidden ${
+            isMenuOpen 
+              ? "opacity-100 visible" 
+              : "opacity-0 invisible pointer-events-none"
+          }`}
+          style={{ top: "80px" }}
+          onClick={() => setIsMenuOpen(false)}
+        />
+
+        {/* Mobile menu panel */}
+        <div
+          className={`fixed left-0 right-0 bg-navy transition-all duration-300 md:hidden ${
+            isMenuOpen 
+              ? "opacity-100 visible translate-y-0" 
+              : "opacity-0 invisible -translate-y-4"
+          }`}
+          style={{ top: "80px" }}
+        >
+          <div className="flex flex-col p-6 gap-4">
+            {navLinks.map(({ label, href }) => (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setIsMenuOpen(false)}
+                className="text-base font-body text-white/80 hover:text-white transition-colors duration-200 py-2 border-b border-white/10"
+              >
+                {label}
+              </Link>
+            ))}
+            
+            <Link
+              href="/request"
+              onClick={() => setIsMenuOpen(false)}
+              className="btn-gold text-navy text-center font-body font-semibold px-5 py-3 rounded-sm tracking-wide mt-2"
+            >
+              Request a service
+            </Link>
+          </div>
+        </div>
+      </nav>
+    </header>
+  );
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\components\portal\PortalAccountForm.tsx ====
+
+"use client";
+
+// components/portal/PortalAccountForm.tsx
+// Updates the client's name and phone via a PATCH to /api/portal/account.
+
+import { useState } from "react";
+import { useForm }  from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z }        from "zod";
+
+const schema = z.object({
+  name:  z.string().min(2, "Name must be at least 2 characters").trim(),
+  phone: z
+    .string()
+    .regex(/^(\+263|0)[0-9]{9}$/, "Enter a valid Zimbabwean number")
+    .optional()
+    .or(z.literal("")),
+});
+
+type Fields = z.infer<typeof schema>;
+
+type Props = {
+  userId:       string;
+  defaultName:  string;
+  email:        string;
+  defaultPhone: string;
+};
+
+export default function PortalAccountForm({
+  userId, defaultName, email, defaultPhone,
+}: Props) {
+  const [saved,  setSaved]  = useState(false);
+  const [error,  setError]  = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isDirty },
+  } = useForm<Fields>({
+    resolver: zodResolver(schema),
+    defaultValues: { name: defaultName, phone: defaultPhone },
+  });
+
+  async function onSubmit(data: Fields) {
+    setSaved(false);
+    setError("");
+
+    const res  = await fetch("/api/portal/account", {
+      method:  "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ ...data, userId }),
+    });
+    const json = await res.json();
+
+    if (!json.success) {
+      setError(json.error ?? "Update failed.");
+      return;
+    }
+    setSaved(true);
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+
+      {/* Email â€” read-only */}
+      <div className="flex flex-col gap-1.5">
+        <label className="font-body text-navy text-sm font-medium">
+          Email address
+        </label>
+        <input
+          type="email"
+          value={email}
+          disabled
+          className="font-body text-slate/50 text-sm w-full bg-gray-50 border border-gray-200 rounded-sm px-4 py-3 cursor-not-allowed"
+        />
+        <p className="font-body text-slate/40 text-xs">
+          Email cannot be changed â€” it&apos;s your sign-in identifier.
+        </p>
+      </div>
+
+      {/* Name */}
+      <div className="flex flex-col gap-1.5">
+        <label className="font-body text-navy text-sm font-medium">
+          Full name <span className="text-gold">*</span>
+        </label>
+        <input
+          {...register("name")}
+          type="text"
+          autoComplete="name"
+          className={inputCls(!!errors.name)}
+        />
+        {errors.name && (
+          <p className="font-body text-red-600 text-xs">{errors.name.message}</p>
+        )}
+      </div>
+
+      {/* Phone */}
+      <div className="flex flex-col gap-1.5">
+        <label className="font-body text-navy text-sm font-medium">
+          Phone number
+          <span className="font-normal text-slate/40 ml-1">(optional)</span>
+        </label>
+        <input
+          {...register("phone")}
+          type="tel"
+          placeholder="+263 77 123 4567"
+          autoComplete="tel"
+          className={inputCls(!!errors.phone)}
+        />
+        {errors.phone && (
+          <p className="font-body text-red-600 text-xs">{errors.phone.message}</p>
+        )}
+      </div>
+
+      {/* Feedback */}
+      {saved && (
+        <div className="bg-green-50 border border-green-200 rounded-sm px-4 py-3 flex gap-2 items-center">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-green-600 shrink-0">
+            <path d="M2 7l4 4 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <p className="font-body text-green-800 text-sm">Details updated.</p>
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-sm px-4 py-3">
+          <p className="font-body text-red-700 text-sm">{error}</p>
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={isSubmitting || !isDirty}
+        className="btn-gold font-body font-semibold text-navy px-6 py-3 rounded-sm text-sm tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isSubmitting ? "Savingâ€¦" : "Save changes"}
+      </button>
+    </form>
+  );
+}
+
+function inputCls(err: boolean) {
+  return [
+    "font-body text-navy text-sm w-full bg-white border rounded-sm px-4 py-3",
+    "placeholder:text-slate/40 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors",
+    err
+      ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+      : "border-gray-200 focus:border-gold focus:ring-gold/20",
+  ].join(" ");
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\components\portal\PortalInvoiceButton.tsx ====
+
+"use client";
+
+// components/portal/PortalInvoiceButton.tsx
+// Client-facing invoice download button on the request detail page.
+// Shows when a payment is PAID â€” lets the client download their receipt.
+
+import { useState } from "react";
+
+type Props = {
+  paymentId: string;
+  amount:    number;
+  currency?: string;
+};
+
+export default function PortalInvoiceButton({ paymentId, amount, currency = "USD" }: Props) {
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState("");
+
+  async function handleDownload() {
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch(`/api/invoice/${paymentId}`);
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        setError(json.error ?? "Could not download invoice.");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url  = window.URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+
+      const disposition = res.headers.get("Content-Disposition") ?? "";
+      const match        = disposition.match(/filename="(.+)"/);
+      a.download         = match ? match[1] : `Premasse-Invoice.pdf`;
+
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div>
+      <button
+        onClick={handleDownload}
+        disabled={loading}
+        className="flex items-center gap-2 font-body text-navy text-sm underline underline-offset-2 decoration-gold hover:decoration-2 transition-all disabled:opacity-50"
+      >
+        {loading ? (
+          <>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="animate-spin">
+              <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.25"/>
+              <path d="M10 6a4 4 0 00-4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            Generatingâ€¦
+          </>
+        ) : (
+          <>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M2 1h5l3 3v7a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/>
+              <path d="M7 1v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+              <path d="M6 5v3M4.5 7l1.5 1.5L7.5 7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Download receipt (${currency} {amount.toFixed(2)})
+          </>
+        )}
+      </button>
+      {error && <p className="font-body text-red-600 text-xs mt-1">{error}</p>}
+    </div>
+  );
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\components\portal\PortalRequestForm.tsx ====
+
+"use client";
+
+// components/portal/PortalRequestForm.tsx
+// Authenticated version of the request form.
+// Key difference from the public form: submits with userId in session,
+// so the request is linked to the client's account immediately.
+// Name and email are pre-filled and locked from the session.
+
+import { useState }    from "react";
+import { useForm }     from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter }   from "next/navigation";
+import { z }           from "zod";
+
+const schema = z.object({
+  serviceId: z.string().min(1, "Please select a service").cuid(),
+  notes:     z.string().min(10, "Please provide at least a brief description").max(2000).trim(),
+});
+
+type Fields = z.infer<typeof schema>;
+
+type Service = {
+  id: string; name: string; slug: string;
+  category: string; description: string; price: number | null;
+};
+
+type Props = {
+  services:             Service[];
+  preselectedServiceId?: string;
+  defaultName:          string;
+  defaultEmail:         string;
+};
+
+export default function PortalRequestForm({
+  services,
+  preselectedServiceId,
+  defaultName,
+  defaultEmail,
+}: Props) {
+  const router = useRouter();
+  const [serverError, setServerError] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<Fields>({
+    resolver: zodResolver(schema),
+    defaultValues: { serviceId: preselectedServiceId ?? "" },
+  });
+
+  async function onSubmit(data: Fields) {
+    setServerError("");
+
+    const res  = await fetch("/api/requests", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({
+        ...data,
+        clientName:  defaultName,
+        clientEmail: defaultEmail,
+        clientPhone: "",
+      }),
+    });
+    const json = await res.json();
+
+    if (!json.success) {
+      setServerError(json.error ?? "Submission failed.");
+      return;
+    }
+
+    // Redirect to the new request's detail page
+    router.push(`/portal/requests/${json.requestId}?submitted=1`);
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+
+      {/* Pre-filled client info â€” read-only */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 border border-gray-100 rounded-sm p-4">
+        <div>
+          <p className="font-body text-slate/40 text-xs uppercase tracking-wider mb-1">Name</p>
+          <p className="font-body text-navy text-sm">{defaultName || "â€”"}</p>
+        </div>
+        <div>
+          <p className="font-body text-slate/40 text-xs uppercase tracking-wider mb-1">Email</p>
+          <p className="font-body text-navy text-sm">{defaultEmail}</p>
+        </div>
+        <p className="font-body text-slate/40 text-xs sm:col-span-2">
+          Your contact details are taken from your account.{" "}
+          <a href="/portal/account" className="underline underline-offset-2">Update them here.</a>
+        </p>
+      </div>
+
+      {/* Service select */}
+      <div className="flex flex-col gap-1.5">
+        <label className="font-body text-navy text-sm font-medium">
+          Service required <span className="text-gold">*</span>
+        </label>
+        <select
+          {...register("serviceId")}
+          className={inputCls(!!errors.serviceId)}
+          defaultValue={preselectedServiceId ?? ""}
+        >
+          <option value="" disabled>Select a serviceâ€¦</option>
+          {services.map((s) => (
+            <option key={s.id} value={s.id}>{s.name}</option>
+          ))}
+        </select>
+        {errors.serviceId && (
+          <p className="font-body text-red-600 text-xs">{errors.serviceId.message}</p>
+        )}
+      </div>
+
+      {/* Notes */}
+      <div className="flex flex-col gap-1.5">
+        <label className="font-body text-navy text-sm font-medium">
+          Tell us about your situation <span className="text-gold">*</span>
+        </label>
+        <textarea
+          {...register("notes")}
+          rows={5}
+          placeholder="e.g. I need to register a new private limited company and obtain a BP number before end of monthâ€¦"
+          className={`${inputCls(!!errors.notes)} resize-none`}
+        />
+        {errors.notes && (
+          <p className="font-body text-red-600 text-xs">{errors.notes.message}</p>
+        )}
+      </div>
+
+      {/* Error */}
+      {serverError && (
+        <div className="bg-red-50 border border-red-200 rounded-sm px-4 py-3 flex gap-2 items-start">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-red-500 shrink-0 mt-0.5">
+            <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M7 4v3M7 9.5h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          <p className="font-body text-red-700 text-sm">{serverError}</p>
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="btn-gold w-full font-body font-semibold text-navy px-8 py-4 rounded-sm text-base tracking-wide disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        {isSubmitting ? "Submittingâ€¦" : "Submit request"}
+      </button>
+
+      <p className="font-body text-slate/50 text-xs text-center">
+        You&apos;ll be able to upload supporting documents after submitting.
+      </p>
+    </form>
+  );
+}
+
+function inputCls(err: boolean) {
+  return [
+    "font-body text-navy text-sm w-full bg-white border rounded-sm px-4 py-3",
+    "placeholder:text-slate/40 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors",
+    err
+      ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+      : "border-gray-200 focus:border-gold focus:ring-gold/20",
+  ].join(" ");
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\components\sections\CTASection.tsx ====
+
+import Link from "next/link";
+
+export default function CTASection() {
+  return (
+    <section className="bg-gold-pale py-24 border-t border-gold/20">
+      <div className="mx-auto max-w-7xl px-6 lg:px-12">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
+
+          {/* Copy */}
+          <div className="max-w-xl text-center lg:text-left">
+            <h2 className="font-display text-navy text-4xl md:text-5xl leading-tight mb-4">
+              Ready to get compliant?
+            </h2>
+            <p className="font-body text-slate text-lg leading-relaxed">
+              Submit a service request and one of our registered practitioners
+              will be in touch within one business day.
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row gap-4 flex-shrink-0">
+            <Link
+              href="/request"
+              className="btn-gold text-navy font-body font-semibold px-8 py-4 rounded-sm text-base tracking-wide text-center"
+            >
+              Request a service
+            </Link>
+            <Link
+              href="/contact"
+              className="font-body text-navy border border-navy/25 hover:border-navy transition-colors duration-200 px-8 py-4 rounded-sm text-base tracking-wide text-center"
+            >
+              Contact us
+            </Link>
+          </div>
+        </div>
+
+        {/* Divider stat strip */}
+        <div className="mt-16 pt-12 border-t border-gold/20 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          {[
+            { value: "5+",   label: "Services offered" },
+            { value: "100%", label: "ZIMRA compliant" },
+            { value: "1",    label: "Business day response" },
+            { value: "ZWL",  label: "Local currency pricing" },
+          ].map(({ value, label }) => (
+            <div key={label}>
+              <div className="font-display text-3xl font-bold text-navy mb-1">
+                {value}
+              </div>
+              <div className="font-body text-slate text-sm">{label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\components\sections\Hero.tsx ====
+
+import Link from "next/link";
+
+export default function Hero() {
+  return (
+    <section className="relative min-h-screen bg-navy overflow-hidden flex items-center">
+
+      {/* Diagonal gold accent stripe */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        aria-hidden="true"
+      >
+        <div
+          className="absolute"
+          style={{
+            top: "-10%",
+            right: "-5%",
+            width: "55%",
+            height: "130%",
+            background:
+              "linear-gradient(135deg, transparent 40%, rgba(201,168,76,0.07) 40%, rgba(201,168,76,0.07) 60%, transparent 60%)",
+            transform: "skewX(-8deg)",
+          }}
+        />
+        {/* Fine gold border line */}
+        <div
+          className="absolute top-0 right-[30%] w-px h-full bg-gold opacity-20"
+          style={{ transform: "rotate(8deg) translateX(120px)" }}
+        />
+      </div>
+
+      {/* Grid texture overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.03] pointer-events-none"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+        }}
+        aria-hidden="true"
+      />
+
+      <div className="relative mx-auto max-w-7xl px-6 lg:px-12 pt-32 pb-24 w-full">
+        <div className="max-w-3xl">
+
+          {/* Eyebrow */}
+          <div className="flex items-center gap-3 mb-8 animate-fade-up" style={{ animationDelay: "0.1s", opacity: 0 }}>
+            <div className="h-px w-10 bg-gold" />
+            <span className="text-gold text-xs tracking-[0.25em] uppercase font-body font-medium">
+              Registered tax accountants Â· Harare, Zimbabwe
+            </span>
+          </div>
+
+          {/* Headline */}
+          <h1
+            className="font-display text-white leading-[1.1] mb-8 animate-fade-up"
+            style={{
+              fontSize: "clamp(2.8rem, 6vw, 5.5rem)",
+              animationDelay: "0.2s",
+              opacity: 0,
+            }}
+          >
+            Your business,{" "}
+            <span className="text-gold italic">fully compliant.</span>
+          </h1>
+
+          {/* Sub-headline */}
+          <p
+            className="font-body text-white/65 text-xl leading-relaxed max-w-xl mb-12 animate-fade-up"
+            style={{ animationDelay: "0.35s", opacity: 0 }}
+          >
+            From company registration to ZIMRA clearance â€” Premasse handles
+            your tax and business obligations so you can focus on growing.
+          </p>
+
+          {/* CTAs */}
+          <div
+            className="flex flex-col sm:flex-row gap-4 animate-fade-up"
+            style={{ animationDelay: "0.5s", opacity: 0 }}
+          >
+            <Link
+              href="/request"
+              className="btn-gold text-navy font-body font-semibold px-8 py-4 rounded-sm text-base tracking-wide text-center"
+            >
+              Request a service
+            </Link>
+            <Link
+              href="/services"
+              className="font-body text-white border border-white/25 hover:border-white/60 transition-colors duration-200 px-8 py-4 rounded-sm text-base tracking-wide text-center"
+            >
+              View all services
+            </Link>
+          </div>
+
+          {/* Trust indicators */}
+          <div
+            className="flex flex-wrap gap-x-10 gap-y-3 mt-16 animate-fade-up"
+            style={{ animationDelay: "0.65s", opacity: 0 }}
+          >
+            {[
+              "Registered tax practitioners",
+              "ZIMRA compliant",
+              "SME specialists",
+            ].map((t) => (
+              <div key={t} className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
+                <span className="text-white/50 text-sm font-body">{t}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom fade */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(to bottom, transparent, rgba(10,37,64,0.6))",
+        }}
+        aria-hidden="true"
+      />
+    </section>
+  );
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\components\sections\ServicesSection.tsx ====
+
+import Link from "next/link";
+
+const services = [
+  {
+    category: "Tax",
+    name: "Tax Accountant Consultation",
+    slug: "tax-accountant-consultation",
+    description:
+      "One-on-one consultation with a registered tax accountant. We review your financial position and advise on obligations.",
+  },
+  {
+    category: "Registration",
+    name: "Company Registration",
+    slug: "company-registration",
+    description:
+      "End-to-end company registration under COBE. Includes name reservation, certificate of incorporation, and CR14.",
+  },
+  {
+    category: "ZIMRA",
+    name: "ZIMRA / Tax Registration",
+    slug: "zimra-tax-registration",
+    description:
+      "BP number, VAT, and PAYE registration with ZIMRA. We handle the paperwork and follow-up on your behalf.",
+  },
+  {
+    category: "Clearance",
+    name: "Tax Clearance Certificate",
+    slug: "tax-clearance",
+    description:
+      "Obtain your ITF263 quickly and correctly. Required for government tenders, contracts, and business transactions.",
+  },
+  {
+    category: "Accounting",
+    name: "SME Accounting Services",
+    slug: "sme-accounting",
+    description:
+      "Monthly bookkeeping, management accounts, payroll, and annual financial statements for small businesses.",
+  },
+];
+
+export default function ServicesSection() {
+  return (
+    <section className="bg-cream py-28" id="services">
+      <div className="mx-auto max-w-7xl px-6 lg:px-12">
+
+        {/* Section header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+          <div>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="h-px w-10 bg-gold" />
+              <span className="text-gold text-xs tracking-[0.25em] uppercase font-body font-medium">
+                What we do
+              </span>
+            </div>
+            <h2 className="font-display text-navy text-4xl md:text-5xl leading-tight">
+              Services built for
+              <br />
+              <em>Zimbabwean business.</em>
+            </h2>
+          </div>
+
+          <p className="text-slate font-body text-base leading-relaxed max-w-sm md:text-right">
+            Every service is handled by registered practitioners who
+            understand the local regulatory environment.
+          </p>
+        </div>
+
+        {/* Services grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-gray-200">
+          {services.map((service, i) => (
+            <Link
+              key={service.slug}
+              href={`/services/${service.slug}`}
+              className="group bg-white p-8 hover:bg-navy transition-colors duration-300 flex flex-col"
+              style={{
+                // Last card spans full width on 3-col if 5 items
+                ...(i === 4 && services.length === 5
+                  ? { gridColumn: "1 / -1" }
+                  : {}),
+              }}
+            >
+              {/* Category pill */}
+              <span className="inline-block font-body text-[10px] tracking-[0.2em] uppercase font-semibold text-gold border border-gold/40 group-hover:border-gold/60 px-2.5 py-1 rounded-sm mb-6 w-fit">
+                {service.category}
+              </span>
+
+              {/* Name */}
+              <h3 className="font-display text-navy group-hover:text-white text-xl font-semibold leading-snug mb-4 transition-colors duration-300">
+                {service.name}
+              </h3>
+
+              {/* Description */}
+              <p className="font-body text-slate group-hover:text-white/65 text-sm leading-relaxed flex-1 transition-colors duration-300">
+                {service.description}
+              </p>
+
+              {/* Arrow */}
+              <div className="mt-8 flex items-center gap-2 text-gold text-sm font-body font-medium">
+                <span>Learn more</span>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  className="transform group-hover:translate-x-1 transition-transform duration-200"
+                >
+                  <path
+                    d="M3 8h10M9 4l4 4-4 4"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {/* View all link */}
+        <div className="mt-10 text-center">
+          <Link
+            href="/services"
+            className="font-body text-navy border border-navy/25 hover:border-navy transition-colors duration-200 px-8 py-3.5 rounded-sm text-sm tracking-wide inline-block"
+          >
+            View all services
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\components\sections\WhyUs.tsx ====
+
+const reasons = [
+  {
+    number: "01",
+    title: "Registered practitioners",
+    body: "All our accountants are registered with the Public Accountants and Auditors Board (PAAB) of Zimbabwe.",
+  },
+  {
+    number: "02",
+    title: "ZIMRA specialists",
+    body: "Deep familiarity with Zimbabwe's tax legislation, ZIMRA processes, and regulatory requirements means fewer delays.",
+  },
+  {
+    number: "03",
+    title: "SME-focused pricing",
+    body: "We structure our fees around the realities of small and growing businesses â€” no hidden costs, no surprises.",
+  },
+  {
+    number: "04",
+    title: "End-to-end handling",
+    body: "We don't just advise â€” we prepare, submit, and follow up on your behalf until the job is done.",
+  },
+];
+
+export default function WhyUs() {
+  return (
+    <section className="bg-navy py-28" id="why-us">
+      <div className="mx-auto max-w-7xl px-6 lg:px-12">
+
+        {/* Header */}
+        <div className="mb-16 max-w-xl">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="h-px w-10 bg-gold" />
+            <span className="text-gold text-xs tracking-[0.25em] uppercase font-body font-medium">
+              Why Premasse
+            </span>
+          </div>
+          <h2 className="font-display text-white text-4xl md:text-5xl leading-tight">
+            The firm that{" "}
+            <em className="text-gold">gets things done.</em>
+          </h2>
+        </div>
+
+        {/* Reasons grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/10">
+          {reasons.map((r) => (
+            <div
+              key={r.number}
+              className="bg-navy p-10 hover:bg-navy-light transition-colors duration-300 group"
+            >
+              <span className="font-display text-5xl text-gold/20 group-hover:text-gold/30 transition-colors duration-300 block mb-6 leading-none">
+                {r.number}
+              </span>
+              <h3 className="font-display text-white text-xl font-semibold mb-3">
+                {r.title}
+              </h3>
+              <p className="font-body text-white/55 text-sm leading-relaxed">
+                {r.body}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

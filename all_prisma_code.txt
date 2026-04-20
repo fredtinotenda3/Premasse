@@ -1,0 +1,822 @@
+﻿
+==== FILE: C:\Users\user\Desktop\premasse\prisma\schema.prisma ====
+
+// Premasse Business Services â€” Prisma Schema
+// Database: PostgreSQL (Neon DB)
+// ORM: Prisma
+// Last updated: Phase 4 â€” Paynow payments added
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ENUMS
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+enum Role {
+  ADMIN   // Premasse staff â€” full dashboard access
+  CLIENT  // Future: clients who track their own requests
+}
+
+enum RequestStatus {
+  PENDING           // Newly submitted, not yet reviewed
+  IN_REVIEW         // Admin has opened and is reviewing
+  IN_PROGRESS       // Actively being worked on
+  AWAITING_DOCS     // Blocked â€” waiting for client to upload documents
+  AWAITING_PAYMENT  // Invoice sent â€” waiting for client to pay
+  COMPLETED         // Service delivered
+  CANCELLED         // Cancelled by admin or client
+}
+
+enum ServiceCategory {
+  TAX_ACCOUNTING  // Registered Tax Accountant Consultations
+  COMPANY_REG     // Company Registration
+  ZIMRA_TAX_REG   // ZIMRA / Tax Registration
+  TAX_CLEARANCE   // Tax Clearance Services
+  SME_ACCOUNTING  // Accounting Services for SMEs
+}
+
+enum PaymentStatus {
+  PENDING           // Payment record created, not yet sent to Paynow
+  AWAITING_PAYMENT  // Sent to Paynow, waiting for client to pay
+  PAID              // Confirmed paid via Paynow webhook
+  FAILED            // Paynow reported failure
+  CANCELLED         // Cancelled by admin or client
+}
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// USER
+// Handles both ADMIN and CLIENT roles.
+// Phase 1: only ADMIN users exist.
+// Phase 3+: CLIENT accounts added.
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  phone         String?
+  role          Role      @default(CLIENT)
+
+  // NextAuth fields (required for session management)
+  emailVerified DateTime?
+  image         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  requests          ServiceRequest[] @relation("UserRequests")
+  auditLogs         AuditLog[]       @relation("AuditedBy")
+  initiatedPayments Payment[]        @relation("InitiatedPayments")
+
+  // NextAuth: accounts & sessions
+  accounts Account[]
+  sessions Session[]
+
+  @@map("users")
+}
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// NEXTAUTH TABLES
+// Required by NextAuth.js v5 (Auth.js)
+// Do not remove â€” auth breaks without these
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// SERVICE
+// Each Premasse service is a row here.
+// Managed via admin CRUD â€” no code changes
+// needed to add/edit/remove services.
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+model Service {
+  id          String          @id @default(cuid())
+  name        String          // e.g. "Tax Clearance Certificate"
+  slug        String          @unique // e.g. "tax-clearance" â€” used in URLs
+  description String          @db.Text
+  category    ServiceCategory
+  price       Float?          // Optional â€” most services are quote-based
+  isActive    Boolean         @default(true) // Soft disable without deleting
+  sortOrder   Int             @default(0)    // Controls display order on site
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  requests ServiceRequest[]
+
+  @@map("services")
+}
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// SERVICE REQUEST
+// Core entity â€” every client submission
+// creates one of these.
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+model ServiceRequest {
+  id        String        @id @default(cuid())
+
+  // Anonymous requests (Phase 1) â€” userId nullable.
+  // Once client portal launches (Phase 3), link to account.
+  userId    String?
+  serviceId String
+
+  // Client-provided info
+  clientName  String        // Captured on form â€” no auth required in Phase 1
+  clientEmail String
+  clientPhone String?
+  notes       String?       @db.Text // Client's description of their situation
+
+  // Admin-managed fields
+  status     RequestStatus @default(PENDING)
+  adminNotes String?       @db.Text // Internal notes, never shown to client
+  assignedTo String?       // Future: assign to specific staff member
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User?      @relation("UserRequests", fields: [userId], references: [id])
+  service   Service    @relation(fields: [serviceId], references: [id])
+  documents Document[]
+  auditLogs AuditLog[]
+  payments  Payment[]
+
+  @@index([status])       // Fast filtering by status in admin dashboard
+  @@index([clientEmail])  // Look up requests by client email
+  @@index([createdAt])    // Sort by date
+  @@map("service_requests")
+}
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// DOCUMENT
+// Files uploaded by client for a request.
+// Stored on Cloudinary â€” only metadata here.
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+model Document {
+  id         String   @id @default(cuid())
+  requestId  String
+  fileUrl    String   // Cloudinary secure_url
+  publicId   String   // Cloudinary public_id (needed for deletion)
+  fileName   String   // Original file name shown in UI
+  fileType   String   // MIME type e.g. "application/pdf"
+  fileSize   Int      // Bytes â€” for display and validation
+  uploadedAt DateTime @default(now())
+
+  // Relations
+  request ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// AUDIT LOG
+// Immutable record of every status change.
+// Powers the activity timeline in the admin
+// dashboard and future client status tracking.
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  requestId  String
+  changedBy  String   // User id of the admin who made the change
+  fromStatus String?  // Null on first log entry (creation)
+  toStatus   String
+  note       String?  // Optional admin comment at time of change
+  createdAt  DateTime @default(now())
+
+  // Relations
+  request ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  admin   User           @relation("AuditedBy", fields: [changedBy], references: [id])
+
+  @@index([requestId])
+  @@map("audit_logs")
+}
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// PAYMENT
+// One payment record per Paynow transaction.
+// A request can have multiple payments if
+// earlier ones fail or are cancelled.
+// The most recent PAID record is authoritative.
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+model Payment {
+  id       String        @id @default(cuid())
+  requestId String
+  amount   Float         // Amount in USD
+  currency String        @default("USD")
+  status   PaymentStatus @default(PENDING)
+
+  // Paynow-specific fields
+  paynowRef   String?   // Paynow's own reference number (from webhook)
+  pollUrl     String?   @db.Text // URL to poll for status updates
+  redirectUrl String?   @db.Text // Web checkout redirect URL for client
+  method      String?   // "web" | "ecocash" | "onemoney"
+  phone       String?   // Phone number used for mobile payments
+
+  // Audit
+  initiatedBy String    // Admin user id who triggered the payment
+  paidAt      DateTime? // Set when Paynow webhook confirms payment
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  request ServiceRequest @relation(fields: [requestId], references: [id])
+  admin   User           @relation("InitiatedPayments", fields: [initiatedBy], references: [id])
+
+  @@index([requestId])
+  @@index([status])
+  @@map("payments")
+}
+
+==== FILE: C:\Users\user\Desktop\premasse\prisma\seed-debug.ts ====
+
+import { PrismaClient, Role } from "@prisma/client";
+
+==== FILE: C:\Users\user\Desktop\premasse\prisma\seed.ts ====
+
+// prisma/seed.ts
+// Premasse Business Services â€” Database Seed
+// Run with: npx prisma db seed
+
+import { PrismaClient, Role, ServiceCategory } from "@prisma/client";
+import { hash } from "bcryptjs";
+
+const prisma = new PrismaClient();
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// DEBUG LOGGER
+// Structured, timestamped debug output.
+// Set DEBUG=true in your .env to enable.
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+const DEBUG = process.env.DEBUG === "true";
+
+function log(level: "info" | "debug" | "warn" | "error", message: string, data?: unknown) {
+  const timestamp = new Date().toISOString();
+  const prefix = {
+    info:  "  âœ“",
+    debug: "  â†’",
+    warn:  "  âš ",
+    error: "  âœ—",
+  }[level];
+
+  if (level === "debug" && !DEBUG) return;
+
+  console.log(`${prefix} [${timestamp}] ${message}`);
+  if (data !== undefined && DEBUG) {
+    console.log("    ", JSON.stringify(data, null, 2));
+  }
+}
+
+async function main() {
+  console.log("ðŸŒ± Seeding Premasse database...");
+  console.log(`   ENV: ${process.env.NODE_ENV ?? "development"}`);
+  console.log(`   DEBUG: ${DEBUG ? "on" : "off (set DEBUG=true to enable)"}`);
+  console.log("");
+
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // SERVICES
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  console.log("â”€â”€ Services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€");
+
+  const services = [
+    {
+      name: "Registered Tax Accountant Consultation",
+      slug: "tax-accountant-consultation",
+      description:
+        "One-on-one consultation with a registered tax accountant. We review your financial position, advise on tax obligations, and help you make informed decisions for your business or personal tax affairs.",
+      category: ServiceCategory.TAX_ACCOUNTING,
+      price: null,
+      sortOrder: 1,
+    },
+    {
+      name: "Company Registration",
+      slug: "company-registration",
+      description:
+        "Full end-to-end company registration with ZIMRA and the Companies and Other Business Entities Act (COBE). Includes name reservation, certificate of incorporation, and CR14 documentation.",
+      category: ServiceCategory.COMPANY_REG,
+      price: null,
+      sortOrder: 2,
+    },
+    {
+      name: "ZIMRA / Tax Registration",
+      slug: "zimra-tax-registration",
+      description:
+        "Register your business for tax purposes with ZIMRA. Covers BP number registration, VAT registration, and PAYE registration for businesses with employees.",
+      category: ServiceCategory.ZIMRA_TAX_REG,
+      price: null,
+      sortOrder: 3,
+    },
+    {
+      name: "Tax Clearance Certificate",
+      slug: "tax-clearance",
+      description:
+        "Obtain your ZIMRA Tax Clearance Certificate (ITF263) quickly and correctly. Required for tendering, contract work, and business transactions in Zimbabwe.",
+      category: ServiceCategory.TAX_CLEARANCE,
+      price: null,
+      sortOrder: 4,
+    },
+    {
+      name: "Accounting Services for SMEs",
+      slug: "sme-accounting",
+      description:
+        "Ongoing accounting support tailored for small and medium enterprises. Includes bookkeeping, monthly management accounts, payroll processing, and annual financial statements.",
+      category: ServiceCategory.SME_ACCOUNTING,
+      price: null,
+      sortOrder: 5,
+    },
+  ];
+
+  log("debug", `Preparing to upsert ${services.length} services`);
+
+  let servicesCreated = 0;
+  let servicesUpdated = 0;
+
+  for (const service of services) {
+    log("debug", `Checking existing record for slug: "${service.slug}"`);
+
+    const existing = await prisma.service.findUnique({
+      where: { slug: service.slug },
+    });
+
+    if (existing) {
+      log("debug", `Found existing service id=${existing.id} â€” will update`);
+    } else {
+      log("debug", `No existing record found â€” will create`);
+    }
+
+    const result = await prisma.service.upsert({
+      where: { slug: service.slug },
+      update: {
+        name: service.name,
+        description: service.description,
+        category: service.category,
+        price: service.price,
+        sortOrder: service.sortOrder,
+        isActive: true,
+      },
+      create: {
+        ...service,
+        isActive: true,
+      },
+    });
+
+    if (existing) {
+      servicesUpdated++;
+      log("info", `Updated service: "${result.name}" (id=${result.id})`);
+    } else {
+      servicesCreated++;
+      log("info", `Created service: "${result.name}" (id=${result.id})`);
+    }
+
+    log("debug", `Service record`, {
+      id: result.id,
+      slug: result.slug,
+      category: result.category,
+      isActive: result.isActive,
+      sortOrder: result.sortOrder,
+    });
+  }
+
+  console.log("");
+  log("info", `Services done â€” created: ${servicesCreated}, updated: ${servicesUpdated}`);
+
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ADMIN USER
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  console.log("");
+  console.log("â”€â”€ Admin user â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€");
+
+  const adminEmail = process.env.SEED_ADMIN_EMAIL ?? "admin@premasse.co.zw";
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "ChangeMe123!";
+
+  log("debug", `Admin email resolved to: ${adminEmail}`);
+  log(
+    "debug",
+    `Password source: ${
+      process.env.SEED_ADMIN_PASSWORD
+        ? "SEED_ADMIN_PASSWORD env var"
+        : "hardcoded default â€” override in .env!"
+    }`
+  );
+
+  if (!process.env.SEED_ADMIN_PASSWORD) {
+    log("warn", "SEED_ADMIN_PASSWORD not set â€” using default. Set it in .env before production!");
+  }
+
+  log("debug", "Hashing admin password (bcrypt, 12 rounds)...");
+  const hashStart = Date.now();
+  const hashedPassword = await hash(adminPassword, 12);
+  log("debug", `Password hashed in ${Date.now() - hashStart}ms`);
+
+  log("debug", `Checking if admin already exists: ${adminEmail}`);
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: adminEmail },
+    include: { accounts: true },
+  });
+
+  if (existingAdmin) {
+    log(
+      "debug",
+      `Existing admin found â€” id=${existingAdmin.id}, linked accounts=${existingAdmin.accounts.length}`
+    );
+  } else {
+    log("debug", "No existing admin â€” will create with linked credentials account");
+  }
+
+  const admin = await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {},
+    create: {
+      name: "Premasse Admin",
+      email: adminEmail,
+      role: Role.ADMIN,
+      accounts: {
+        create: {
+          type: "credentials",
+          provider: "credentials",
+          providerAccountId: adminEmail,
+          access_token: hashedPassword,
+        },
+      },
+    },
+  });
+
+  log(
+    "info",
+    `${existingAdmin ? "Skipped (already exists)" : "Created"} admin: ${admin.email} (id=${admin.id})`
+  );
+  log("debug", "Admin record", {
+    id: admin.id,
+    email: admin.email,
+    role: admin.role,
+    createdAt: admin.createdAt,
+  });
+
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // SAMPLE SERVICE REQUEST (dev only)
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log("");
+    console.log("â”€â”€ Sample request (dev only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€");
+
+    log("debug", 'Looking up service with slug "tax-clearance"');
+    const taxClearance = await prisma.service.findUnique({
+      where: { slug: "tax-clearance" },
+    });
+
+    if (!taxClearance) {
+      log("warn", 'Service "tax-clearance" not found â€” skipping sample request');
+    } else {
+      log("debug", `Found service: id=${taxClearance.id}, name="${taxClearance.name}"`);
+
+      const existing = await prisma.serviceRequest.findFirst({
+        where: { clientEmail: "testclient@example.com" },
+      });
+
+      if (existing) {
+        log("info", `Sample request already exists (id=${existing.id}) â€” skipping`);
+        log("debug", "Existing request", {
+          id: existing.id,
+          status: existing.status,
+          createdAt: existing.createdAt,
+        });
+      } else {
+        log("debug", "No existing sample request â€” creating now");
+
+        const sampleRequest = await prisma.serviceRequest.create({
+          data: {
+            serviceId: taxClearance.id,
+            clientName: "Tatenda Moyo",
+            clientEmail: "testclient@example.com",
+            clientPhone: "+263 77 123 4567",
+            notes:
+              "I need a tax clearance certificate urgently for a government tender closing end of month. My BP number is 1234567.",
+            status: "PENDING",
+            auditLogs: {
+              create: {
+                changedBy: admin.id,
+                fromStatus: null,
+                toStatus: "PENDING",
+                note: "Request submitted via website",
+              },
+            },
+          },
+          include: {
+            auditLogs: true,
+          },
+        });
+
+        log("info", `Created sample request (id=${sampleRequest.id})`);
+        log("debug", "Sample request", {
+          id: sampleRequest.id,
+          serviceId: sampleRequest.serviceId,
+          clientName: sampleRequest.clientName,
+          clientEmail: sampleRequest.clientEmail,
+          status: sampleRequest.status,
+          auditLogsCreated: sampleRequest.auditLogs.length,
+        });
+      }
+    }
+  } else {
+    log("debug", "NODE_ENV=production â€” skipping sample request block");
+  }
+
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // FINAL SUMMARY
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  console.log("");
+  console.log("â”€â”€ Summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€");
+
+  const [totalServices, totalUsers, totalRequests] = await Promise.all([
+    prisma.service.count(),
+    prisma.user.count(),
+    prisma.serviceRequest.count(),
+  ]);
+
+  log("info", `Services in DB:  ${totalServices}`);
+  log("info", `Users in DB:     ${totalUsers}`);
+  log("info", `Requests in DB:  ${totalRequests}`);
+
+  console.log("");
+  console.log("âœ… Seed complete.");
+}
+
+main()
+  .catch((e) => {
+    console.error("\nâŒ Seed failed:");
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    log("debug", "Disconnecting Prisma client");
+    await prisma.$disconnect();
+  });
+
+==== FILE: C:\Users\user\Desktop\premasse\prisma\migrations\migration_lock.toml ====
+
+# Please do not edit this file manually
+# It should be added in your version-control system (e.g., Git)
+provider = "postgresql"
+
+==== FILE: C:\Users\user\Desktop\premasse\prisma\migrations\20260414092718_init\migration.sql ====
+
+-- CreateEnum
+CREATE TYPE "Role" AS ENUM ('ADMIN', 'CLIENT');
+
+-- CreateEnum
+CREATE TYPE "RequestStatus" AS ENUM ('PENDING', 'IN_REVIEW', 'IN_PROGRESS', 'AWAITING_DOCS', 'AWAITING_PAYMENT', 'COMPLETED', 'CANCELLED');
+
+-- CreateEnum
+CREATE TYPE "ServiceCategory" AS ENUM ('TAX_ACCOUNTING', 'COMPANY_REG', 'ZIMRA_TAX_REG', 'TAX_CLEARANCE', 'SME_ACCOUNTING');
+
+-- CreateEnum
+CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'AWAITING_PAYMENT', 'PAID', 'FAILED', 'CANCELLED');
+
+-- CreateTable
+CREATE TABLE "users" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "phone" TEXT,
+    "role" "Role" NOT NULL DEFAULT 'CLIENT',
+    "emailVerified" TIMESTAMP(3),
+    "image" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "accounts" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "provider" TEXT NOT NULL,
+    "providerAccountId" TEXT NOT NULL,
+    "refresh_token" TEXT,
+    "access_token" TEXT,
+    "expires_at" INTEGER,
+    "token_type" TEXT,
+    "scope" TEXT,
+    "id_token" TEXT,
+    "session_state" TEXT,
+
+    CONSTRAINT "accounts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "sessions" (
+    "id" TEXT NOT NULL,
+    "sessionToken" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "expires" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "sessions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "verification_tokens" (
+    "identifier" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
+    "expires" TIMESTAMP(3) NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "services" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "category" "ServiceCategory" NOT NULL,
+    "price" DOUBLE PRECISION,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "services_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "service_requests" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT,
+    "serviceId" TEXT NOT NULL,
+    "clientName" TEXT NOT NULL,
+    "clientEmail" TEXT NOT NULL,
+    "clientPhone" TEXT,
+    "notes" TEXT,
+    "status" "RequestStatus" NOT NULL DEFAULT 'PENDING',
+    "adminNotes" TEXT,
+    "assignedTo" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "service_requests_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "documents" (
+    "id" TEXT NOT NULL,
+    "requestId" TEXT NOT NULL,
+    "fileUrl" TEXT NOT NULL,
+    "publicId" TEXT NOT NULL,
+    "fileName" TEXT NOT NULL,
+    "fileType" TEXT NOT NULL,
+    "fileSize" INTEGER NOT NULL,
+    "uploadedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "documents_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "audit_logs" (
+    "id" TEXT NOT NULL,
+    "requestId" TEXT NOT NULL,
+    "changedBy" TEXT NOT NULL,
+    "fromStatus" TEXT,
+    "toStatus" TEXT NOT NULL,
+    "note" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "audit_logs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "payments" (
+    "id" TEXT NOT NULL,
+    "requestId" TEXT NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "currency" TEXT NOT NULL DEFAULT 'USD',
+    "status" "PaymentStatus" NOT NULL DEFAULT 'PENDING',
+    "paynowRef" TEXT,
+    "pollUrl" TEXT,
+    "redirectUrl" TEXT,
+    "method" TEXT,
+    "phone" TEXT,
+    "initiatedBy" TEXT NOT NULL,
+    "paidAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "payments_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "accounts_provider_providerAccountId_key" ON "accounts"("provider", "providerAccountId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "sessions_sessionToken_key" ON "sessions"("sessionToken");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "verification_tokens_token_key" ON "verification_tokens"("token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "verification_tokens_identifier_token_key" ON "verification_tokens"("identifier", "token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "services_slug_key" ON "services"("slug");
+
+-- CreateIndex
+CREATE INDEX "service_requests_status_idx" ON "service_requests"("status");
+
+-- CreateIndex
+CREATE INDEX "service_requests_clientEmail_idx" ON "service_requests"("clientEmail");
+
+-- CreateIndex
+CREATE INDEX "service_requests_createdAt_idx" ON "service_requests"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "audit_logs_requestId_idx" ON "audit_logs"("requestId");
+
+-- CreateIndex
+CREATE INDEX "payments_requestId_idx" ON "payments"("requestId");
+
+-- CreateIndex
+CREATE INDEX "payments_status_idx" ON "payments"("status");
+
+-- AddForeignKey
+ALTER TABLE "accounts" ADD CONSTRAINT "accounts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "sessions" ADD CONSTRAINT "sessions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "service_requests" ADD CONSTRAINT "service_requests_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "service_requests" ADD CONSTRAINT "service_requests_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "services"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "documents" ADD CONSTRAINT "documents_requestId_fkey" FOREIGN KEY ("requestId") REFERENCES "service_requests"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_requestId_fkey" FOREIGN KEY ("requestId") REFERENCES "service_requests"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_changedBy_fkey" FOREIGN KEY ("changedBy") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "payments" ADD CONSTRAINT "payments_requestId_fkey" FOREIGN KEY ("requestId") REFERENCES "service_requests"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "payments" ADD CONSTRAINT "payments_initiatedBy_fkey" FOREIGN KEY ("initiatedBy") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
