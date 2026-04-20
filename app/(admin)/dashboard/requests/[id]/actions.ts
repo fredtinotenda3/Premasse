@@ -1,12 +1,14 @@
 // app/(admin)/dashboard/requests/[id]/actions.ts
+// Updated: sends WhatsApp notification to client when status changes.
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { redirect }       from "next/navigation";
-import { z }              from "zod";
-import { prisma }         from "@/lib/prisma";
-import { requireAdmin }   from "@/lib/auth-helpers";
-import { RequestStatus }  from "@prisma/client";
+import { revalidatePath }            from "next/cache";
+import { redirect }                  from "next/navigation";
+import { z }                         from "zod";
+import { prisma }                    from "@/lib/prisma";
+import { requireAdmin }              from "@/lib/auth-helpers";
+import { RequestStatus }             from "@prisma/client";
+import { sendStatusUpdateWhatsApp }  from "@/lib/whatsapp";
 
 const updateStatusSchema = z.object({
   requestId: z.string().cuid(),
@@ -31,8 +33,14 @@ export async function updateRequestStatus(formData: FormData): Promise<void> {
   const { requestId, newStatus, note } = parsed.data;
 
   const request = await prisma.serviceRequest.findUnique({
-    where:  { id: requestId },
-    select: { id: true, status: true },
+    where:   { id: requestId },
+    select:  {
+      id:          true,
+      status:      true,
+      clientName:  true,
+      clientPhone: true,
+      service:     { select: { name: true } },
+    },
   });
 
   if (!request) {
@@ -40,9 +48,7 @@ export async function updateRequestStatus(formData: FormData): Promise<void> {
     return;
   }
 
-  if (request.status === newStatus) {
-    return;
-  }
+  if (request.status === newStatus) return;
 
   await prisma.$transaction([
     prisma.serviceRequest.update({
@@ -63,6 +69,20 @@ export async function updateRequestStatus(formData: FormData): Promise<void> {
   console.info(
     `[action:updateStatus] Request ${requestId} → ${newStatus} by ${session.user.email}`
   );
+
+  // Send WhatsApp if client has a phone number
+  if (request.clientPhone) {
+    sendStatusUpdateWhatsApp({
+      clientName:  request.clientName,
+      clientPhone: request.clientPhone,
+      serviceName: request.service.name,
+      newStatus,
+      requestId,
+      adminNote:   note,
+    }).catch((err) =>
+      console.error("[action:updateStatus] WhatsApp failed:", err)
+    );
+  }
 
   revalidatePath(`/dashboard/requests/${requestId}`);
   revalidatePath("/dashboard/requests");

@@ -1,11 +1,14 @@
-// app/api/requests/route.ts  (updated for Phase 3 — email notifications)
-// Diff from Phase 1: sendRequestEmails() is now called after the DB transaction.
-// Emails fire in parallel and never block the response — a failed email does
-// not fail the request. The client always gets a 201 if the DB write succeeds.
+// app/api/requests/route.ts
+// Updated: fires WhatsApp notifications (to client + admin) alongside emails.
+// WhatsApp failures never block the 201 response.
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma }                from "@/lib/prisma";
 import { sendRequestEmails }     from "@/lib/email";
+import {
+  sendRequestReceivedWhatsApp,
+  sendAdminNewRequestWhatsApp,
+} from "@/lib/whatsapp";
 import {
   serviceRequestSchema,
   type ServiceRequestResponse,
@@ -15,7 +18,7 @@ export async function POST(
   req: NextRequest
 ): Promise<NextResponse<ServiceRequestResponse>> {
 
-  // ── 1. Parse + validate ────────────────────────────────────────────────────
+  // ── 1. Parse + validate ───────────────────────────────────────────────────
   let body: unknown;
   try { body = await req.json(); }
   catch {
@@ -29,8 +32,8 @@ export async function POST(
   if (!parsed.success) {
     return NextResponse.json(
       {
-        success: false,
-        error: "Please fix the errors below and try again.",
+        success:     false,
+        error:       "Please fix the errors below and try again.",
         fieldErrors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
       },
       { status: 422 }
@@ -39,7 +42,7 @@ export async function POST(
 
   const { clientName, clientEmail, clientPhone, serviceId, notes } = parsed.data;
 
-  // ── 2. Verify service ──────────────────────────────────────────────────────
+  // ── 2. Verify service ─────────────────────────────────────────────────────
   const service = await prisma.service.findUnique({
     where:  { id: serviceId },
     select: { id: true, name: true, isActive: true },
@@ -52,7 +55,7 @@ export async function POST(
     );
   }
 
-  // ── 3. Duplicate guard ─────────────────────────────────────────────────────
+  // ── 3. Duplicate guard ────────────────────────────────────────────────────
   const duplicate = await prisma.serviceRequest.findFirst({
     where:  { clientEmail, serviceId, status: "PENDING" },
     select: { id: true },
@@ -62,13 +65,13 @@ export async function POST(
     return NextResponse.json(
       {
         success: false,
-        error: "You already have a pending request for this service. Our team will be in touch shortly.",
+        error:   "You already have a pending request for this service. Our team will be in touch shortly.",
       },
       { status: 409 }
     );
   }
 
-  // ── 4. DB transaction ──────────────────────────────────────────────────────
+  // ── 4. DB transaction ─────────────────────────────────────────────────────
   const admin = await prisma.user.findFirst({
     where:   { role: "ADMIN" },
     select:  { id: true },
@@ -117,18 +120,39 @@ export async function POST(
     );
   }
 
-  // ── 5. Send emails (non-blocking) ──────────────────────────────────────────
-  // Fire-and-forget — awaited with allSettled so errors are logged but never
-  // bubble up to break the 201 response the client is already expecting.
-  sendRequestEmails({
-    clientName,
-    clientEmail,
-    clientPhone: clientPhone || null,
-    serviceName: service.name,
-    notes,
-    requestId:   newRequest.id,
-  }).catch((err) =>
-    console.error("[api/requests] sendRequestEmails threw unexpectedly:", err)
+  // ── 5. Send notifications (non-blocking) ──────────────────────────────────
+  // Emails + WhatsApp fire in parallel. Neither can break the 201 response.
+  Promise.allSettled([
+    // Emails (existing)
+    sendRequestEmails({
+      clientName,
+      clientEmail,
+      clientPhone: clientPhone || null,
+      serviceName: service.name,
+      notes,
+      requestId:   newRequest.id,
+    }),
+
+    // WhatsApp to client (if phone provided)
+    ...(clientPhone ? [
+      sendRequestReceivedWhatsApp({
+        clientName,
+        clientPhone,
+        serviceName: service.name,
+        requestId:   newRequest.id,
+      }),
+    ] : []),
+
+    // WhatsApp to admin (always — so they know immediately)
+    sendAdminNewRequestWhatsApp({
+      clientName,
+      clientPhone: clientPhone ?? "",
+      serviceName: service.name,
+      requestId:   newRequest.id,
+    }),
+
+  ]).catch((err) =>
+    console.error("[api/requests] Notification error:", err)
   );
 
   console.info(
@@ -145,7 +169,7 @@ export async function POST(
   );
 }
 
-// GET — fetch active services for the form dropdown (unchanged)
+// GET — fetch active services for the form dropdown
 export async function GET(): Promise<NextResponse> {
   try {
     const services = await prisma.service.findMany({

@@ -11,6 +11,7 @@ import AuditTimeline from "@/components/dashboard/AuditTimeline";
 import { updateRequestStatus } from "./actions";
 import { format } from "date-fns";
 import RequestDocuments from "@/components/dashboard/RequestDocuments";
+import InvoiceButton from "@/components/dashboard/InvoiceButton";
 
 export const metadata: Metadata = { title: "Request detail — Admin" };
 export const dynamic = "force-dynamic";
@@ -54,6 +55,7 @@ export default async function RequestDetailPage({
           admin: { select: { name: true, email: true } },
         },
       },
+      payments: true,
     },
   });
 
@@ -210,6 +212,25 @@ export default async function RequestDetailPage({
               Activity
             </h2>
             <AuditTimeline entries={request.auditLogs} />
+          </div>
+
+          {/* Payment section with InvoiceButton */}
+          <div className="bg-white border border-gray-100 rounded-sm p-6">
+            <h2 className="font-display text-navy text-base font-semibold mb-5">
+              Payments
+            </h2>
+            {request.payments.filter(p => p.status === "PAID").map(p => (
+              <InvoiceButton
+                key={p.id}
+                paymentId={p.id}
+                clientName={request.clientName}
+                amount={p.amount}
+                status={p.status}
+              />
+            ))}
+            {request.payments.filter(p => p.status === "PAID").length === 0 && (
+              <p className="font-body text-slate/40 text-sm italic">No paid payments found.</p>
+            )}
           </div>
         </div>
       </div>

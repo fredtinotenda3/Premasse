@@ -11,6 +11,7 @@ import { auth }      from "@/auth";
 import { prisma }    from "@/lib/prisma";
 import { RequestStatus } from "@prisma/client";
 import { format, formatDistanceToNow } from "date-fns";
+import PortalInvoiceButton from "@/components/portal/PortalInvoiceButton";
 
 export const metadata: Metadata = { title: "Request — Premasse Portal" };
 export const dynamic = "force-dynamic";
@@ -45,7 +46,7 @@ export default async function PortalRequestDetailPage({
       payments: {
         where:   { status: "PAID" },
         orderBy: { paidAt: "desc" },
-        select:  { amount: true, method: true, paidAt: true },
+        select:  { id: true, amount: true, method: true, paidAt: true, status: true },
       },
     },
   });
@@ -183,18 +184,21 @@ export default async function PortalRequestDetailPage({
                 Payment
               </h2>
               {request.payments.map((p, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div>
-                    <p className="font-display text-navy text-xl font-bold">
-                      ${p.amount.toFixed(2)} <span className="font-body text-slate/40 text-sm font-normal">USD</span>
-                    </p>
-                    <p className="font-body text-slate/50 text-xs">
-                      {p.method ?? "Web"} · {p.paidAt ? format(new Date(p.paidAt), "d MMM yyyy") : ""}
-                    </p>
+                <div key={i}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="font-display text-navy text-xl font-bold">
+                        ${p.amount.toFixed(2)} <span className="font-body text-slate/40 text-sm font-normal">USD</span>
+                      </p>
+                      <p className="font-body text-slate/50 text-xs">
+                        {p.method ?? "Web"} · {p.paidAt ? format(new Date(p.paidAt), "d MMM yyyy") : ""}
+                      </p>
+                    </div>
+                    <span className="font-body font-semibold text-xs px-2.5 py-1 rounded-sm border bg-green-50 text-green-800 border-green-200 uppercase tracking-widest">
+                      Paid
+                    </span>
                   </div>
-                  <span className="font-body font-semibold text-xs px-2.5 py-1 rounded-sm border bg-green-50 text-green-800 border-green-200 uppercase tracking-widest">
-                    Paid
-                  </span>
+                  <PortalInvoiceButton paymentId={p.id} amount={p.amount} />
                 </div>
               ))}
             </div>
