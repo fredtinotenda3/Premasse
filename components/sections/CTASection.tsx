@@ -1,3 +1,5 @@
+// components/sections/CTASection.tsx
+
 import Link from "next/link";
 
 export default function CTASection() {
@@ -37,10 +39,10 @@ export default function CTASection() {
         {/* Divider stat strip */}
         <div className="mt-16 pt-12 border-t border-gold/20 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {[
-            { value: "5+",   label: "Services offered" },
+            { value: "14+",  label: "Services offered" },
             { value: "100%", label: "ZIMRA compliant" },
             { value: "1",    label: "Business day response" },
-            { value: "ZWL",  label: "Local currency pricing" },
+            { value: "Local", label: "Zimbabwe pricing" },
           ].map(({ value, label }) => (
             <div key={label}>
               <div className="font-display text-3xl font-bold text-navy mb-1">

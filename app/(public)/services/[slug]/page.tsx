@@ -1,15 +1,24 @@
 // app/(public)/services/[slug]/page.tsx
 
-import { Metadata }  from "next";
-import Link          from "next/link";
-import Script        from "next/script";
-import { notFound }  from "next/navigation";
-import { prisma }    from "@/lib/prisma";
-import Navbar        from "@/components/layout/Navbar";
-import Footer        from "@/components/layout/Footer";
+import { Metadata } from "next";
+import Link from "next/link";
+import Image from "next/image";
+import Script from "next/script";
+import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import { ServiceCategory } from "@prisma/client";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://premasse.co.zw";
+
+// Dynamic image mapping based on service category
+const CATEGORY_IMAGES: Record<ServiceCategory, string> = {
+  TAX_ACCOUNTING: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=1200&q=85&auto=format&fit=crop",
+  COMPANY_REG: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1200&q=85&auto=format&fit=crop",
+  ZIMRA_TAX_REG: "https://images.unsplash.com/photo-1554224154-26032ffc0ad7?w=1200&q=85&auto=format&fit=crop",
+  TAX_CLEARANCE: "https://images.unsplash.com/photo-1554224155-1696413565d7?w=1200&q=85&auto=format&fit=crop",
+  SME_ACCOUNTING: "https://images.unsplash.com/photo-1554224155-9090266daf94?w=1200&q=85&auto=format&fit=crop",
+  STOCK_TAKING: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1200&q=85&auto=format&fit=crop",
+};
 
 const SEO_CONFIG: Record<ServiceCategory, {
   titleKeyword:    string;
@@ -228,6 +237,7 @@ export default async function ServiceDetailPage({
   const preparations = WHAT_TO_PREPARE[service.category] ?? [];
   const faqs         = FAQS[service.category] ?? [];
   const canonicalUrl = `${SITE_URL}/services/${slug}`;
+  const categoryImage = CATEGORY_IMAGES[service.category];
 
   const serviceStructuredData = {
     "@context": "https://schema.org",
@@ -270,43 +280,116 @@ export default async function ServiceDetailPage({
         strategy="afterInteractive"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceStructuredData) }}
       />
-
-      <Navbar />
       <main>
-        <div className="bg-navy pt-32 pb-16 px-6 relative overflow-hidden">
+        {/* Hero with dynamic image based on service category */}
+        <section className="relative min-h-[70vh] bg-navy overflow-hidden flex items-center">
+          {/* Architectural grid overlay */}
           <div
-            className="absolute inset-0 opacity-[0.03] pointer-events-none"
+            className="absolute inset-0 pointer-events-none"
+            aria-hidden="true"
             style={{
               backgroundImage:
-                "linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px)",
-              backgroundSize: "60px 60px",
+                "linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px)",
+              backgroundSize: "80px 80px",
+            }}
+          />
+
+          {/* Dynamic hero image based on service category */}
+          <div
+            className="absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none"
+            aria-hidden="true"
+          >
+            <Image
+              src={categoryImage}
+              alt={service.name}
+              fill
+              className="object-cover object-center"
+              style={{ opacity: 1 }}
+              sizes="50vw"
+              priority
+            />
+            {/* Navy fade from left */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(to right, #0A2540 0%, #0A2540 20%, rgba(10,37,64,0.7) 55%, rgba(10,37,64,0.15) 100%)",
+              }}
+            />
+            {/* Navy fade from bottom */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: "linear-gradient(to top, #0A2540 0%, transparent 40%)",
+              }}
+            />
+          </div>
+
+          {/* Diagonal gold accent */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            aria-hidden="true"
+            style={{
+              background:
+                "linear-gradient(135deg, transparent 58%, rgba(201,168,76,0.03) 58%, rgba(201,168,76,0.03) 72%, transparent 72%)",
+            }}
+          />
+
+          {/* Top gold rule */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gold opacity-20" />
+
+          <div className="relative mx-auto max-w-7xl px-6 lg:px-12 pt-36 pb-28 w-full">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-2 font-body text-white/30 text-xs mb-8">
+                <Link href="/services" className="hover:text-white/60 transition-colors">
+                  Services
+                </Link>
+                <span>/</span>
+                <span className="text-white/60">{service.name}</span>
+              </div>
+
+              <span className="inline-block font-body text-[10px] tracking-[0.2em] uppercase font-semibold text-gold border border-gold/40 px-2.5 py-1 rounded-sm mb-5">
+                {CATEGORY_LABELS[service.category]}
+              </span>
+
+              <h1
+                className="font-display text-white leading-[1.08] mb-6"
+                style={{
+                  fontSize: "clamp(2.5rem, 4.5vw, 4.2rem)",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                {seo.h1}
+              </h1>
+
+              <p
+                className="font-body text-white/60 leading-relaxed"
+                style={{
+                  fontSize: "1.125rem",
+                  maxWidth: "560px",
+                }}
+              >
+                {service.description}
+              </p>
+
+              {service.price && (
+                <p className="font-body text-gold text-base font-medium mt-4">
+                  From ${service.price.toFixed(2)} USD
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Bottom fade */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
+            style={{
+              background:
+                "linear-gradient(to bottom, transparent, rgba(10,37,64,0.8))",
             }}
             aria-hidden="true"
           />
-          <div className="relative mx-auto max-w-4xl">
-            <div className="flex items-center gap-2 font-body text-white/30 text-xs mb-8">
-              <Link href="/services" className="hover:text-white/60 transition-colors">Services</Link>
-              <span>/</span>
-              <span className="text-white/60">{service.name}</span>
-            </div>
-
-            <span className="inline-block font-body text-[10px] tracking-[0.2em] uppercase font-semibold text-gold border border-gold/40 px-2.5 py-1 rounded-sm mb-5">
-              {CATEGORY_LABELS[service.category]}
-            </span>
-
-            <h1 className="font-display text-white text-4xl md:text-5xl leading-tight mb-6">
-              {seo.h1}
-            </h1>
-            <p className="font-body text-white/65 text-lg leading-relaxed max-w-2xl">
-              {service.description}
-            </p>
-            {service.price && (
-              <p className="font-body text-gold text-base font-medium mt-4">
-                From ${service.price.toFixed(2)} USD
-              </p>
-            )}
-          </div>
-        </div>
+        </section>
 
         <div className="bg-cream py-20 px-6">
           <div className="mx-auto max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -344,9 +427,9 @@ export default async function ServiceDetailPage({
                 </div>
                 <ol className="space-y-5">
                   {[
-                    { n: "1", title: "Submit your request",       body: "Fill in the form with a brief description. It takes less than 2 minutes." },
-                    { n: "2", title: "We review and contact you",  body: "A registered practitioner reviews your submission and contacts you within one business day." },
-                    { n: "3", title: "We handle everything",       body: "We conduct the stock count, prepare all documentation, and deliver a certified report." },
+                    { n: "1", title: "Submit your request", body: "Fill in the form with a brief description. It takes less than 2 minutes." },
+                    { n: "2", title: "We review and contact you", body: "A registered practitioner reviews your submission and contacts you within one business day." },
+                    { n: "3", title: "We handle everything", body: "We complete the service, prepare all documentation, and deliver the final result to you." },
                   ].map(({ n, title, body }) => (
                     <li key={n} className="flex gap-5">
                       <span className="font-display text-3xl text-gold/30 font-bold leading-none flex-shrink-0 w-6 pt-0.5">{n}</span>
@@ -433,7 +516,6 @@ export default async function ServiceDetailPage({
           </div>
         </div>
       </main>
-      <Footer />
     </>
   );
 }

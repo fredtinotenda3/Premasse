@@ -1,109 +1,158 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Hero() {
   return (
     <section className="relative min-h-screen bg-navy overflow-hidden flex items-center">
 
-      {/* Diagonal gold accent stripe */}
+      {/* Architectural grid overlay */}
       <div
         className="absolute inset-0 pointer-events-none"
         aria-hidden="true"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px)",
+          backgroundSize: "80px 80px",
+        }}
+      />
+
+      {/* Hero image — right-side bleed, professional African business context */}
+      <div
+        className="absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none"
+        aria-hidden="true"
       >
+        {/* Unsplash: professional African business/office context */}
+        <Image
+          src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1200&q=85&auto=format&fit=crop"
+          alt="Professional business services"
+          fill
+          className="object-cover object-center"
+          style={{ opacity: 1 }}
+          sizes="50vw"
+          priority
+        />
+        {/* Navy fade from left */}
         <div
-          className="absolute"
+          className="absolute inset-0"
           style={{
-            top: "-10%",
-            right: "-5%",
-            width: "55%",
-            height: "130%",
             background:
-              "linear-gradient(135deg, transparent 40%, rgba(201,168,76,0.07) 40%, rgba(201,168,76,0.07) 60%, transparent 60%)",
-            transform: "skewX(-8deg)",
+              "linear-gradient(to right, #0A2540 0%, #0A2540 20%, rgba(10,37,64,0.7) 55%, rgba(10,37,64,0.15) 100%)",
           }}
         />
-        {/* Fine gold border line */}
+        {/* Navy fade from bottom */}
         <div
-          className="absolute top-0 right-[30%] w-px h-full bg-gold opacity-20"
-          style={{ transform: "rotate(8deg) translateX(120px)" }}
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to top, #0A2540 0%, transparent 40%)",
+          }}
         />
       </div>
 
-      {/* Grid texture overlay */}
+      {/* Diagonal gold accent */}
       <div
-        className="absolute inset-0 opacity-[0.03] pointer-events-none"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
-          backgroundSize: "60px 60px",
-        }}
+        className="absolute inset-0 pointer-events-none"
         aria-hidden="true"
+        style={{
+          background:
+            "linear-gradient(135deg, transparent 58%, rgba(201,168,76,0.03) 58%, rgba(201,168,76,0.03) 72%, transparent 72%)",
+        }}
       />
 
-      <div className="relative mx-auto max-w-7xl px-6 lg:px-12 pt-32 pb-24 w-full">
-        <div className="max-w-3xl">
+      {/* Top gold rule */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gold opacity-20" />
 
-          {/* Eyebrow */}
-          <div className="flex items-center gap-3 mb-8 animate-fade-up" style={{ animationDelay: "0.1s", opacity: 0 }}>
-            <div className="h-px w-10 bg-gold" />
-            <span className="text-gold text-xs tracking-[0.25em] uppercase font-body font-medium">
-              Registered tax accountants · Harare, Zimbabwe
-            </span>
+      <div className="relative mx-auto max-w-7xl px-6 lg:px-12 pt-36 pb-28 w-full">
+        <div className="max-w-2xl">
+
+          {/* Credential badge */}
+          <div
+            className="inline-flex items-center gap-3 mb-10 animate-fade-up"
+            style={{ animationDelay: "0.05s", opacity: 0 }}
+          >
+            <div
+              className="flex items-center gap-2.5 border border-gold/25 px-4 py-2 rounded-sm"
+              style={{ backgroundColor: "rgba(201,168,76,0.06)" }}
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-gold" />
+              <span className="font-body text-gold text-xs tracking-[0.22em] uppercase font-medium">
+                PAAB Registered · Harare, Zimbabwe
+              </span>
+            </div>
           </div>
 
           {/* Headline */}
           <h1
-            className="font-display text-white leading-[1.1] mb-8 animate-fade-up"
+            className="font-display text-white leading-[1.08] mb-7 animate-fade-up"
             style={{
-              fontSize: "clamp(2.8rem, 6vw, 5.5rem)",
-              animationDelay: "0.2s",
+              fontSize: "clamp(3rem, 5.5vw, 5.2rem)",
+              animationDelay: "0.15s",
               opacity: 0,
+              letterSpacing: "-0.01em",
             }}
           >
-            Your business,{" "}
-            <span className="text-gold italic">fully compliant.</span>
+            Tax. Compliance.{" "}
+            <br />
+            <span
+              className="text-gold"
+              style={{ fontStyle: "italic" }}
+            >
+              Done right.
+            </span>
           </h1>
 
           {/* Sub-headline */}
           <p
-            className="font-body text-white/65 text-xl leading-relaxed max-w-xl mb-12 animate-fade-up"
-            style={{ animationDelay: "0.35s", opacity: 0 }}
+            className="font-body text-white/60 leading-relaxed mb-12 animate-fade-up"
+            style={{
+              fontSize: "1.125rem",
+              maxWidth: "520px",
+              animationDelay: "0.28s",
+              opacity: 0,
+            }}
           >
-            From company registration to ZIMRA clearance — Premasse handles
-            your tax and business obligations so you can focus on growing.
+            Registered tax accountants and business specialists serving
+            Zimbabwean businesses — from company registration to ZIMRA
+            clearance and physical stock-taking.
           </p>
 
-          {/* CTAs */}
+          {/* CTA group */}
           <div
-            className="flex flex-col sm:flex-row gap-4 animate-fade-up"
-            style={{ animationDelay: "0.5s", opacity: 0 }}
+            className="flex flex-col sm:flex-row gap-3 animate-fade-up"
+            style={{ animationDelay: "0.42s", opacity: 0 }}
           >
             <Link
               href="/request"
-              className="btn-gold text-navy font-body font-semibold px-8 py-4 rounded-sm text-base tracking-wide text-center"
+              className="btn-gold text-navy font-body font-semibold px-8 py-4 rounded-sm text-sm tracking-widest uppercase text-center"
             >
-              Request a service
+              Request a Service
             </Link>
             <Link
               href="/services"
-              className="font-body text-white border border-white/25 hover:border-white/60 transition-colors duration-200 px-8 py-4 rounded-sm text-base tracking-wide text-center"
+              className="font-body text-white/75 hover:text-white border border-white/15 hover:border-white/35 transition-all duration-200 px-8 py-4 rounded-sm text-sm tracking-widest uppercase text-center"
             >
-              View all services
+              View Services
             </Link>
           </div>
 
-          {/* Trust indicators */}
+          {/* Trust strip */}
           <div
-            className="flex flex-wrap gap-x-10 gap-y-3 mt-16 animate-fade-up"
-            style={{ animationDelay: "0.65s", opacity: 0 }}
+            className="flex flex-wrap gap-x-8 gap-y-3 mt-16 pt-12 border-t border-white/8 animate-fade-up"
+            style={{ animationDelay: "0.56s", opacity: 0 }}
           >
             {[
-              "Registered tax practitioners",
-              "ZIMRA compliant",
-              "SME specialists",
-            ].map((t) => (
-              <div key={t} className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
-                <span className="text-white/50 text-sm font-body">{t}</span>
+              { value: "14", label: "Services" },
+              { value: "1 day", label: "Response time" },
+              { value: "100%", label: "ZIMRA compliant" },
+              { value: "PAAB", label: "Registered" },
+            ].map(({ value, label }) => (
+              <div key={label} className="flex flex-col">
+                <span className="font-display text-white text-xl font-bold leading-none mb-1">
+                  {value}
+                </span>
+                <span className="font-body text-white/35 text-xs tracking-widest uppercase">
+                  {label}
+                </span>
               </div>
             ))}
           </div>
@@ -112,10 +161,9 @@ export default function Hero() {
 
       {/* Bottom fade */}
       <div
-        className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
+        className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
         style={{
-          background:
-            "linear-gradient(to bottom, transparent, rgba(10,37,64,0.6))",
+          background: "linear-gradient(to bottom, transparent, rgba(10,37,64,0.8))",
         }}
         aria-hidden="true"
       />

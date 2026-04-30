@@ -4,20 +4,19 @@
 
 "use client";
 
-import { useState }  from "react";
-import Link          from "next/link";
-import { useForm }   from "react-hook-form";
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z }         from "zod";
-import Navbar        from "@/components/layout/Navbar";
-import Footer        from "@/components/layout/Footer";
+import { z } from "zod";
 
 // ── Validation schema ─────────────────────────────────────────────────────────
 
 const contactSchema = z.object({
-  name:    z.string().min(2, "Enter your full name").max(100).trim(),
-  email:   z.string().email("Enter a valid email address").trim().toLowerCase(),
-  phone:   z
+  name: z.string().min(2, "Enter your full name").max(100).trim(),
+  email: z.string().email("Enter a valid email address").trim().toLowerCase(),
+  phone: z
     .string()
     .regex(/^(\+263|0)[0-9]{9}$/, "Enter a valid Zimbabwean number")
     .optional()
@@ -34,7 +33,7 @@ const CONTACT_ITEMS = [
   {
     label: "Email",
     value: "info@premasse.co.zw",
-    href:  "mailto:info@premasse.co.zw",
+    href: "mailto:info@premasse.co.zw",
     icon: (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <rect x="2" y="4" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.3"/>
@@ -45,7 +44,7 @@ const CONTACT_ITEMS = [
   {
     label: "Location",
     value: "Harare, Zimbabwe",
-    href:  null,
+    href: null,
     icon: (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M9 2a5 5 0 015 5c0 3.5-5 9-5 9S4 10.5 4 7a5 5 0 015-5z" stroke="currentColor" strokeWidth="1.3"/>
@@ -56,7 +55,7 @@ const CONTACT_ITEMS = [
   {
     label: "Hours",
     value: "Mon – Fri, 8:00 AM – 5:00 PM CAT",
-    href:  null,
+    href: null,
     icon: (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1.3"/>
@@ -69,8 +68,8 @@ const CONTACT_ITEMS = [
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ContactPage() {
-  const [submitState,    setSubmitState]    = useState<"idle" | "success" | "error">("idle");
-  const [serverMessage,  setServerMessage]  = useState("");
+  const [submitState, setSubmitState] = useState<"idle" | "success" | "error">("idle");
+  const [serverMessage, setServerMessage] = useState("");
 
   const {
     register,
@@ -82,10 +81,10 @@ export default function ContactPage() {
   async function onSubmit(data: ContactFields) {
     setServerMessage("");
     try {
-      const res  = await fetch("/api/contact", {
-        method:  "POST",
+      const res = await fetch("/api/contact", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(data),
+        body: JSON.stringify(data),
       });
       const json = await res.json();
 
@@ -105,36 +104,106 @@ export default function ContactPage() {
 
   return (
     <>
-      <Navbar />
       <main>
-
-        {/* Hero */}
-        <div className="bg-navy pt-32 pb-16 px-6 relative overflow-hidden">
+        {/* Hero with image - matching homepage style */}
+        <section className="relative min-h-[70vh] bg-navy overflow-hidden flex items-center">
+          {/* Architectural grid overlay */}
           <div
-            className="absolute inset-0 opacity-[0.03] pointer-events-none"
+            className="absolute inset-0 pointer-events-none"
+            aria-hidden="true"
             style={{
               backgroundImage:
-                "linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px)",
-              backgroundSize: "60px 60px",
+                "linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px)",
+              backgroundSize: "80px 80px",
+            }}
+          />
+
+          {/* Hero image — right-side bleed, professional customer support context */}
+          <div
+            className="absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none"
+            aria-hidden="true"
+          >
+            <Image
+              src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=85&auto=format&fit=crop"
+              alt="Customer support professional"
+              fill
+              className="object-cover object-center"
+              style={{ opacity: 1 }}
+              sizes="50vw"
+              priority
+            />
+            {/* Navy fade from left */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(to right, #0A2540 0%, #0A2540 20%, rgba(10,37,64,0.7) 55%, rgba(10,37,64,0.15) 100%)",
+              }}
+            />
+            {/* Navy fade from bottom */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: "linear-gradient(to top, #0A2540 0%, transparent 40%)",
+              }}
+            />
+          </div>
+
+          {/* Diagonal gold accent */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            aria-hidden="true"
+            style={{
+              background:
+                "linear-gradient(135deg, transparent 58%, rgba(201,168,76,0.03) 58%, rgba(201,168,76,0.03) 72%, transparent 72%)",
+            }}
+          />
+
+          {/* Top gold rule */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gold opacity-20" />
+
+          <div className="relative mx-auto max-w-7xl px-6 lg:px-12 pt-36 pb-28 w-full">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="h-px w-10 bg-gold" />
+                <span className="text-gold text-xs tracking-[0.25em] uppercase font-body font-medium">
+                  Get in touch
+                </span>
+              </div>
+
+              <h1
+                className="font-display text-white leading-[1.08] mb-6"
+                style={{
+                  fontSize: "clamp(3rem, 5.5vw, 5.2rem)",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                Contact us
+              </h1>
+
+              <p
+                className="font-body text-white/60 leading-relaxed"
+                style={{
+                  fontSize: "1.125rem",
+                  maxWidth: "560px",
+                }}
+              >
+                Have a question before submitting a request? Send us a message
+                and we&apos;ll get back to you within one business day.
+              </p>
+            </div>
+          </div>
+
+          {/* Bottom fade */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
+            style={{
+              background:
+                "linear-gradient(to bottom, transparent, rgba(10,37,64,0.8))",
             }}
             aria-hidden="true"
           />
-          <div className="relative mx-auto max-w-4xl">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="h-px w-10 bg-gold" />
-              <span className="text-gold text-xs tracking-[0.25em] uppercase font-body font-medium">
-                Get in touch
-              </span>
-            </div>
-            <h1 className="font-display text-white text-4xl md:text-5xl leading-tight mb-4">
-              Contact us
-            </h1>
-            <p className="font-body text-white/60 text-lg leading-relaxed max-w-xl">
-              Have a question before submitting a request? Send us a message
-              and we&apos;ll get back to you within one business day.
-            </p>
-          </div>
-        </div>
+        </section>
 
         {/* Content */}
         <div className="bg-cream py-20 px-6">
@@ -337,9 +406,7 @@ export default function ContactPage() {
             </aside>
           </div>
         </div>
-
       </main>
-      <Footer />
     </>
   );
 }
@@ -353,9 +420,9 @@ function Field({
   required,
   children,
 }: {
-  label:    string;
-  error?:   string;
-  hint?:    string;
+  label: string;
+  error?: string;
+  hint?: string;
   required?: boolean;
   children: React.ReactNode;
 }) {

@@ -1,3 +1,5 @@
+// components/layout/Footer.tsx
+
 import Link from "next/link";
 
 export default function Footer() {
@@ -77,8 +79,12 @@ export default function Footer() {
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-xs text-white/40">
           <p>© {year} Premasse Business Services. All rights reserved.</p>
           <div className="flex gap-6">
-            <Link href="/about"   className="hover:text-white/70 transition-colors">About</Link>
-            <Link href="/contact" className="hover:text-white/70 transition-colors">Contact</Link>
+            <Link href="/about" className="hover:text-white/70 transition-colors">
+              About
+            </Link>
+            <Link href="/contact" className="hover:text-white/70 transition-colors">
+              Contact
+            </Link>
           </div>
         </div>
       </div>

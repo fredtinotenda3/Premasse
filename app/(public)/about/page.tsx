@@ -2,9 +2,8 @@
 // About page — who Premasse is, what they stand for, and why clients trust them.
 
 import { Metadata } from "next";
-import Link         from "next/link";
-import Navbar       from "@/components/layout/Navbar";
-import Footer       from "@/components/layout/Footer";
+import Link from "next/link";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "About",
@@ -15,19 +14,19 @@ export const metadata: Metadata = {
 const VALUES = [
   {
     title: "Registered practitioners",
-    body:  "All our accountants are registered with the Public Accountants and Auditors Board (PAAB) of Zimbabwe. You deal with qualified professionals, not junior staff.",
+    body: "All our accountants are registered with the Public Accountants and Auditors Board (PAAB) of Zimbabwe. You deal with qualified professionals, not junior staff.",
   },
   {
     title: "Local expertise",
-    body:  "We understand Zimbabwe's tax legislation, ZIMRA processes, and the Companies and Other Business Entities Act inside and out. No guesswork.",
+    body: "We understand Zimbabwe's tax legislation, ZIMRA processes, and the Companies and Other Business Entities Act inside and out. No guesswork.",
   },
   {
     title: "Transparent fees",
-    body:  "We agree fees upfront before any work begins. No hourly rate surprises, no hidden costs. SME-friendly pricing that reflects the reality of running a business in Zimbabwe.",
+    body: "We agree fees upfront before any work begins. No hourly rate surprises, no hidden costs. SME-friendly pricing that reflects the reality of running a business in Zimbabwe.",
   },
   {
     title: "End-to-end handling",
-    body:  "We don't hand you a form and wish you luck. We prepare, submit, and follow up with ZIMRA and relevant authorities until the job is fully done.",
+    body: "We don't hand you a form and wish you luck. We prepare, submit, and follow up with ZIMRA and relevant authorities until the job is fully done.",
   },
 ];
 
@@ -42,50 +41,107 @@ const SERVICES_SUMMARY = [
 export default function AboutPage() {
   return (
     <>
-      <Navbar />
       <main>
-
-        {/* Hero */}
-        <div className="bg-navy pt-32 pb-20 px-6 relative overflow-hidden">
+        {/* Hero with image - matching homepage style */}
+        <section className="relative min-h-[70vh] bg-navy overflow-hidden flex items-center">
+          {/* Architectural grid overlay */}
           <div
-            className="absolute inset-0 opacity-[0.03] pointer-events-none"
+            className="absolute inset-0 pointer-events-none"
+            aria-hidden="true"
             style={{
               backgroundImage:
-                "linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px)",
-              backgroundSize: "60px 60px",
+                "linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px)",
+              backgroundSize: "80px 80px",
             }}
-            aria-hidden="true"
           />
 
-          {/* Diagonal accent */}
+          {/* Hero image — right-side bleed, professional African business context */}
+          <div
+            className="absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none"
+            aria-hidden="true"
+          >
+            <Image
+              src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&q=85&auto=format&fit=crop"
+              alt="Professional team meeting"
+              fill
+              className="object-cover object-center"
+              style={{ opacity: 1 }}
+              sizes="50vw"
+              priority
+            />
+            {/* Navy fade from left */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(to right, #0A2540 0%, #0A2540 20%, rgba(10,37,64,0.7) 55%, rgba(10,37,64,0.15) 100%)",
+              }}
+            />
+            {/* Navy fade from bottom */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: "linear-gradient(to top, #0A2540 0%, transparent 40%)",
+              }}
+            />
+          </div>
+
+          {/* Diagonal gold accent */}
           <div
             className="absolute inset-0 pointer-events-none"
             aria-hidden="true"
             style={{
               background:
-                "linear-gradient(135deg, transparent 55%, rgba(201,168,76,0.06) 55%, rgba(201,168,76,0.06) 70%, transparent 70%)",
+                "linear-gradient(135deg, transparent 58%, rgba(201,168,76,0.03) 58%, rgba(201,168,76,0.03) 72%, transparent 72%)",
             }}
           />
 
-          <div className="relative mx-auto max-w-4xl">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="h-px w-10 bg-gold" />
-              <span className="text-gold text-xs tracking-[0.25em] uppercase font-body font-medium">
-                Who we are
-              </span>
+          {/* Top gold rule */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gold opacity-20" />
+
+          <div className="relative mx-auto max-w-7xl px-6 lg:px-12 pt-36 pb-28 w-full">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="h-px w-10 bg-gold" />
+                <span className="text-gold text-xs tracking-[0.25em] uppercase font-body font-medium">
+                  Who we are
+                </span>
+              </div>
+              <h1
+                className="font-display text-white leading-[1.08] mb-6"
+                style={{
+                  fontSize: "clamp(3rem, 5.5vw, 5.2rem)",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                A firm built for{" "}
+                <em className="text-gold not-italic">Zimbabwean business.</em>
+              </h1>
+              <p
+                className="font-body text-white/60 leading-relaxed"
+                style={{
+                  fontSize: "1.125rem",
+                  maxWidth: "560px",
+                }}
+              >
+                Premasse Business Services is a registered tax and business
+                services firm based in Harare. We help SMEs and individuals stay
+                compliant, get registered, and focus on growing their businesses
+                rather than chasing paperwork.
+              </p>
             </div>
-            <h1 className="font-display text-white text-4xl md:text-5xl leading-tight mb-6 max-w-2xl">
-              A firm built for{" "}
-              <em className="text-gold">Zimbabwean business.</em>
-            </h1>
-            <p className="font-body text-white/65 text-lg leading-relaxed max-w-2xl">
-              Premasse Business Services is a registered tax and business
-              services firm based in Harare. We help SMEs and individuals stay
-              compliant, get registered, and focus on growing their businesses
-              rather than chasing paperwork.
-            </p>
           </div>
-        </div>
+
+          {/* Bottom fade */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
+            style={{
+              background:
+                "linear-gradient(to bottom, transparent, rgba(10,37,64,0.8))",
+            }}
+            aria-hidden="true"
+          />
+        </section>
 
         {/* Mission section */}
         <div className="bg-cream py-24 px-6">
@@ -98,7 +154,7 @@ export default function AboutPage() {
                 </span>
               </div>
               <h2 className="font-display text-navy text-3xl md:text-4xl leading-tight mb-6">
-                Compliance shouldn't be a full-time job.
+                Compliance shouldn&apos;t be a full-time job.
               </h2>
               <p className="font-body text-slate text-base leading-relaxed mb-4">
                 Too many Zimbabwean business owners spend hours navigating ZIMRA
@@ -108,7 +164,7 @@ export default function AboutPage() {
               <p className="font-body text-slate text-base leading-relaxed">
                 Premasse exists to take that burden off your desk entirely. We
                 handle the tax registrations, clearances, and accounting so you
-                can concentrate on what you're actually good at.
+                can concentrate on what you&apos;re actually good at.
               </p>
             </div>
 
@@ -215,9 +271,7 @@ export default function AboutPage() {
             </div>
           </div>
         </div>
-
       </main>
-      <Footer />
     </>
   );
 }
