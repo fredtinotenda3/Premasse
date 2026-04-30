@@ -1,6 +1,4 @@
 // app/(public)/services/[slug]/page.tsx
-// Individual service page with full SEO: unique title, description,
-// canonical URL, OG image, and Service structured data per page.
 
 import { Metadata }  from "next";
 import Link          from "next/link";
@@ -13,14 +11,11 @@ import { ServiceCategory } from "@prisma/client";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://premasse.co.zw";
 
-// ── SEO keyword targeting per service ────────────────────────────────────────
-// These map directly to what Zimbabweans actually search on Google.
-
 const SEO_CONFIG: Record<ServiceCategory, {
-  titleKeyword:       string;
-  metaDescription:    string;
-  h1:                 string;
-  keywords:           string[];
+  titleKeyword:    string;
+  metaDescription: string;
+  h1:              string;
+  keywords:        string[];
 }> = {
   TAX_CLEARANCE: {
     titleKeyword:    "ITF263 Tax Clearance Certificate Zimbabwe",
@@ -67,9 +62,17 @@ const SEO_CONFIG: Record<ServiceCategory, {
       "accounting services Harare", "small business accounting Zimbabwe", "management accounts Zimbabwe",
     ],
   },
+  STOCK_TAKING: {
+    titleKeyword:    "Physical Stock Counting & Inventory Services Zimbabwe",
+    metaDescription: "Professional physical stock counting, stock reconciliation, warehouse audits, and inventory control services in Zimbabwe. Independent, accurate, and certified stock-taking for businesses in Harare.",
+    h1:              "Physical Stock-Taking & Inventory Services Zimbabwe",
+    keywords: [
+      "physical stock counting Zimbabwe", "stock taking Zimbabwe", "inventory audit Zimbabwe",
+      "stock reconciliation Zimbabwe", "warehouse stock audit Zimbabwe", "stock variance investigation Zimbabwe",
+      "year end stock count Zimbabwe", "retail stock count Zimbabwe", "inventory control Zimbabwe",
+    ],
+  },
 };
-
-// ── Static generation ─────────────────────────────────────────────────────────
 
 export async function generateStaticParams() {
   const services = await prisma.service.findMany({
@@ -78,8 +81,6 @@ export async function generateStaticParams() {
   });
   return services.map((s) => ({ slug: s.slug }));
 }
-
-// ── Per-page metadata ─────────────────────────────────────────────────────────
 
 export async function generateMetadata({
   params,
@@ -94,16 +95,14 @@ export async function generateMetadata({
 
   if (!service) return { title: "Service not found" };
 
-  const seo = SEO_CONFIG[service.category];
+  const seo          = SEO_CONFIG[service.category];
   const canonicalUrl = `${SITE_URL}/services/${slug}`;
 
   return {
     title:       seo.titleKeyword,
     description: seo.metaDescription,
     keywords:    seo.keywords,
-
-    alternates: { canonical: canonicalUrl },
-
+    alternates:  { canonical: canonicalUrl },
     openGraph: {
       title:       `${seo.titleKeyword} | Premasse`,
       description: seo.metaDescription,
@@ -117,7 +116,6 @@ export async function generateMetadata({
         alt:    `${seo.titleKeyword} — Premasse Business Services`,
       }],
     },
-
     twitter: {
       card:        "summary_large_image",
       title:       `${seo.titleKeyword} | Premasse`,
@@ -127,14 +125,13 @@ export async function generateMetadata({
   };
 }
 
-// ── Category labels + what to prepare ────────────────────────────────────────
-
 const CATEGORY_LABELS: Record<ServiceCategory, string> = {
   TAX_ACCOUNTING: "Tax",
   COMPANY_REG:    "Registration",
   ZIMRA_TAX_REG:  "ZIMRA",
   TAX_CLEARANCE:  "Clearance",
   SME_ACCOUNTING: "Accounting",
+  STOCK_TAKING:   "Stock-Taking",
 };
 
 const WHAT_TO_PREPARE: Record<ServiceCategory, string[]> = {
@@ -168,9 +165,14 @@ const WHAT_TO_PREPARE: Record<ServiceCategory, string[]> = {
     "Existing accounting software access (if any)",
     "Payroll details (if employees exist)",
   ],
+  STOCK_TAKING: [
+    "Site address and layout (warehouse, retail store, or factory)",
+    "Preferred date and time for the stock count",
+    "Access to your stock management or ERP system (if applicable)",
+    "List of stock categories or product lines to be counted",
+    "Any previous stock count reports for comparison",
+  ],
 };
-
-// ── FAQ per service (boosts SEO with FAQ schema) ──────────────────────────────
 
 const FAQS: Record<ServiceCategory, { q: string; a: string }[]> = {
   TAX_CLEARANCE: [
@@ -198,9 +200,14 @@ const FAQS: Record<ServiceCategory, { q: string; a: string }[]> = {
     { q: "How much does SME accounting cost in Zimbabwe?", a: "Premasse offers SME-friendly pricing agreed upfront. Contact us for a quote based on your business size and requirements — no hourly surprises." },
     { q: "What is the difference between bookkeeping and accounting?", a: "Bookkeeping is the daily recording of transactions. Accounting interprets those records to produce financial statements, tax returns, and business insights. Premasse provides both." },
   ],
+  STOCK_TAKING: [
+    { q: "What is a physical stock count and why does my business need one?", a: "A physical stock count is an independent verification of all inventory held by your business. It confirms that what is in your system matches what is physically on the shelves or in the warehouse. Regular stock counts help detect theft, errors, and system weaknesses before they become costly." },
+    { q: "How long does a physical stock count take in Zimbabwe?", a: "The duration depends on the size and complexity of your inventory. A small retail store may take half a day, while a large warehouse could take several days. Premasse will give you a time estimate after an initial assessment of your site." },
+    { q: "Can you conduct stock counts outside business hours?", a: "Yes. Premasse can conduct stock counts after hours, over weekends, or during scheduled downtime to minimise disruption to your operations." },
+    { q: "Do you provide a certified stock count report?", a: "Yes. All Premasse stock-taking engagements include a detailed, signed report suitable for management review and external auditors. The report covers count methodology, variances identified, and recommendations." },
+    { q: "What industries do you cover for stock-taking in Zimbabwe?", a: "Premasse serves warehouses, factories, retail stores, supermarkets, pharmacies, and any business that holds physical inventory. If you hold stock, we can count it." },
+  ],
 };
-
-// ── Page ──────────────────────────────────────────────────────────────────────
 
 export const revalidate = 60;
 
@@ -222,7 +229,6 @@ export default async function ServiceDetailPage({
   const faqs         = FAQS[service.category] ?? [];
   const canonicalUrl = `${SITE_URL}/services/${slug}`;
 
-  // Service + FAQ structured data
   const serviceStructuredData = {
     "@context": "https://schema.org",
     "@graph": [
@@ -267,7 +273,6 @@ export default async function ServiceDetailPage({
 
       <Navbar />
       <main>
-        {/* Hero */}
         <div className="bg-navy pt-32 pb-16 px-6 relative overflow-hidden">
           <div
             className="absolute inset-0 opacity-[0.03] pointer-events-none"
@@ -289,7 +294,6 @@ export default async function ServiceDetailPage({
               {CATEGORY_LABELS[service.category]}
             </span>
 
-            {/* Use keyword-rich H1 for SEO */}
             <h1 className="font-display text-white text-4xl md:text-5xl leading-tight mb-6">
               {seo.h1}
             </h1>
@@ -304,11 +308,8 @@ export default async function ServiceDetailPage({
           </div>
         </div>
 
-        {/* Content */}
         <div className="bg-cream py-20 px-6">
           <div className="mx-auto max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-12">
-
-            {/* Main content */}
             <div className="md:col-span-2 space-y-10">
 
               <div>
@@ -343,9 +344,9 @@ export default async function ServiceDetailPage({
                 </div>
                 <ol className="space-y-5">
                   {[
-                    { n: "1", title: "Submit your request",      body: "Fill in the form with a brief description. It takes less than 2 minutes." },
-                    { n: "2", title: "We review and contact you", body: "A registered practitioner reviews your submission and contacts you within one business day." },
-                    { n: "3", title: "We handle everything",      body: "We prepare all documentation, submit to ZIMRA or the relevant authority, and follow up until completion." },
+                    { n: "1", title: "Submit your request",       body: "Fill in the form with a brief description. It takes less than 2 minutes." },
+                    { n: "2", title: "We review and contact you",  body: "A registered practitioner reviews your submission and contacts you within one business day." },
+                    { n: "3", title: "We handle everything",       body: "We conduct the stock count, prepare all documentation, and deliver a certified report." },
                   ].map(({ n, title, body }) => (
                     <li key={n} className="flex gap-5">
                       <span className="font-display text-3xl text-gold/30 font-bold leading-none flex-shrink-0 w-6 pt-0.5">{n}</span>
@@ -358,7 +359,6 @@ export default async function ServiceDetailPage({
                 </ol>
               </div>
 
-              {/* FAQ Section — targets "People also ask" in Google */}
               {faqs.length > 0 && (
                 <div>
                   <div className="flex items-center gap-3 mb-6">
@@ -379,7 +379,6 @@ export default async function ServiceDetailPage({
               )}
             </div>
 
-            {/* Sidebar CTA */}
             <aside className="space-y-5">
               <div className="bg-white border border-gray-100 rounded-sm p-6 sticky top-6">
                 <h3 className="font-display text-navy text-lg font-semibold mb-2">Get started today</h3>
@@ -407,12 +406,11 @@ export default async function ServiceDetailPage({
                   </p>
                 )}
 
-                {/* Trust signals */}
                 <div className="mt-6 pt-5 border-t border-gray-100 space-y-2">
                   {[
-                    "PAAB registered practitioners",
+                    "Independent & certified team",
                     "Response within 1 business day",
-                    "Fees agreed upfront",
+                    "Detailed professional reports",
                   ].map((t) => (
                     <div key={t} className="flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />

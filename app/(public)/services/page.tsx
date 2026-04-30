@@ -1,5 +1,4 @@
 // app/(public)/services/page.tsx
-// SEO metadata added — targets "services Zimbabwe" keywords.
 
 import { Metadata }  from "next";
 import Link          from "next/link";
@@ -12,16 +11,17 @@ import { ServiceCategory } from "@prisma/client";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://premasse.co.zw";
 
 export const metadata: Metadata = {
-  title:       "Services — Tax & Business Services Zimbabwe",
-  description: "Professional tax and business services in Zimbabwe: company registration, ZIMRA tax registration, ITF263 tax clearance certificates, and SME accounting. Harare-based PAAB-registered practitioners.",
+  title:       "Services — Tax, Business & Stock-Taking Services Zimbabwe",
+  description: "Professional tax, business, and stock-taking services in Zimbabwe: company registration, ZIMRA tax registration, ITF263 tax clearance, SME accounting, and physical stock counting. Harare-based PAAB-registered practitioners.",
   alternates:  { canonical: `${SITE_URL}/services` },
   keywords: [
     "tax services Zimbabwe", "business services Harare", "company registration Zimbabwe",
     "tax clearance Zimbabwe", "ZIMRA registration", "accounting services Zimbabwe",
+    "stock taking Zimbabwe", "physical stock counting Zimbabwe", "inventory audit Zimbabwe",
   ],
   openGraph: {
     title:       "Services | Premasse Business Services Zimbabwe",
-    description: "Tax clearance, company registration, ZIMRA registration, and SME accounting in Zimbabwe.",
+    description: "Tax clearance, company registration, ZIMRA registration, SME accounting, and stock-taking services in Zimbabwe.",
     url:         `${SITE_URL}/services`,
     images: [{ url: `${SITE_URL}/og-image.png`, width: 1200, height: 630 }],
   },
@@ -35,6 +35,7 @@ const CATEGORY_LABELS: Record<ServiceCategory, string> = {
   ZIMRA_TAX_REG:  "ZIMRA",
   TAX_CLEARANCE:  "Clearance",
   SME_ACCOUNTING: "Accounting",
+  STOCK_TAKING:   "Stock-Taking",
 };
 
 export default async function ServicesPage() {
@@ -43,7 +44,6 @@ export default async function ServicesPage() {
     orderBy: { sortOrder: "asc" },
   });
 
-  // ItemList structured data for Google
   const itemListStructuredData = {
     "@context": "https://schema.org",
     "@type":    "ItemList",
@@ -78,7 +78,7 @@ export default async function ServicesPage() {
               Our services
             </h1>
             <p className="font-body text-white/60 text-lg leading-relaxed max-w-xl">
-              Professional tax and business services for Zimbabwean SMEs and individuals. All work carried out by PAAB-registered practitioners.
+              Professional tax, business, and stock-taking services for Zimbabwean SMEs and individuals. All work carried out by registered practitioners.
             </p>
           </div>
         </div>
@@ -122,7 +122,7 @@ export default async function ServicesPage() {
           <div className="mx-auto max-w-7xl flex flex-col md:flex-row items-center justify-between gap-8">
             <div>
               <h2 className="font-display text-white text-2xl font-semibold mb-2">Not sure which service you need?</h2>
-              <p className="font-body text-white/60 text-base">Submit a request and describe your situation — we&apos;ll figure it out together.</p>
+              <p className="font-body text-white/60 text-base">Submit a request and describe your situation — we'll figure it out together.</p>
             </div>
             <Link href="/request" className="btn-gold font-body font-semibold text-navy px-8 py-4 rounded-sm text-base tracking-wide shrink-0">
               Request a service

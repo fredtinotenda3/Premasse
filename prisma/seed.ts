@@ -7,18 +7,12 @@ import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-// ─────────────────────────────────────────
-// DEBUG LOGGER
-// Structured, timestamped debug output.
-// Set DEBUG=true in your .env to enable.
-// ─────────────────────────────────────────
-
 const DEBUG = process.env.DEBUG === "true";
 
 function log(level: "info" | "debug" | "warn" | "error", message: string, data?: unknown) {
   const timestamp = new Date().toISOString();
   const prefix = {
-    info:  "  ✓",
+    info:  "  ✔",
     debug: "  →",
     warn:  "  ⚠",
     error: "  ✗",
@@ -38,11 +32,9 @@ async function main() {
   console.log(`   DEBUG: ${DEBUG ? "on" : "off (set DEBUG=true to enable)"}`);
   console.log("");
 
-  // ─────────────────────────────────────────
-  // SERVICES
-  // ─────────────────────────────────────────
+  // ── Services ──────────────────────────────────────────────────────────────
 
-  console.log("── Services ──────────────────────────────");
+  console.log("── Services ──────────────────────────────────────");
 
   const services = [
     {
@@ -90,6 +82,88 @@ async function main() {
       price: null,
       sortOrder: 5,
     },
+    // ── Stock-Taking Services ────────────────────────────────────────────────
+    {
+      name: "Physical Stock Counting",
+      slug: "physical-stock-counting",
+      description:
+        "Independent and accurate stock verification in warehouses, factories, and retail stores. Our team conducts thorough physical counts to give you a true picture of your inventory.",
+      category: ServiceCategory.STOCK_TAKING,
+      price: null,
+      sortOrder: 6,
+    },
+    {
+      name: "Stock Reconciliation",
+      slug: "stock-reconciliation",
+      description:
+        "Comparing physical stock counts with your accounting or ERP records to identify and resolve discrepancies. We ensure your books reflect actual inventory on hand.",
+      category: ServiceCategory.STOCK_TAKING,
+      price: null,
+      sortOrder: 7,
+    },
+    {
+      name: "Stock Variance Investigation",
+      slug: "stock-variance-investigation",
+      description:
+        "Identifying stock shortages, surpluses, and their possible causes. We investigate root causes of variances and provide actionable recommendations to prevent recurrence.",
+      category: ServiceCategory.STOCK_TAKING,
+      price: null,
+      sortOrder: 8,
+    },
+    {
+      name: "Warehouse Stock Audits",
+      slug: "warehouse-stock-audits",
+      description:
+        "Full independent audits of warehouse inventory. We verify quantities, condition, and location of stock to ensure accurate records and optimal warehouse management.",
+      category: ServiceCategory.STOCK_TAKING,
+      price: null,
+      sortOrder: 9,
+    },
+    {
+      name: "Retail Store Stock Counts",
+      slug: "retail-store-stock-counts",
+      description:
+        "Periodic and year-end stock verification for shops and supermarkets. Minimise disruption while ensuring accurate stock counts that satisfy audit and management requirements.",
+      category: ServiceCategory.STOCK_TAKING,
+      price: null,
+      sortOrder: 10,
+    },
+    {
+      name: "Inventory Control Assessments",
+      slug: "inventory-control-assessments",
+      description:
+        "Reviewing stock management systems and internal controls. We assess your existing processes and recommend improvements to reduce losses and improve stock accuracy.",
+      category: ServiceCategory.STOCK_TAKING,
+      price: null,
+      sortOrder: 11,
+    },
+    {
+      name: "Shrinkage & Loss Investigations",
+      slug: "shrinkage-loss-investigations",
+      description:
+        "Identifying theft, mismanagement, and system weaknesses that lead to stock shrinkage. We provide a detailed report with findings and recommendations to protect your inventory.",
+      category: ServiceCategory.STOCK_TAKING,
+      price: null,
+      sortOrder: 12,
+    },
+    {
+      name: "Year-End Stock Verification for Auditors",
+      slug: "year-end-stock-verification",
+      description:
+        "Independent stock counts required for financial audits. We work alongside your auditors to provide credible, documented inventory verification at financial year-end.",
+      category: ServiceCategory.STOCK_TAKING,
+      price: null,
+      sortOrder: 13,
+    },
+    {
+      name: "Stock Reporting & Certification",
+      slug: "stock-reporting-certification",
+      description:
+        "Detailed professional reports for management and auditors. We produce certified stock count reports that meet audit standards and give stakeholders confidence in your inventory figures.",
+      category: ServiceCategory.STOCK_TAKING,
+      price: null,
+      sortOrder: 14,
+    },
   ];
 
   log("debug", `Preparing to upsert ${services.length} services`);
@@ -98,27 +172,19 @@ async function main() {
   let servicesUpdated = 0;
 
   for (const service of services) {
-    log("debug", `Checking existing record for slug: "${service.slug}"`);
-
     const existing = await prisma.service.findUnique({
       where: { slug: service.slug },
     });
 
-    if (existing) {
-      log("debug", `Found existing service id=${existing.id} — will update`);
-    } else {
-      log("debug", `No existing record found — will create`);
-    }
-
     const result = await prisma.service.upsert({
       where: { slug: service.slug },
       update: {
-        name: service.name,
+        name:        service.name,
         description: service.description,
-        category: service.category,
-        price: service.price,
-        sortOrder: service.sortOrder,
-        isActive: true,
+        category:    service.category,
+        price:       service.price,
+        sortOrder:   service.sortOrder,
+        isActive:    true,
       },
       create: {
         ...service,
@@ -133,76 +199,42 @@ async function main() {
       servicesCreated++;
       log("info", `Created service: "${result.name}" (id=${result.id})`);
     }
-
-    log("debug", `Service record`, {
-      id: result.id,
-      slug: result.slug,
-      category: result.category,
-      isActive: result.isActive,
-      sortOrder: result.sortOrder,
-    });
   }
 
   console.log("");
   log("info", `Services done — created: ${servicesCreated}, updated: ${servicesUpdated}`);
 
-  // ─────────────────────────────────────────
-  // ADMIN USER
-  // ─────────────────────────────────────────
+  // ── Admin User ────────────────────────────────────────────────────────────
 
   console.log("");
-  console.log("── Admin user ────────────────────────────");
+  console.log("── Admin user ────────────────────────────────────");
 
-  const adminEmail = process.env.SEED_ADMIN_EMAIL ?? "admin@premasse.co.zw";
+  const adminEmail    = process.env.SEED_ADMIN_EMAIL    ?? "admin@premasse.co.zw";
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "ChangeMe123!";
-
-  log("debug", `Admin email resolved to: ${adminEmail}`);
-  log(
-    "debug",
-    `Password source: ${
-      process.env.SEED_ADMIN_PASSWORD
-        ? "SEED_ADMIN_PASSWORD env var"
-        : "hardcoded default — override in .env!"
-    }`
-  );
 
   if (!process.env.SEED_ADMIN_PASSWORD) {
     log("warn", "SEED_ADMIN_PASSWORD not set — using default. Set it in .env before production!");
   }
 
-  log("debug", "Hashing admin password (bcrypt, 12 rounds)...");
-  const hashStart = Date.now();
   const hashedPassword = await hash(adminPassword, 12);
-  log("debug", `Password hashed in ${Date.now() - hashStart}ms`);
 
-  log("debug", `Checking if admin already exists: ${adminEmail}`);
   const existingAdmin = await prisma.user.findUnique({
     where: { email: adminEmail },
-    include: { accounts: true },
   });
-
-  if (existingAdmin) {
-    log(
-      "debug",
-      `Existing admin found — id=${existingAdmin.id}, linked accounts=${existingAdmin.accounts.length}`
-    );
-  } else {
-    log("debug", "No existing admin — will create with linked credentials account");
-  }
 
   const admin = await prisma.user.upsert({
     where: { email: adminEmail },
     update: {},
     create: {
-      name: "Premasse Admin",
+      name:  "Premasse Admin",
       email: adminEmail,
-      role: Role.ADMIN,
+      role:  Role.ADMIN,
       accounts: {
         create: {
-          type: "credentials",
-          provider: "credentials",
+          type:              "credentials",
+          provider:          "credentials",
           providerAccountId: adminEmail,
-          access_token: hashedPassword,
+          access_token:      hashedPassword,
         },
       },
     },
@@ -212,22 +244,13 @@ async function main() {
     "info",
     `${existingAdmin ? "Skipped (already exists)" : "Created"} admin: ${admin.email} (id=${admin.id})`
   );
-  log("debug", "Admin record", {
-    id: admin.id,
-    email: admin.email,
-    role: admin.role,
-    createdAt: admin.createdAt,
-  });
 
-  // ─────────────────────────────────────────
-  // SAMPLE SERVICE REQUEST (dev only)
-  // ─────────────────────────────────────────
+  // ── Sample Request (dev only) ─────────────────────────────────────────────
 
   if (process.env.NODE_ENV !== "production") {
     console.log("");
-    console.log("── Sample request (dev only) ─────────────");
+    console.log("── Sample request (dev only) ─────────────────────");
 
-    log("debug", 'Looking up service with slug "tax-clearance"');
     const taxClearance = await prisma.service.findUnique({
       where: { slug: "tax-clearance" },
     });
@@ -235,26 +258,17 @@ async function main() {
     if (!taxClearance) {
       log("warn", 'Service "tax-clearance" not found — skipping sample request');
     } else {
-      log("debug", `Found service: id=${taxClearance.id}, name="${taxClearance.name}"`);
-
       const existing = await prisma.serviceRequest.findFirst({
         where: { clientEmail: "testclient@example.com" },
       });
 
       if (existing) {
         log("info", `Sample request already exists (id=${existing.id}) — skipping`);
-        log("debug", "Existing request", {
-          id: existing.id,
-          status: existing.status,
-          createdAt: existing.createdAt,
-        });
       } else {
-        log("debug", "No existing sample request — creating now");
-
         const sampleRequest = await prisma.serviceRequest.create({
           data: {
-            serviceId: taxClearance.id,
-            clientName: "Tatenda Moyo",
+            serviceId:   taxClearance.id,
+            clientName:  "Tatenda Moyo",
             clientEmail: "testclient@example.com",
             clientPhone: "+263 77 123 4567",
             notes:
@@ -262,39 +276,23 @@ async function main() {
             status: "PENDING",
             auditLogs: {
               create: {
-                changedBy: admin.id,
+                changedBy:  admin.id,
                 fromStatus: null,
-                toStatus: "PENDING",
-                note: "Request submitted via website",
+                toStatus:   "PENDING",
+                note:       "Request submitted via website",
               },
             },
           },
-          include: {
-            auditLogs: true,
-          },
         });
-
         log("info", `Created sample request (id=${sampleRequest.id})`);
-        log("debug", "Sample request", {
-          id: sampleRequest.id,
-          serviceId: sampleRequest.serviceId,
-          clientName: sampleRequest.clientName,
-          clientEmail: sampleRequest.clientEmail,
-          status: sampleRequest.status,
-          auditLogsCreated: sampleRequest.auditLogs.length,
-        });
       }
     }
-  } else {
-    log("debug", "NODE_ENV=production — skipping sample request block");
   }
 
-  // ─────────────────────────────────────────
-  // FINAL SUMMARY
-  // ─────────────────────────────────────────
+  // ── Summary ───────────────────────────────────────────────────────────────
 
   console.log("");
-  console.log("── Summary ───────────────────────────────");
+  console.log("── Summary ──────────────────────────────────────");
 
   const [totalServices, totalUsers, totalRequests] = await Promise.all([
     prisma.service.count(),
@@ -317,6 +315,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    log("debug", "Disconnecting Prisma client");
     await prisma.$disconnect();
   });
