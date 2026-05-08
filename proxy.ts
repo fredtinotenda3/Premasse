@@ -12,17 +12,25 @@ export default auth((req: any) => {
   const session      = req.auth;
   const isAuthed     = !!session?.user;
   const role         = session?.user?.role;
+  
+  // DEBUG: Log all requests and session state
+  console.log(`[Middleware] ${pathname} | isAuthed: ${isAuthed} | role: ${role} | hasSession: ${!!session}`);
 
   // ── Admin dashboard ────────────────────────────────────────────────────────
   if (pathname.startsWith("/dashboard")) {
+    console.log(`[Middleware] Dashboard access attempt - isAuthed: ${isAuthed}, role: ${role}`);
+    
     if (!isAuthed) {
+      console.log(`[Middleware] Not authenticated, redirecting to /login from ${pathname}`);
       const url = new URL("/login", req.url);
       url.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(url);
     }
     if (role !== "ADMIN") {
+      console.log(`[Middleware] Role ${role} is not ADMIN, redirecting to /`);
       return NextResponse.redirect(new URL("/", req.url));
     }
+    console.log(`[Middleware] Admin access granted to ${pathname}`);
   }
 
   // ── Client portal ──────────────────────────────────────────────────────────
@@ -40,6 +48,7 @@ export default auth((req: any) => {
 
   // ── Redirect authenticated users away from auth pages ─────────────────────
   if (pathname === "/login" && isAuthed && role === "ADMIN") {
+    console.log(`[Middleware] Authenticated admin on /login, redirecting to /dashboard`);
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
   if (pathname === "/portal/login" && isAuthed && role === "CLIENT") {

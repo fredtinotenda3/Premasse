@@ -51,6 +51,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     verifyRequest: "/portal/verify",
   },
 
+  // Cookie configuration for better mobile support
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax", // Important for mobile browsers
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
+
   providers: [
     // ── Admin: email + password ───────────────────────────────────────────────
     CredentialsProvider({
@@ -84,7 +97,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const match = await compare(password, hashedPassword);
         if (!match) return null;
 
-        console.info(`[auth] Admin login: ${email}`);
+        console.info(`[auth] Admin login successful: ${email}`);
         return {
           id:    user.id,
           name:  user.name,
@@ -122,13 +135,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           subject: "Your Premasse sign-in link",
           html: `
             <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:40px 24px">
-              <h2 style="color:#0A2540;font-size:22px;margin-bottom:8px">Sign in to Premasse</h2>
+              <h2 style="color:#1B5E20;font-size:22px;margin-bottom:8px">Sign in to Premasse</h2>
               <p style="color:#4A5568;font-size:15px;line-height:1.6;margin-bottom:28px">
                 Click the button below to sign in to your Premasse client portal.
                 This link expires in 24 hours and can only be used once.
               </p>
               <a href="${url}"
-                style="display:inline-block;background:#0A2540;color:#C9A84C;font-weight:600;
+                style="display:inline-block;background:#1B5E20;color:#C9A84C;font-weight:600;
                        padding:14px 28px;border-radius:2px;text-decoration:none;font-size:14px">
                 Sign in to portal →
               </a>
@@ -154,6 +167,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id   = user.id   ?? token.id;
         token.role = user.role ?? token.role;
+        console.log("[auth/jwt] Token set:", { id: token.id, role: token.role, email: token.email });
       }
       return token;
     },
@@ -162,6 +176,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token && session.user) {
         session.user.id   = token.id   as string;
         session.user.role = token.role as "ADMIN" | "CLIENT";
+        console.log("[auth/session] Session set:", { id: session.user.id, role: session.user.role, email: session.user.email });
       }
       return session;
     },

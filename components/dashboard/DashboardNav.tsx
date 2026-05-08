@@ -101,17 +101,15 @@ export default function DashboardNav({
       {/* Mobile menu button - visible only on mobile */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-navy/95 backdrop-blur-sm rounded-md shadow-lg"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-green-dark/95 backdrop-blur-sm rounded-md shadow-lg text-white"
         aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
       >
         {isMobileMenuOpen ? (
-          // Close icon
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
             <line x1="3" y1="3" x2="19" y2="19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             <line x1="19" y1="3" x2="3" y2="19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         ) : (
-          // Hamburger icon
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
             <line x1="2" y1="5" x2="20" y2="5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             <line x1="2" y1="11" x2="20" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -122,7 +120,7 @@ export default function DashboardNav({
 
       {/* Mobile menu overlay */}
       <div
-        className={`fixed inset-0 bg-navy/95 backdrop-blur-sm transition-all duration-300 lg:hidden ${
+        className={`fixed inset-0 bg-green-dark/95 backdrop-blur-sm transition-all duration-300 lg:hidden ${
           isMobileMenuOpen 
             ? "opacity-100 visible" 
             : "opacity-0 invisible pointer-events-none"
@@ -132,7 +130,7 @@ export default function DashboardNav({
 
       {/* Mobile menu panel */}
       <div
-        className={`fixed left-0 right-0 bg-navy transition-all duration-300 lg:hidden ${
+        className={`fixed left-0 right-0 bg-green-dark transition-all duration-300 lg:hidden ${
           isMobileMenuOpen 
             ? "opacity-100 visible translate-y-0" 
             : "opacity-0 invisible -translate-y-4"
@@ -186,7 +184,7 @@ export default function DashboardNav({
       </div>
 
       {/* Desktop Sidebar navigation - Full height */}
-      <aside className="hidden lg:flex lg:flex-col lg:h-screen w-64 bg-navy shadow-2xl fixed lg:relative">
+      <aside className="hidden lg:flex lg:flex-col lg:h-screen w-64 bg-green-dark shadow-2xl fixed lg:relative">
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="px-6 py-6 border-b border-white/10 shrink-0">
