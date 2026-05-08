@@ -2,17 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
-
 @layer base {
   :root {
-    --navy:   #0A2540;
-    --navy-light: #0f3460;
-    --gold:   #C9A84C;
-    --gold-light: #E8C96A;
-    --gold-pale: #FDF6E3;
-    --cream:  #FAFAF8;
-    --slate:  #4A5568;
-    --border: #E2E8F0;
+    --green-dark:   #1B5E20;
+    --green:        #2E7D32;
+    --green-light:  #4CAF50;
+    --green-pale:   #E8F5E9;
+    --gold:         #C9A84C;
+    --gold-light:   #E8C96A;
+    --gold-pale:    #FDF6E3;
+    --cream:        #FAFAF8;
+    --slate:        #4A5568;
+    --border:       #E2E8F0;
   }
 
   html {
@@ -21,7 +22,7 @@
 
   ::selection {
     background: var(--gold);
-    color: var(--navy);
+    color: var(--green-dark);
   }
 }
 
@@ -32,16 +33,19 @@
   .font-body {
     font-family: var(--font-body), system-ui, sans-serif;
   }
-  .text-navy    { color: var(--navy); }
-  .text-gold    { color: var(--gold); }
-  .text-slate   { color: var(--slate); }
-  .bg-navy      { background-color: var(--navy); }
-  .bg-navy-light{ background-color: var(--navy-light); }
-  .bg-gold      { background-color: var(--gold); }
-  .bg-gold-pale { background-color: var(--gold-pale); }
-  .bg-cream     { background-color: var(--cream); }
-  .border-gold  { border-color: var(--gold); }
-  .border-navy  { border-color: var(--navy); }
+  .text-green-dark { color: var(--green-dark); }
+  .text-green     { color: var(--green); }
+  .text-gold      { color: var(--gold); }
+  .text-slate     { color: var(--slate); }
+  .bg-green-dark  { background-color: var(--green-dark); }
+  .bg-green       { background-color: var(--green); }
+  .bg-green-light { background-color: var(--green-light); }
+  .bg-green-pale  { background-color: var(--green-pale); }
+  .bg-gold        { background-color: var(--gold); }
+  .bg-gold-pale   { background-color: var(--gold-pale); }
+  .bg-cream       { background-color: var(--cream); }
+  .border-gold    { border-color: var(--gold); }
+  .border-green   { border-color: var(--green); }
 }
 
 /* Fade-up animation for staggered section reveals */
@@ -79,5 +83,27 @@
 }
 
 .btn-gold:active {
+  transform: translateY(0);
+}
+
+.btn-green {
+  background: linear-gradient(
+    105deg,
+    var(--green) 0%,
+    var(--green-light) 45%,
+    var(--green) 55%,
+    var(--green) 100%
+  );
+  background-size: 200% auto;
+  transition: background-position 0.4s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-green:hover {
+  background-position: right center;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(46, 125, 50, 0.35);
+}
+
+.btn-green:active {
   transform: translateY(0);
 }

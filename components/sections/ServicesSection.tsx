@@ -26,10 +26,31 @@ const SERVICE_GROUPS = [
         description:
           "BP number, VAT, and PAYE registration with ZIMRA. We handle the paperwork and follow-up on your behalf.",
       },
+      {
+        category: "Compliance",
+        name: "NSSA Compliance",
+        slug: "nssa-compliance",
+        description:
+          "National Social Security Authority registration and compliance. We ensure your business meets all NSSA requirements.",
+      },
+      {
+        category: "Compliance",
+        name: "PRAZ Compliance",
+        slug: "praz-compliance",
+        description:
+          "Procurement Regulatory Authority of Zimbabwe compliance. Get your business registered for government tenders.",
+      },
+      {
+        category: "Compliance",
+        name: "ZIMDEF Compliance",
+        slug: "zimdef-compliance",
+        description:
+          "Zimbabwe Manpower Development Fund compliance. We handle your ZIMDEF registration and levy submissions.",
+      },
     ],
   },
   {
-    group: "Business Formation",
+    group: "Business Formation & Growth",
     accent: "#C9A84C",
     services: [
       {
@@ -38,6 +59,27 @@ const SERVICE_GROUPS = [
         slug: "company-registration",
         description:
           "End-to-end company registration under COBE. Includes name reservation, certificate of incorporation, and CR14.",
+      },
+      {
+        category: "Accounting",
+        name: "Accounting Services",
+        slug: "accounting-services",
+        description:
+          "Professional accounting services including financial statements, management accounts, and tax returns.",
+      },
+      {
+        category: "Bookkeeping",
+        name: "Bookkeeping Services",
+        slug: "bookkeeping-services",
+        description:
+          "Daily, weekly, or monthly bookkeeping to keep your financial records accurate and up to date.",
+      },
+      {
+        category: "Advisory",
+        name: "Startup Business Acumen",
+        slug: "startup-business-acumen",
+        description:
+          "We help startups gain simple business acumen knowledge to help them in their day-to-day operations. WE HELP YOU GROW.",
       },
       {
         category: "Accounting",
@@ -98,7 +140,7 @@ export default function ServicesSection() {
                 What we do
               </span>
             </div>
-            <h2 className="font-display text-navy leading-[1.1]" style={{ fontSize: "clamp(2.2rem, 4vw, 3.5rem)" }}>
+            <h2 className="font-display text-green-dark leading-[1.1]" style={{ fontSize: "clamp(2.2rem, 4vw, 3.5rem)" }}>
               Services built for
               <br />
               <em className="text-gold">Zimbabwean business.</em>
@@ -106,13 +148,13 @@ export default function ServicesSection() {
           </div>
           <div className="lg:pb-2">
             <p className="font-body text-slate text-base leading-relaxed max-w-sm">
-              Every service is handled by registered practitioners who understand the local regulatory environment.
+              Every service is handled by ZIMRA-registered practitioners who understand the local regulatory environment.
             </p>
             <Link
               href="/services"
-              className="inline-flex items-center gap-2 font-body text-navy text-sm mt-6 border-b border-navy/20 hover:border-navy pb-0.5 transition-colors duration-150"
+              className="inline-flex items-center gap-2 font-body text-green-dark text-sm mt-6 border-b border-green-dark/20 hover:border-green-dark pb-0.5 transition-colors duration-150"
             >
-              View all 14 services
+              View all services
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -138,7 +180,7 @@ export default function ServicesSection() {
                   <Link
                     key={service.slug}
                     href={`/services/${service.slug}`}
-                    className="group bg-white p-7 hover:bg-navy transition-colors duration-300 flex flex-col min-h-[200px]"
+                    className="group bg-white p-7 hover:bg-green-dark transition-colors duration-300 flex flex-col min-h-[200px]"
                   >
                     {/* Category pill */}
                     <span className="inline-block font-body text-[9px] tracking-[0.22em] uppercase font-semibold text-gold border border-gold/35 group-hover:border-gold/50 px-2 py-0.5 rounded-sm mb-5 w-fit">
@@ -146,7 +188,7 @@ export default function ServicesSection() {
                     </span>
 
                     {/* Name */}
-                    <h3 className="font-display text-navy group-hover:text-white text-base font-semibold leading-snug mb-3 transition-colors duration-300">
+                    <h3 className="font-display text-green-dark group-hover:text-white text-base font-semibold leading-snug mb-3 transition-colors duration-300">
                       {service.name}
                     </h3>
 
@@ -182,7 +224,7 @@ export default function ServicesSection() {
           </p>
           <Link
             href="/request"
-            className="btn-gold text-navy font-body font-semibold px-7 py-3.5 rounded-sm text-sm tracking-wide shrink-0"
+            className="btn-gold text-green-dark font-body font-semibold px-7 py-3.5 rounded-sm text-sm tracking-wide shrink-0"
           >
             Request a service
           </Link>

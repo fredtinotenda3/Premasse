@@ -1,5 +1,3 @@
-// components/sections/CTASection.tsx
-
 import Link from "next/link";
 
 export default function CTASection() {
@@ -10,11 +8,11 @@ export default function CTASection() {
 
           {/* Copy */}
           <div className="max-w-xl text-center lg:text-left">
-            <h2 className="font-display text-navy text-4xl md:text-5xl leading-tight mb-4">
+            <h2 className="font-display text-green-dark text-4xl md:text-5xl leading-tight mb-4">
               Ready to get compliant?
             </h2>
             <p className="font-body text-slate text-lg leading-relaxed">
-              Submit a service request and one of our registered practitioners
+              Submit a service request and one of our ZIMRA-registered practitioners
               will be in touch within one business day.
             </p>
           </div>
@@ -23,13 +21,13 @@ export default function CTASection() {
           <div className="flex flex-col sm:flex-row gap-4 flex-shrink-0">
             <Link
               href="/request"
-              className="btn-gold text-navy font-body font-semibold px-8 py-4 rounded-sm text-base tracking-wide text-center"
+              className="btn-gold text-green-dark font-body font-semibold px-8 py-4 rounded-sm text-base tracking-wide text-center"
             >
               Request a service
             </Link>
             <Link
               href="/contact"
-              className="font-body text-navy border border-navy/25 hover:border-navy transition-colors duration-200 px-8 py-4 rounded-sm text-base tracking-wide text-center"
+              className="font-body text-green-dark border border-green-dark/25 hover:border-green-dark transition-colors duration-200 px-8 py-4 rounded-sm text-base tracking-wide text-center"
             >
               Contact us
             </Link>
@@ -45,7 +43,7 @@ export default function CTASection() {
             { value: "Local", label: "Zimbabwe pricing" },
           ].map(({ value, label }) => (
             <div key={label}>
-              <div className="font-display text-3xl font-bold text-navy mb-1">
+              <div className="font-display text-3xl font-bold text-green-dark mb-1">
                 {value}
               </div>
               <div className="font-body text-slate text-sm">{label}</div>

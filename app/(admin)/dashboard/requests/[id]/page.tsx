@@ -12,6 +12,7 @@ import { updateRequestStatus } from "./actions";
 import { format } from "date-fns";
 import RequestDocuments from "@/components/dashboard/RequestDocuments";
 import InvoiceButton from "@/components/dashboard/InvoiceButton";
+import PaymentPanel from "@/components/dashboard/PaymentPanel";
 
 export const metadata: Metadata = { title: "Request detail — Admin" };
 export const dynamic = "force-dynamic";
@@ -55,7 +56,9 @@ export default async function RequestDetailPage({
           admin: { select: { name: true, email: true } },
         },
       },
-      payments: true,
+      payments: {
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 
@@ -63,15 +66,33 @@ export default async function RequestDetailPage({
 
   const wasJustUpdated = updated === "1";
 
+  // Get the most recent payment (if any) for the PaymentPanel
+  const latestPayment = request.payments.length > 0 ? request.payments[0] : null;
+
+  // Format latest payment for PaymentPanel component
+  const existingPayment = latestPayment ? {
+    id: latestPayment.id,
+    amount: latestPayment.amount,
+    status: latestPayment.status,
+    method: latestPayment.method,
+    redirectUrl: latestPayment.redirectUrl,
+    createdAt: latestPayment.createdAt.toISOString(),
+    paidAt: latestPayment.paidAt?.toISOString() ?? null,
+  } : null;
+
+  // Check if request is in a terminal state (can't create new payments)
+  const isTerminalState = ["COMPLETED", "CANCELLED"].includes(request.status);
+  const canCreatePayment = !isTerminalState && request.status !== "AWAITING_PAYMENT";
+
   return (
     <div className="max-w-5xl">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 font-body text-slate/50 text-xs mb-6">
-        <Link href="/dashboard/requests" className="hover:text-navy transition-colors">
+        <Link href="/dashboard/requests" className="hover:text-green-dark transition-colors">
           Requests
         </Link>
         <span>/</span>
-        <span className="text-navy font-medium truncate max-w-50">
+        <span className="text-green-dark font-medium truncate max-w-50">
           {request.clientName}
         </span>
       </div>
@@ -90,7 +111,7 @@ export default async function RequestDetailPage({
       <div className="flex items-start justify-between gap-4 mb-8">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <h1 className="font-display text-navy text-2xl font-semibold">
+            <h1 className="font-display text-green-dark text-2xl font-semibold">
               {request.clientName}
             </h1>
             <StatusBadge status={request.status} />
@@ -111,7 +132,7 @@ export default async function RequestDetailPage({
 
           {/* Client details */}
           <div className="bg-white border border-gray-100 rounded-sm p-6">
-            <h2 className="font-display text-navy text-base font-semibold mb-5">
+            <h2 className="font-display text-green-dark text-base font-semibold mb-5">
               Client details
             </h2>
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -127,7 +148,7 @@ export default async function RequestDetailPage({
                   <dt className="font-body text-slate/50 text-xs uppercase tracking-wider mb-0.5">
                     {label}
                   </dt>
-                  <dd className="font-body text-navy text-sm">{value}</dd>
+                  <dd className="font-body text-green-dark text-sm">{value}</dd>
                 </div>
               ))}
             </dl>
@@ -135,7 +156,7 @@ export default async function RequestDetailPage({
 
           {/* Client notes */}
           <div className="bg-white border border-gray-100 rounded-sm p-6">
-            <h2 className="font-display text-navy text-base font-semibold mb-4">
+            <h2 className="font-display text-green-dark text-base font-semibold mb-4">
               Client notes
             </h2>
             <p className="font-body text-slate text-sm leading-relaxed whitespace-pre-wrap">
@@ -158,7 +179,7 @@ export default async function RequestDetailPage({
 
           {/* Status update form */}
           <div className="bg-white border border-gray-100 rounded-sm p-6">
-            <h2 className="font-display text-navy text-base font-semibold mb-5">
+            <h2 className="font-display text-green-dark text-base font-semibold mb-5">
               Update status
             </h2>
 
@@ -166,14 +187,14 @@ export default async function RequestDetailPage({
               <input type="hidden" name="requestId" value={request.id} />
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="newStatus" className="font-body text-navy text-sm font-medium">
+                <label htmlFor="newStatus" className="font-body text-green-dark text-sm font-medium">
                   New status
                 </label>
                 <select
                   id="newStatus"
                   name="newStatus"
                   defaultValue={request.status}
-                  className="font-body text-navy text-sm w-full bg-white border border-gray-200 rounded-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-gold/20 focus:border-gold transition-colors"
+                  className="font-body text-green-dark text-sm w-full bg-white border border-gray-200 rounded-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-gold/20 focus:border-gold transition-colors"
                 >
                   {ALL_STATUSES.map((s) => (
                     <option key={s} value={s}>
@@ -184,7 +205,7 @@ export default async function RequestDetailPage({
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="note" className="font-body text-navy text-sm font-medium">
+                <label htmlFor="note" className="font-body text-green-dark text-sm font-medium">
                   Internal note{" "}
                   <span className="text-slate/40 font-normal">(optional)</span>
                 </label>
@@ -193,45 +214,112 @@ export default async function RequestDetailPage({
                   name="note"
                   rows={3}
                   placeholder="e.g. Called client, waiting for ID documents…"
-                  className="font-body text-navy text-sm w-full bg-white border border-gray-200 rounded-sm px-3 py-2.5 resize-none placeholder:text-slate/30 focus:outline-none focus:ring-2 focus:ring-gold/20 focus:border-gold transition-colors"
+                  className="font-body text-green-dark text-sm w-full bg-white border border-gray-200 rounded-sm px-3 py-2.5 resize-none placeholder:text-slate/30 focus:outline-none focus:ring-2 focus:ring-gold/20 focus:border-gold transition-colors"
                 />
               </div>
 
               <button
                 type="submit"
-                className="btn-gold w-full font-body font-semibold text-navy px-4 py-3 rounded-sm text-sm tracking-wide"
+                className="btn-gold w-full font-body font-semibold text-green-dark px-4 py-3 rounded-sm text-sm tracking-wide"
               >
                 Save status
               </button>
             </form>
           </div>
 
+          {/* PAYMENT PANEL - Initiate payments */}
+          {!isTerminalState && (
+            <PaymentPanel
+              requestId={request.id}
+              existingPayment={existingPayment}
+            />
+          )}
+
+          {/* Terminal state message */}
+          {isTerminalState && (
+            <div className="bg-gray-50 border border-gray-200 rounded-sm p-6">
+              <h2 className="font-display text-green-dark text-base font-semibold mb-3">
+                Payments
+              </h2>
+              <p className="font-body text-slate/50 text-sm">
+                This request is {request.status.toLowerCase()}. 
+                {request.status === "COMPLETED" 
+                  ? " No further payments can be initiated." 
+                  : " Payment cannot be initiated for cancelled requests."}
+              </p>
+              {request.payments.filter(p => p.status === "PAID").length > 0 && (
+                <div className="mt-4">
+                  <p className="font-body text-slate/60 text-sm mb-2">Paid invoices:</p>
+                  {request.payments.filter(p => p.status === "PAID").map(p => (
+                    <InvoiceButton
+                      key={p.id}
+                      paymentId={p.id}
+                      clientName={request.clientName}
+                      amount={p.amount}
+                      status={p.status}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Audit timeline */}
           <div className="bg-white border border-gray-100 rounded-sm p-6">
-            <h2 className="font-display text-navy text-base font-semibold mb-5">
+            <h2 className="font-display text-green-dark text-base font-semibold mb-5">
               Activity
             </h2>
             <AuditTimeline entries={request.auditLogs} />
           </div>
 
-          {/* Payment section with InvoiceButton */}
-          <div className="bg-white border border-gray-100 rounded-sm p-6">
-            <h2 className="font-display text-navy text-base font-semibold mb-5">
-              Payments
-            </h2>
-            {request.payments.filter(p => p.status === "PAID").map(p => (
-              <InvoiceButton
-                key={p.id}
-                paymentId={p.id}
-                clientName={request.clientName}
-                amount={p.amount}
-                status={p.status}
-              />
-            ))}
-            {request.payments.filter(p => p.status === "PAID").length === 0 && (
-              <p className="font-body text-slate/40 text-sm italic">No paid payments found.</p>
-            )}
-          </div>
+          {/* Payment history section */}
+          {request.payments.length > 0 && (
+            <div className="bg-white border border-gray-100 rounded-sm p-6">
+              <h2 className="font-display text-green-dark text-base font-semibold mb-5">
+                Payment history
+              </h2>
+              <div className="space-y-3">
+                {request.payments.map((payment) => (
+                  <div
+                    key={payment.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-sm"
+                  >
+                    <div>
+                      <p className="font-body text-green-dark text-sm font-medium">
+                        ${payment.amount.toFixed(2)} USD
+                      </p>
+                      <p className="font-body text-slate/40 text-xs">
+                        {payment.method ? `${payment.method} · ` : ""}
+                        {format(new Date(payment.createdAt), "d MMM yyyy, HH:mm")}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span className={`inline-block font-body font-semibold text-[10px] px-2 py-1 rounded-sm border uppercase tracking-widest ${
+                        payment.status === "PAID" ? "bg-green-50 text-green-800 border-green-200" :
+                        payment.status === "AWAITING_PAYMENT" ? "bg-amber-50 text-amber-800 border-amber-200" :
+                        payment.status === "FAILED" ? "bg-red-50 text-red-700 border-red-200" :
+                        "bg-gray-100 text-gray-500 border-gray-200"
+                      }`}>
+                        {payment.status === "AWAITING_PAYMENT" ? "Pending" :
+                         payment.status === "PAID" ? "Paid" :
+                         payment.status === "FAILED" ? "Failed" : "Cancelled"}
+                      </span>
+                      {payment.status === "PAID" && (
+                        <div className="mt-2">
+                          <InvoiceButton
+                            paymentId={payment.id}
+                            clientName={request.clientName}
+                            amount={payment.amount}
+                            status={payment.status}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

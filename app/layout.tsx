@@ -21,78 +21,69 @@ const dmSans = DM_Sans({
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://premasse.co.zw";
 
-// ── Root metadata ─────────────────────────────────────────────────────────────
+// ── Root metadata ──────────────────────────────────────────────────────────────
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 
   title: {
-    default:  "Premasse Business Services | Tax & Company Registration Zimbabwe",
+    default:  "Premasse Business Services | Tax, Compliance & Business Growth Zimbabwe",
     template: "%s | Premasse Business Services",
   },
 
   description:
-    "Registered tax accountants in Harare, Zimbabwe. Company registration, ZIMRA tax registration, ITF263 tax clearance certificates, and SME accounting. Get started in minutes.",
+    "ZIMRA-registered tax accountants in Harare, Zimbabwe. Company registration, NSSA, PRAZ, ZIMDEF compliance, accounting, bookkeeping, and business growth advisory. WE HELP YOU GROW.",
 
   keywords: [
-    // High-intent local search terms
     "tax clearance certificate Zimbabwe",
     "company registration Zimbabwe",
     "ZIMRA registration Zimbabwe",
     "tax accountant Harare",
-    "company registration Harare",
-    "ITF263 tax clearance",
-    "ZIMRA BP number registration",
+    "NSSA compliance Zimbabwe",
+    "PRAZ compliance Zimbabwe",
+    "ZIMDEF compliance Zimbabwe",
+    "accounting services Zimbabwe",
+    "bookkeeping services Zimbabwe",
+    "startup business acumen Zimbabwe",
     "SME accounting Zimbabwe",
-    "registered tax accountant Zimbabwe",
-    "PAAB accountant Zimbabwe",
+    "ZIMRA registered accountant Zimbabwe",
     "tax consultant Harare",
     "VAT registration Zimbabwe",
     "PAYE registration Zimbabwe",
-    "company registration COBE",
   ],
 
   authors:  [{ name: "Premasse Business Services", url: SITE_URL }],
   creator:  "Premasse Business Services",
   publisher:"Premasse Business Services",
 
-  // Canonical + alternate
   alternates: {
     canonical: SITE_URL,
   },
 
-  // Open Graph — for WhatsApp, Facebook, LinkedIn link previews
   openGraph: {
     type:        "website",
     locale:      "en_ZW",
     url:         SITE_URL,
     siteName:    "Premasse Business Services",
-    title:       "Premasse Business Services | Tax & Company Registration Zimbabwe",
-    description: "Registered tax accountants in Harare. Company registration, ZIMRA tax registration, tax clearance (ITF263), and SME accounting. Serving Zimbabwean businesses.",
+    title:       "Premasse Business Services | Tax, Compliance & Business Growth Zimbabwe",
+    description: "ZIMRA-registered tax accountants in Harare. Company registration, NSSA, PRAZ, ZIMDEF compliance, accounting, bookkeeping, and business growth advisory. WE HELP YOU GROW.",
     images: [
       {
         url:    `${SITE_URL}/og-image.png`,
         width:  1200,
         height: 630,
-        alt:    "Premasse Business Services — Tax Accountants Zimbabwe",
+        alt:    "Premasse Business Services — Tax & Business Growth Zimbabwe",
       },
     ],
   },
 
-  // Twitter / X card
   twitter: {
     card:        "summary_large_image",
-    title:       "Premasse Business Services | Tax & Company Registration Zimbabwe",
-    description: "Registered tax accountants in Harare. Company registration, ZIMRA registration, tax clearance, SME accounting.",
+    title:       "Premasse Business Services | Tax, Compliance & Business Growth Zimbabwe",
+    description: "ZIMRA-registered tax accountants. Company registration, compliance, accounting, bookkeeping. WE HELP YOU GROW.",
     images:      [`${SITE_URL}/og-image.png`],
   },
 
-  // Verification (add once you verify in Google Search Console)
-  // verification: {
-  //   google: "YOUR_GOOGLE_VERIFICATION_CODE",
-  // },
-
-  // Prevent AI crawlers from training on content
   robots: {
     index:          true,
     follow:         true,
@@ -105,8 +96,7 @@ export const metadata: Metadata = {
   },
 };
 
-// ── JSON-LD Structured Data ───────────────────────────────────────────────────
-// Tells Google exactly what kind of business this is — enables rich results.
+// ── JSON-LD Structured Data ────────────────────────────────────────────────────
 
 const structuredData = {
   "@context": "https://schema.org",
@@ -116,7 +106,7 @@ const structuredData = {
   logo:       `${SITE_URL}/logo.png`,
   image:      `${SITE_URL}/og-image.png`,
   description:
-    "Registered tax accountants and business services specialists in Zimbabwe. Company registration, ZIMRA tax registration, ITF263 tax clearance certificates, and SME accounting services.",
+    "ZIMRA-registered tax accountants and business services specialists in Zimbabwe. Company registration, NSSA, PRAZ, ZIMDEF compliance, accounting, bookkeeping, and business growth advisory.",
   telephone:    "",
   email:        "info@premasse.co.zw",
   priceRange:   "$$",
@@ -158,34 +148,52 @@ const structuredData = {
         "@type":       "Offer",
         itemOffered: {
           "@type":       "Service",
-          name:          "Tax Clearance Certificate Zimbabwe (ITF263)",
-          description:   "Obtain your ZIMRA ITF263 Tax Clearance Certificate quickly for tenders, contracts, and business transactions.",
-          url:           `${SITE_URL}/services/tax-clearance`,
+          name:          "NSSA Compliance Zimbabwe",
+          description:   "National Social Security Authority registration and compliance for Zimbabwean businesses.",
+          url:           `${SITE_URL}/services/nssa-compliance`,
         },
       },
       {
         "@type":       "Offer",
         itemOffered: {
           "@type":       "Service",
-          name:          "ZIMRA Tax Registration Zimbabwe",
-          description:   "BP number, VAT, and PAYE registration with ZIMRA for businesses in Zimbabwe.",
-          url:           `${SITE_URL}/services/zimra-tax-registration`,
+          name:          "PRAZ Compliance Zimbabwe",
+          description:   "Procurement Regulatory Authority of Zimbabwe compliance. Get your business registered for government tenders.",
+          url:           `${SITE_URL}/services/praz-compliance`,
         },
       },
       {
         "@type":       "Offer",
         itemOffered: {
           "@type":       "Service",
-          name:          "SME Accounting Services Zimbabwe",
-          description:   "Monthly bookkeeping, management accounts, payroll processing, and annual financial statements for Zimbabwean SMEs.",
-          url:           `${SITE_URL}/services/sme-accounting`,
+          name:          "ZIMDEF Compliance Zimbabwe",
+          description:   "Zimbabwe Manpower Development Fund compliance. Registration and levy submissions.",
+          url:           `${SITE_URL}/services/zimdef-compliance`,
+        },
+      },
+      {
+        "@type":       "Offer",
+        itemOffered: {
+          "@type":       "Service",
+          name:          "Accounting & Bookkeeping Services Zimbabwe",
+          description:   "Professional accounting and bookkeeping services for SMEs in Zimbabwe.",
+          url:           `${SITE_URL}/services/accounting-services`,
+        },
+      },
+      {
+        "@type":       "Offer",
+        itemOffered: {
+          "@type":       "Service",
+          name:          "Startup Business Acumen Zimbabwe",
+          description:   "We help startups gain simple business acumen knowledge to help them in their day-to-day operations. WE HELP YOU GROW.",
+          url:           `${SITE_URL}/services/startup-business-acumen`,
         },
       },
     ],
   },
 };
 
-// ── Layout ────────────────────────────────────────────────────────────────────
+// ── Layout ─────────────────────────────────────────────────────────────────────
 
 export default function RootLayout({
   children,

@@ -11,7 +11,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-// ── Validation schema ─────────────────────────────────────────────────────────
+// ──── Validation schema ──────────────────────────────────────────────────────
 
 const contactSchema = z.object({
   name: z.string().min(2, "Enter your full name").max(100).trim(),
@@ -27,7 +27,7 @@ const contactSchema = z.object({
 
 type ContactFields = z.infer<typeof contactSchema>;
 
-// ── Contact details ───────────────────────────────────────────────────────────
+// ──── Contact details ────────────────────────────────────────────────────────
 
 const CONTACT_ITEMS = [
   {
@@ -65,7 +65,7 @@ const CONTACT_ITEMS = [
   },
 ];
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ──── Page ────────────────────────────────────────────────────────────────────
 
 export default function ContactPage() {
   const [submitState, setSubmitState] = useState<"idle" | "success" | "error">("idle");
@@ -105,8 +105,8 @@ export default function ContactPage() {
   return (
     <>
       <main>
-        {/* Hero with image - matching homepage style */}
-        <section className="relative min-h-[70vh] bg-navy overflow-hidden flex items-center">
+        {/* Hero with image - diverse African customer support context */}
+        <section className="relative min-h-[70vh] bg-green-dark overflow-hidden flex items-center">
           {/* Architectural grid overlay */}
           <div
             className="absolute inset-0 pointer-events-none"
@@ -118,33 +118,33 @@ export default function ContactPage() {
             }}
           />
 
-          {/* Hero image — right-side bleed, professional customer support context */}
+          {/* Hero image — diverse customer support context */}
           <div
             className="absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none"
             aria-hidden="true"
           >
             <Image
-              src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=85&auto=format&fit=crop"
-              alt="Customer support professional"
+              src="https://images.unsplash.com/photo-1573164713988-8665fc963095?w=1200&q=85&auto=format&fit=crop"
+              alt="Diverse customer support team in Harare"
               fill
               className="object-cover object-center"
               style={{ opacity: 1 }}
               sizes="50vw"
               priority
             />
-            {/* Navy fade from left */}
+            {/* Green fade from left */}
             <div
               className="absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(to right, #0A2540 0%, #0A2540 20%, rgba(10,37,64,0.7) 55%, rgba(10,37,64,0.15) 100%)",
+                  "linear-gradient(to right, #1B5E20 0%, #1B5E20 20%, rgba(27,94,32,0.7) 55%, rgba(27,94,32,0.15) 100%)",
               }}
             />
-            {/* Navy fade from bottom */}
+            {/* Green fade from bottom */}
             <div
               className="absolute inset-0"
               style={{
-                background: "linear-gradient(to top, #0A2540 0%, transparent 40%)",
+                background: "linear-gradient(to top, #1B5E20 0%, transparent 40%)",
               }}
             />
           </div>
@@ -190,6 +190,7 @@ export default function ContactPage() {
               >
                 Have a question before submitting a request? Send us a message
                 and we&apos;ll get back to you within one business day.
+                <br /><span className="text-gold font-semibold">WE HELP YOU GROW — ask us how.</span>
               </p>
             </div>
           </div>
@@ -199,7 +200,7 @@ export default function ContactPage() {
             className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
             style={{
               background:
-                "linear-gradient(to bottom, transparent, rgba(10,37,64,0.8))",
+                "linear-gradient(to bottom, transparent, rgba(27,94,32,0.8))",
             }}
             aria-hidden="true"
           />
@@ -221,7 +222,7 @@ export default function ContactPage() {
                         <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
-                    <h2 className="font-display text-navy text-2xl font-semibold mb-3">
+                    <h2 className="font-display text-green-dark text-2xl font-semibold mb-3">
                       Message sent
                     </h2>
                     <p className="font-body text-slate text-base leading-relaxed mb-8 max-w-sm mx-auto">
@@ -229,14 +230,14 @@ export default function ContactPage() {
                     </p>
                     <button
                       onClick={() => setSubmitState("idle")}
-                      className="font-body text-navy border border-navy/25 hover:border-navy px-6 py-2.5 rounded-sm text-sm transition-colors"
+                      className="font-body text-green-dark border border-green-dark/25 hover:border-green-dark px-6 py-2.5 rounded-sm text-sm transition-colors"
                     >
                       Send another message
                     </button>
                   </div>
                 ) : (
                   <>
-                    <h2 className="font-display text-navy text-xl font-semibold mb-2">
+                    <h2 className="font-display text-green-dark text-xl font-semibold mb-2">
                       Send a message
                     </h2>
                     <p className="font-body text-slate/60 text-sm mb-8">
@@ -317,7 +318,7 @@ export default function ContactPage() {
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="btn-gold w-full font-body font-semibold text-navy px-8 py-4 rounded-sm text-base tracking-wide disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="btn-green w-full font-body font-semibold text-white px-8 py-4 rounded-sm text-base tracking-wide disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                       >
                         {isSubmitting ? (
                           <>
@@ -342,7 +343,7 @@ export default function ContactPage() {
 
               {/* Contact details */}
               <div className="bg-white border border-gray-100 rounded-sm p-6">
-                <h3 className="font-display text-navy text-base font-semibold mb-5">
+                <h3 className="font-display text-green-dark text-base font-semibold mb-5">
                   Contact details
                 </h3>
                 <ul className="space-y-5">
@@ -356,12 +357,12 @@ export default function ContactPage() {
                         {href ? (
                           <a
                             href={href}
-                            className="font-body text-navy text-sm hover:underline underline-offset-2 decoration-gold transition-all"
+                            className="font-body text-green-dark text-sm hover:underline underline-offset-2 decoration-gold transition-all"
                           >
                             {value}
                           </a>
                         ) : (
-                          <p className="font-body text-navy text-sm">{value}</p>
+                          <p className="font-body text-green-dark text-sm">{value}</p>
                         )}
                       </div>
                     </li>
@@ -371,7 +372,7 @@ export default function ContactPage() {
 
               {/* Prefer a service request? */}
               <div className="bg-gold-pale border border-gold/20 rounded-sm p-6">
-                <h3 className="font-display text-navy text-base font-semibold mb-2">
+                <h3 className="font-display text-green-dark text-base font-semibold mb-2">
                   Ready to proceed?
                 </h3>
                 <p className="font-body text-slate text-sm leading-relaxed mb-4">
@@ -379,24 +380,40 @@ export default function ContactPage() {
                 </p>
                 <Link
                   href="/request"
-                  className="btn-gold block w-full font-body font-semibold text-navy px-5 py-3 rounded-sm text-sm tracking-wide text-center"
+                  className="btn-green block w-full font-body font-semibold text-white px-5 py-3 rounded-sm text-sm tracking-wide text-center"
                 >
                   Request a service
                 </Link>
               </div>
 
+              {/* WE HELP YOU GROW - Business Acumen Card */}
+              <div className="bg-green-pale border border-green-primary/20 rounded-sm p-6 text-center">
+                <h3 className="font-display text-green-dark text-base font-semibold mb-2">
+                  WE HELP YOU GROW
+                </h3>
+                <p className="font-body text-slate text-sm leading-relaxed mb-4">
+                  Need business acumen training or startup guidance? We&apos;re here to help you build the skills to succeed.
+                </p>
+                <Link
+                  href="/services/startup-business-acumen"
+                  className="font-body text-green-dark text-sm font-semibold underline underline-offset-2 decoration-gold hover:decoration-2 transition-all"
+                >
+                  Learn about our training →
+                </Link>
+              </div>
+
               {/* Response time note */}
               <div className="bg-white border border-gray-100 rounded-sm p-6">
-                <h3 className="font-display text-navy text-base font-semibold mb-3">
+                <h3 className="font-display text-green-dark text-base font-semibold mb-3">
                   Response time
                 </h3>
                 <p className="font-body text-slate/70 text-sm leading-relaxed">
                   We respond to all enquiries within{" "}
-                  <span className="font-medium text-navy">one business day</span>.
+                  <span className="font-medium text-green-dark">one business day</span>.
                   For urgent matters, email us directly at{" "}
                   <a
                     href="mailto:info@premasse.co.zw"
-                    className="text-navy underline underline-offset-2 decoration-gold hover:decoration-2 transition-all"
+                    className="text-green-dark underline underline-offset-2 decoration-gold hover:decoration-2 transition-all"
                   >
                     info@premasse.co.zw
                   </a>
@@ -411,7 +428,7 @@ export default function ContactPage() {
   );
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// ──── Sub-components ─────────────────────────────────────────────────────────
 
 function Field({
   label,
@@ -428,7 +445,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="font-body text-navy text-sm font-medium">
+      <label className="font-body text-green-dark text-sm font-medium">
         {label}
         {required && (
           <span className="text-gold ml-1" aria-hidden="true">*</span>
@@ -447,7 +464,7 @@ function Field({
 
 function inputCls(hasError: boolean): string {
   return [
-    "font-body text-navy text-sm w-full bg-white border rounded-sm px-4 py-3",
+    "font-body text-green-dark text-sm w-full bg-white border rounded-sm px-4 py-3",
     "placeholder:text-slate/40 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors",
     hasError
       ? "border-red-300 focus:border-red-400 focus:ring-red-100"

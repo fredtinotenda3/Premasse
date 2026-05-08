@@ -1,7 +1,7 @@
 // app/opengraph-image.tsx
 // Generates the /og-image.png used by all OG tags.
 // Next.js renders this at build time.
-// This creates a professional navy/gold branded card for WhatsApp + social previews.
+// This creates a professional green/gold branded card for WhatsApp + social previews.
 
 import { ImageResponse } from "next/og";
 
@@ -16,7 +16,7 @@ export default function OGImage() {
         style={{
           width:           "100%",
           height:          "100%",
-          backgroundColor: "#0A2540",
+          backgroundColor: "#1B5E20",
           display:         "flex",
           flexDirection:   "column",
           justifyContent:  "center",
@@ -61,7 +61,7 @@ export default function OGImage() {
         >
           <div style={{ width: "48px", height: "2px", backgroundColor: "#C9A84C" }} />
           <span style={{ color: "#C9A84C", fontSize: "14px", letterSpacing: "4px", textTransform: "uppercase" }}>
-            Registered Tax Practitioners
+            ZIMRA Registered Practitioners
           </span>
         </div>
 
@@ -91,7 +91,7 @@ export default function OGImage() {
             marginBottom: "48px",
           }}
         >
-          Tax clearance · Company registration · ZIMRA registration · SME accounting
+          Tax clearance · Company registration · NSSA · PRAZ · ZIMDEF compliance · Accounting · Bookkeeping · WE HELP YOU GROW
         </div>
 
         {/* Bottom bar */}
@@ -102,7 +102,7 @@ export default function OGImage() {
             gap:            "32px",
           }}
         >
-          {["PAAB Registered", "Harare, Zimbabwe", "info@premasse.co.zw"].map((item) => (
+          {["ZIMRA Registered", "Harare, Zimbabwe", "info@premasse.co.zw"].map((item) => (
             <div
               key={item}
               style={{

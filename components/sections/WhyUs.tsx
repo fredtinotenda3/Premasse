@@ -5,15 +5,15 @@ import { CheckCircle2 } from "lucide-react";
 const reasons = [
   {
     number: "01",
-    title: "Registered practitioners",
-    body: "All our accountants are registered with the Public Accountants and Auditors Board (PAAB) of Zimbabwe.",
-    outcome: "You deal with qualified professionals, not junior staff.",
+    title: "ZIMRA-registered practitioners",
+    body: "All our accountants are ZIMRA-registered professionals with deep expertise in Zimbabwe's tax legislation.",
+    outcome: "You deal with qualified professionals who know the system inside out.",
   },
   {
     number: "02",
-    title: "ZIMRA specialists",
-    body: "Deep familiarity with Zimbabwe's tax legislation, ZIMRA processes, and regulatory requirements.",
-    outcome: "Fewer delays. No back-and-forth. Done right the first time.",
+    title: "Full compliance specialists",
+    body: "Deep familiarity with NSSA, PRAZ, ZIMDEF, and all regulatory requirements for Zimbabwean businesses.",
+    outcome: "Complete compliance across all authorities. No gaps. No surprises.",
   },
   {
     number: "03",
@@ -27,11 +27,17 @@ const reasons = [
     body: "We don't just advise — we prepare, submit, and follow up on your behalf.",
     outcome: "You focus on your business. We handle the paperwork.",
   },
+  {
+    number: "05",
+    title: "WE HELP YOU GROW",
+    body: "Beyond compliance, we provide business acumen and practical guidance to help startups thrive.",
+    outcome: "Growth-focused advice that turns compliance into opportunity.",
+  },
 ];
 
 export default function WhyUs() {
   return (
-    <section className="bg-navy py-28" id="why-us">
+    <section className="bg-green-dark py-28" id="why-us">
       <div className="mx-auto max-w-7xl px-6 lg:px-12">
 
         {/* Header */}
@@ -48,14 +54,16 @@ export default function WhyUs() {
           </h2>
         </div>
 
-        {/* Reasons grid - 2x2 on desktop, 1x4 on mobile */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+        {/* Reasons grid - 3x2 on desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
           {reasons.map((r, idx) => (
             <div
               key={r.number}
               className={`
                 relative group
-                ${idx % 2 === 0 ? 'md:border-r' : ''}
+                ${idx % 3 !== 2 ? 'lg:border-r' : ''}
+                ${idx < 3 ? 'lg:border-b' : ''}
+                ${idx % 2 === 0 && idx < 2 ? 'md:border-r' : ''}
                 ${idx < 2 ? 'md:border-b' : ''}
                 border-white/8
               `}
@@ -93,11 +101,12 @@ export default function WhyUs() {
 
         {/* Trust footer */}
         <div className="mt-16 pt-12 border-t border-white/8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-          <div className="flex gap-6">
+          <div className="flex flex-wrap gap-6">
             {[
-              "PAAB Registered",
+              "ZIMRA Registered",
               "10+ Years Combined Experience",
               "Zimbabwean Business Specialists",
+              "NSSA · PRAZ · ZIMDEF Compliant",
             ].map((tag) => (
               <div key={tag} className="flex items-center gap-2">
                 <div className="w-1 h-1 rounded-full bg-gold/50" />
@@ -108,9 +117,9 @@ export default function WhyUs() {
             ))}
           </div>
 
-          {/* Subtle stat - no decoration */}
+          {/* Subtle stat */}
           <p className="font-mono text-white/20 text-[10px] tracking-wider">
-            Verified practitioners · Public Accountants and Auditors Board
+            Verified practitioners · ZIMRA-registered consultants
           </p>
         </div>
       </div>

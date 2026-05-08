@@ -1,12 +1,10 @@
-// components/layout/Footer.tsx
-
 import Link from "next/link";
 
 export default function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-navy text-white/70">
+    <footer className="bg-green-dark text-white/70">
       <div className="mx-auto max-w-7xl px-6 lg:px-12 py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
           {/* Brand */}
@@ -20,8 +18,8 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-sm leading-relaxed text-white/60 max-w-xs">
-              Registered tax accountants and business services specialists
-              serving SMEs across Zimbabwe.
+              ZIMRA-registered tax accountants and business services specialists
+              serving SMEs across Zimbabwe. WE HELP YOU GROW.
             </p>
           </div>
 
@@ -36,7 +34,8 @@ export default function Footer() {
                 "Company Registration",
                 "ZIMRA / Tax Registration",
                 "Tax Clearance Certificate",
-                "SME Accounting",
+                "Accounting & Bookkeeping",
+                "NSSA · PRAZ · ZIMDEF Compliance",
               ].map((s) => (
                 <li key={s}>
                   <Link
@@ -69,7 +68,7 @@ export default function Footer() {
 
             <Link
               href="/request"
-              className="inline-block mt-6 btn-gold text-navy text-sm font-body font-semibold px-5 py-2.5 rounded-sm tracking-wide"
+              className="inline-block mt-6 btn-gold text-green-dark text-sm font-body font-semibold px-5 py-2.5 rounded-sm tracking-wide"
             >
               Request a service
             </Link>

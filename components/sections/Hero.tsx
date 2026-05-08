@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function Hero() {
   return (
-    <section className="relative min-h-screen bg-navy overflow-hidden flex items-center">
+    <section className="relative min-h-screen bg-green-dark overflow-hidden flex items-center">
 
       {/* Architectural grid overlay */}
       <div
@@ -16,35 +16,34 @@ export default function Hero() {
         }}
       />
 
-      {/* Hero image — right-side bleed, professional African business context */}
+      {/* Hero image — right-side bleed, diverse African business context */}
       <div
         className="absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none"
         aria-hidden="true"
       >
-        {/* Unsplash: professional African business/office context */}
         <Image
-          src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1200&q=85&auto=format&fit=crop"
-          alt="Professional business services"
+          src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=85&auto=format&fit=crop"
+          alt="Diverse business team collaborating"
           fill
           className="object-cover object-center"
           style={{ opacity: 1 }}
           sizes="50vw"
           priority
         />
-        {/* Navy fade from left */}
+        {/* Green fade from left */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to right, #0A2540 0%, #0A2540 20%, rgba(10,37,64,0.7) 55%, rgba(10,37,64,0.15) 100%)",
+              "linear-gradient(to right, #1B5E20 0%, #1B5E20 20%, rgba(27,94,32,0.7) 55%, rgba(27,94,32,0.15) 100%)",
           }}
         />
-        {/* Navy fade from bottom */}
+        {/* Green fade from bottom */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to top, #0A2540 0%, transparent 40%)",
+              "linear-gradient(to top, #1B5E20 0%, transparent 40%)",
           }}
         />
       </div>
@@ -76,7 +75,7 @@ export default function Hero() {
             >
               <div className="w-1.5 h-1.5 rounded-full bg-gold" />
               <span className="font-body text-gold text-xs tracking-[0.22em] uppercase font-medium">
-                PAAB Registered · Harare, Zimbabwe
+                ZIMRA Registered · Harare, Zimbabwe
               </span>
             </div>
           </div>
@@ -97,7 +96,7 @@ export default function Hero() {
               className="text-gold"
               style={{ fontStyle: "italic" }}
             >
-              Done right.
+              Business growth.
             </span>
           </h1>
 
@@ -106,14 +105,13 @@ export default function Hero() {
             className="font-body text-white/60 leading-relaxed mb-12 animate-fade-up"
             style={{
               fontSize: "1.125rem",
-              maxWidth: "520px",
+              maxWidth: "620px",
               animationDelay: "0.28s",
               opacity: 0,
             }}
           >
-            Registered tax accountants and business specialists serving
-            Zimbabwean businesses — from company registration to ZIMRA
-            clearance and physical stock-taking.
+            ZIMRA-registered tax accountants and business specialists serving Zimbabwean businesses — 
+            from company registration to compliance, accounting, and WE HELP YOU GROW.
           </p>
 
           {/* CTA group */}
@@ -123,7 +121,7 @@ export default function Hero() {
           >
             <Link
               href="/request"
-              className="btn-gold text-navy font-body font-semibold px-8 py-4 rounded-sm text-sm tracking-widest uppercase text-center"
+              className="btn-gold text-green-dark font-body font-semibold px-8 py-4 rounded-sm text-sm tracking-widest uppercase text-center"
             >
               Request a Service
             </Link>
@@ -141,10 +139,10 @@ export default function Hero() {
             style={{ animationDelay: "0.56s", opacity: 0 }}
           >
             {[
-              { value: "14", label: "Services" },
+              { value: "14+", label: "Services" },
               { value: "1 day", label: "Response time" },
               { value: "100%", label: "ZIMRA compliant" },
-              { value: "PAAB", label: "Registered" },
+              { value: "ZIMRA", label: "Registered" },
             ].map(({ value, label }) => (
               <div key={label} className="flex flex-col">
                 <span className="font-display text-white text-xl font-bold leading-none mb-1">
@@ -163,7 +161,7 @@ export default function Hero() {
       <div
         className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
         style={{
-          background: "linear-gradient(to bottom, transparent, rgba(10,37,64,0.8))",
+          background: "linear-gradient(to bottom, transparent, rgba(27,94,32,0.8))",
         }}
         aria-hidden="true"
       />

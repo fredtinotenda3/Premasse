@@ -12,7 +12,7 @@ const DEBUG = process.env.DEBUG === "true";
 function log(level: "info" | "debug" | "warn" | "error", message: string, data?: unknown) {
   const timestamp = new Date().toISOString();
   const prefix = {
-    info:  "  ✔",
+    info:  "  ✓",
     debug: "  →",
     warn:  "  ⚠",
     error: "  ✗",
@@ -29,12 +29,12 @@ function log(level: "info" | "debug" | "warn" | "error", message: string, data?:
 async function main() {
   console.log("🌱 Seeding Premasse database...");
   console.log(`   ENV: ${process.env.NODE_ENV ?? "development"}`);
-  console.log(`   DEBUG: ${DEBUG ? "on" : "off (set DEBUG=true to enable)"}`);
+  console.log(`   DEBUG: ${DEBUG ? "on (set DEBUG=true to enable)" : "off"}`);
   console.log("");
 
-  // ── Services ──────────────────────────────────────────────────────────────
+  // ── Services ──────────────────────────────────────────────────────────────────
 
-  console.log("── Services ──────────────────────────────────────");
+  console.log("── Services ────────────────────────────────────────────────────────");
 
   const services = [
     {
@@ -82,7 +82,7 @@ async function main() {
       price: null,
       sortOrder: 5,
     },
-    // ── Stock-Taking Services ────────────────────────────────────────────────
+    // ── Stock-Taking Services ─────────────────────────────────────────────────────
     {
       name: "Physical Stock Counting",
       slug: "physical-stock-counting",
@@ -164,6 +164,63 @@ async function main() {
       price: null,
       sortOrder: 14,
     },
+    // ── New Services: NSSA, PRAZ, ZIMDEF Compliance ─────────────────────────────
+    {
+      name: "NSSA Compliance",
+      slug: "nssa-compliance",
+      description:
+        "National Social Security Authority registration and compliance. We ensure your business meets all NSSA requirements for employee contributions and reporting. Stay compliant with Zimbabwe's social security regulations.",
+      category: ServiceCategory.TAX_COMPLIANCE,
+      price: null,
+      sortOrder: 15,
+    },
+    {
+      name: "PRAZ Compliance",
+      slug: "praz-compliance",
+      description:
+        "Procurement Regulatory Authority of Zimbabwe compliance. Get your business registered for government tenders and ensure procurement compliance. Essential for businesses seeking government contracts.",
+      category: ServiceCategory.TAX_COMPLIANCE,
+      price: null,
+      sortOrder: 16,
+    },
+    {
+      name: "ZIMDEF Compliance",
+      slug: "zimdef-compliance",
+      description:
+        "Zimbabwe Manpower Development Fund compliance. We handle your ZIMDEF registration and levy submissions. Meet your training levy obligations without the hassle.",
+      category: ServiceCategory.TAX_COMPLIANCE,
+      price: null,
+      sortOrder: 17,
+    },
+    // ── New Services: Accounting & Bookkeeping ───────────────────────────────────
+    {
+      name: "Accounting Services",
+      slug: "accounting-services",
+      description:
+        "Professional accounting services including financial statements, management accounts, tax returns, and financial analysis for Zimbabwean businesses. Get clear visibility into your business finances.",
+      category: ServiceCategory.SME_ACCOUNTING,
+      price: null,
+      sortOrder: 18,
+    },
+    {
+      name: "Bookkeeping Services",
+      slug: "bookkeeping-services",
+      description:
+        "Daily, weekly, or monthly bookkeeping to keep your financial records accurate and up to date. We help you track income, expenses, and manage cash flow effectively.",
+      category: ServiceCategory.SME_ACCOUNTING,
+      price: null,
+      sortOrder: 19,
+    },
+    // ── New Service: Startup Business Acumen ─────────────────────────────────────
+    {
+      name: "Startup Business Acumen",
+      slug: "startup-business-acumen",
+      description:
+        "We help startups gain simple business acumen knowledge to help them in their day-to-day operations. From business planning to financial management — WE HELP YOU GROW. Turn your startup vision into a thriving business.",
+      category: ServiceCategory.BUSINESS_ADVISORY,
+      price: null,
+      sortOrder: 20,
+    },
   ];
 
   log("debug", `Preparing to upsert ${services.length} services`);
@@ -204,10 +261,10 @@ async function main() {
   console.log("");
   log("info", `Services done — created: ${servicesCreated}, updated: ${servicesUpdated}`);
 
-  // ── Admin User ────────────────────────────────────────────────────────────
+  // ── Admin User ────────────────────────────────────────────────────────────────
 
   console.log("");
-  console.log("── Admin user ────────────────────────────────────");
+  console.log("── Admin user ──────────────────────────────────────────────────────");
 
   const adminEmail    = process.env.SEED_ADMIN_EMAIL    ?? "admin@premasse.co.zw";
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "ChangeMe123!";
@@ -245,11 +302,11 @@ async function main() {
     `${existingAdmin ? "Skipped (already exists)" : "Created"} admin: ${admin.email} (id=${admin.id})`
   );
 
-  // ── Sample Request (dev only) ─────────────────────────────────────────────
+  // ── Sample Request (dev only) ─────────────────────────────────────────────────
 
   if (process.env.NODE_ENV !== "production") {
     console.log("");
-    console.log("── Sample request (dev only) ─────────────────────");
+    console.log("── Sample request (dev only) ─────────────────────────────────────");
 
     const taxClearance = await prisma.service.findUnique({
       where: { slug: "tax-clearance" },
@@ -289,10 +346,10 @@ async function main() {
     }
   }
 
-  // ── Summary ───────────────────────────────────────────────────────────────
+  // ── Summary ───────────────────────────────────────────────────────────────────
 
   console.log("");
-  console.log("── Summary ──────────────────────────────────────");
+  console.log("── Summary ─────────────────────────────────────────────────────────");
 
   const [totalServices, totalUsers, totalRequests] = await Promise.all([
     prisma.service.count(),

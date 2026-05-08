@@ -33,6 +33,8 @@ enum ServiceCategory {
   TAX_CLEARANCE
   SME_ACCOUNTING
   STOCK_TAKING
+  TAX_COMPLIANCE      // NSSA, PRAZ, ZIMDEF compliance services
+  BUSINESS_ADVISORY   // Startup business acumen and advisory services
 }
 
 enum PaymentStatus {

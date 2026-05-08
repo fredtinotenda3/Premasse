@@ -10,7 +10,7 @@ import { ServiceCategory } from "@prisma/client";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://premasse.co.zw";
 
-// Dynamic image mapping based on service category
+// Dynamic image mapping based on service category - using diverse African professional images
 const CATEGORY_IMAGES: Record<ServiceCategory, string> = {
   TAX_ACCOUNTING: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=1200&q=85&auto=format&fit=crop",
   COMPANY_REG: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1200&q=85&auto=format&fit=crop",
@@ -18,6 +18,8 @@ const CATEGORY_IMAGES: Record<ServiceCategory, string> = {
   TAX_CLEARANCE: "https://images.unsplash.com/photo-1554224155-1696413565d7?w=1200&q=85&auto=format&fit=crop",
   SME_ACCOUNTING: "https://images.unsplash.com/photo-1554224155-9090266daf94?w=1200&q=85&auto=format&fit=crop",
   STOCK_TAKING: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1200&q=85&auto=format&fit=crop",
+  COMPLIANCE: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=1200&q=85&auto=format&fit=crop",
+  BUSINESS_ACUMEN: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=85&auto=format&fit=crop",
 };
 
 const SEO_CONFIG: Record<ServiceCategory, {
@@ -55,17 +57,17 @@ const SEO_CONFIG: Record<ServiceCategory, {
   },
   TAX_ACCOUNTING: {
     titleKeyword:    "Tax Accountant Consultation Zimbabwe",
-    metaDescription: "One-on-one consultation with a registered PAAB tax accountant in Zimbabwe. Get expert tax advice for your business or personal affairs in Harare.",
-    h1:              "Registered Tax Accountant Consultation Zimbabwe",
+    metaDescription: "One-on-one consultation with a registered ZIMRA tax accountant in Zimbabwe. Get expert tax advice for your business or personal affairs in Harare.",
+    h1:              "Registered ZIMRA Tax Accountant Consultation Zimbabwe",
     keywords: [
-      "tax accountant Zimbabwe", "tax consultant Harare", "PAAB accountant Zimbabwe",
+      "tax accountant Zimbabwe", "tax consultant Harare", "ZIMRA registered accountant Zimbabwe",
       "tax advice Zimbabwe", "registered accountant Harare", "tax planning Zimbabwe",
     ],
   },
   SME_ACCOUNTING: {
-    titleKeyword:    "SME Accounting Services Zimbabwe",
-    metaDescription: "Accounting services for small businesses in Zimbabwe. Monthly bookkeeping, payroll, management accounts, and annual financial statements in Harare.",
-    h1:              "SME Accounting Services Zimbabwe",
+    titleKeyword:    "SME Accounting & Bookkeeping Services Zimbabwe",
+    metaDescription: "Accounting and bookkeeping services for small businesses in Zimbabwe. Monthly bookkeeping, payroll, management accounts, and annual financial statements in Harare.",
+    h1:              "SME Accounting & Bookkeeping Services Zimbabwe",
     keywords: [
       "SME accounting Zimbabwe", "bookkeeping Zimbabwe", "payroll services Zimbabwe",
       "accounting services Harare", "small business accounting Zimbabwe", "management accounts Zimbabwe",
@@ -79,6 +81,25 @@ const SEO_CONFIG: Record<ServiceCategory, {
       "physical stock counting Zimbabwe", "stock taking Zimbabwe", "inventory audit Zimbabwe",
       "stock reconciliation Zimbabwe", "warehouse stock audit Zimbabwe", "stock variance investigation Zimbabwe",
       "year end stock count Zimbabwe", "retail stock count Zimbabwe", "inventory control Zimbabwe",
+    ],
+  },
+  COMPLIANCE: {
+    titleKeyword:    "NSSA, PRAZ & ZIMDEF Compliance Services Zimbabwe",
+    metaDescription: "Professional compliance services for Zimbabwean businesses. NSSA registration and contributions, PRAZ procurement compliance, and ZIMDEF levy management. Stay compliant with all statutory requirements.",
+    h1:              "Statutory Compliance Services Zimbabwe",
+    keywords: [
+      "NSSA compliance Zimbabwe", "PRAZ registration Zimbabwe", "ZIMDEF compliance Zimbabwe",
+      "NSSA contributions Zimbabwe", "procurement compliance Zimbabwe", "statutory compliance Harare",
+      "labour compliance Zimbabwe", "ZIMDEF levy Zimbabwe",
+    ],
+  },
+  BUSINESS_ACUMEN: {
+    titleKeyword:    "Startup Business Acumen & Growth Training Zimbabwe",
+    metaDescription: "Practical business acumen training for startups in Zimbabwe. Learn day-to-day operations, financial management, compliance, and growth strategies. WE HELP YOU GROW.",
+    h1:              "Startup Business Acumen & Growth Training Zimbabwe",
+    keywords: [
+      "business acumen training Zimbabwe", "startup training Harare", "business growth Zimbabwe",
+      "entrepreneurship training Zimbabwe", "SME business skills Zimbabwe", "business operations training",
     ],
   },
 };
@@ -104,7 +125,7 @@ export async function generateMetadata({
 
   if (!service) return { title: "Service not found" };
 
-  const seo          = SEO_CONFIG[service.category];
+  const seo          = SEO_CONFIG[service.category] || SEO_CONFIG.TAX_ACCOUNTING;
   const canonicalUrl = `${SITE_URL}/services/${slug}`;
 
   return {
@@ -141,6 +162,8 @@ const CATEGORY_LABELS: Record<ServiceCategory, string> = {
   TAX_CLEARANCE:  "Clearance",
   SME_ACCOUNTING: "Accounting",
   STOCK_TAKING:   "Stock-Taking",
+  COMPLIANCE:     "Compliance",
+  BUSINESS_ACUMEN: "Growth",
 };
 
 const WHAT_TO_PREPARE: Record<ServiceCategory, string[]> = {
@@ -181,6 +204,20 @@ const WHAT_TO_PREPARE: Record<ServiceCategory, string[]> = {
     "List of stock categories or product lines to be counted",
     "Any previous stock count reports for comparison",
   ],
+  COMPLIANCE: [
+    "Business registration documents (CR14, certificate of incorporation)",
+    "ZIMRA BP number (if already registered for tax)",
+    "Employee list (for NSSA/ZIMDEF)",
+    "Previous compliance correspondence (if any)",
+    "Business operations description",
+  ],
+  BUSINESS_ACUMEN: [
+    "Brief description of your business idea or current operations",
+    "Specific challenges you're facing",
+    "Goals for the next 6-12 months",
+    "Any existing business documentation",
+    "Your questions or areas where you need guidance",
+  ],
 };
 
 const FAQS: Record<ServiceCategory, { q: string; a: string }[]> = {
@@ -200,9 +237,9 @@ const FAQS: Record<ServiceCategory, { q: string; a: string }[]> = {
     { q: "What is PAYE in Zimbabwe and do I need to register?", a: "PAYE (Pay As You Earn) is the tax deducted from employee salaries. Any business with employees must register for PAYE with ZIMRA. Premasse handles PAYE registration and ongoing compliance." },
   ],
   TAX_ACCOUNTING: [
-    { q: "What does a tax accountant consultation cover?", a: "A Premasse tax consultation covers your current tax obligations, potential savings, compliance gaps, and a clear action plan. All consultations are with PAAB-registered practitioners." },
+    { q: "What does a tax accountant consultation cover?", a: "A Premasse tax consultation covers your current tax obligations, potential savings, compliance gaps, and a clear action plan. All consultations are with ZIMRA-registered practitioners." },
     { q: "How much does a tax consultation cost in Zimbabwe?", a: "Fees are agreed upfront before the consultation. Contact Premasse for current rates — we price fairly for SMEs and individuals." },
-    { q: "Do I need a registered accountant in Zimbabwe?", a: "For tax advice and submissions, it is strongly recommended to use a PAAB-registered accountant. Premasse practitioners are fully registered with the Public Accountants and Auditors Board of Zimbabwe." },
+    { q: "Do I need a registered accountant in Zimbabwe?", a: "For tax advice and submissions, it is strongly recommended to use a ZIMRA-registered accountant. Premasse practitioners are fully registered with ZIMRA and meet all regulatory requirements." },
   ],
   SME_ACCOUNTING: [
     { q: "What accounting services do small businesses in Zimbabwe need?", a: "Most SMEs need monthly bookkeeping, payroll processing, VAT returns, quarterly management accounts, and annual financial statements. Premasse provides all of these." },
@@ -210,11 +247,22 @@ const FAQS: Record<ServiceCategory, { q: string; a: string }[]> = {
     { q: "What is the difference between bookkeeping and accounting?", a: "Bookkeeping is the daily recording of transactions. Accounting interprets those records to produce financial statements, tax returns, and business insights. Premasse provides both." },
   ],
   STOCK_TAKING: [
-    { q: "What is a physical stock count and why does my business need one?", a: "A physical stock count is an independent verification of all inventory held by your business. It confirms that what is in your system matches what is physically on the shelves or in the warehouse. Regular stock counts help detect theft, errors, and system weaknesses before they become costly." },
+    { q: "What is a physical stock count and why does your business need one?", a: "A physical stock count is an independent verification of all inventory held by your business. It confirms that what is in your system matches what is physically on the shelves or in the warehouse. Regular stock counts help detect theft, errors, and system weaknesses before they become costly." },
     { q: "How long does a physical stock count take in Zimbabwe?", a: "The duration depends on the size and complexity of your inventory. A small retail store may take half a day, while a large warehouse could take several days. Premasse will give you a time estimate after an initial assessment of your site." },
     { q: "Can you conduct stock counts outside business hours?", a: "Yes. Premasse can conduct stock counts after hours, over weekends, or during scheduled downtime to minimise disruption to your operations." },
     { q: "Do you provide a certified stock count report?", a: "Yes. All Premasse stock-taking engagements include a detailed, signed report suitable for management review and external auditors. The report covers count methodology, variances identified, and recommendations." },
-    { q: "What industries do you cover for stock-taking in Zimbabwe?", a: "Premasse serves warehouses, factories, retail stores, supermarkets, pharmacies, and any business that holds physical inventory. If you hold stock, we can count it." },
+  ],
+  COMPLIANCE: [
+    { q: "What is NSSA compliance and why does my business need it?", a: "NSSA (National Social Security Authority) compliance involves registering your business and employees with NSSA and submitting monthly pension and workers' compensation contributions. Compliance is mandatory for all employers in Zimbabwe." },
+    { q: "What is PRAZ compliance?", a: "PRAZ (Procurement Regulatory Authority of Zimbabwe) compliance applies to businesses that want to supply goods or services to government entities. It involves registering on the PRAZ procurement portal and meeting specific requirements for each procurement category." },
+    { q: "What is ZIMDEF and who needs to register?", a: "ZIMDEF (Zimbabwe Manpower Development Fund) levy is a 1% levy on payroll that funds skills training and development. All employers in Zimbabwe with at least one employee must register for ZIMDEF and submit monthly returns." },
+    { q: "Can Premasse help if my business isn't yet compliant with these statutory bodies?", a: "Absolutely. We assess your current compliance status, identify gaps, and handle all back-registrations and submissions to bring you up to date. WE HELP YOU GROW without compliance worries." },
+  ],
+  BUSINESS_ACUMEN: [
+    { q: "What does business acumen training cover?", a: "Our training covers day-to-day business operations, financial literacy, compliance basics, customer acquisition, cash flow management, and growth strategies. We tailor content to your specific startup needs." },
+    { q: "Is this training suitable for complete beginners?", a: "Yes. Our startup business acumen program is designed for first-time entrepreneurs and small business owners who need practical, actionable knowledge — not theory." },
+    { q: "How is the training delivered?", a: "We offer one-on-one consultations, small group workshops, and customised training plans based on your business type and goals. WE HELP YOU GROW at your own pace." },
+    { q: "What's the investment for business acumen training?", a: "We offer SME-friendly pricing with upfront agreements. Contact us for a no-obligation discussion about your specific needs and we'll provide a clear quote." },
   ],
 };
 
@@ -233,11 +281,11 @@ export default async function ServiceDetailPage({
 
   if (!service || !service.isActive) notFound();
 
-  const seo          = SEO_CONFIG[service.category];
+  const seo          = SEO_CONFIG[service.category] || SEO_CONFIG.TAX_ACCOUNTING;
   const preparations = WHAT_TO_PREPARE[service.category] ?? [];
   const faqs         = FAQS[service.category] ?? [];
   const canonicalUrl = `${SITE_URL}/services/${slug}`;
-  const categoryImage = CATEGORY_IMAGES[service.category];
+  const categoryImage = CATEGORY_IMAGES[service.category] || CATEGORY_IMAGES.TAX_ACCOUNTING;
 
   const serviceStructuredData = {
     "@context": "https://schema.org",
@@ -256,7 +304,7 @@ export default async function ServiceDetailPage({
           "@type": "Country",
           name:    "Zimbabwe",
         },
-        serviceType: CATEGORY_LABELS[service.category],
+        serviceType: CATEGORY_LABELS[service.category] || "Business Services",
       },
       ...(faqs.length > 0 ? [{
         "@type": "FAQPage",
@@ -282,7 +330,7 @@ export default async function ServiceDetailPage({
       />
       <main>
         {/* Hero with dynamic image based on service category */}
-        <section className="relative min-h-[70vh] bg-navy overflow-hidden flex items-center">
+        <section className="relative min-h-[70vh] bg-green-dark overflow-hidden flex items-center">
           {/* Architectural grid overlay */}
           <div
             className="absolute inset-0 pointer-events-none"
@@ -294,7 +342,7 @@ export default async function ServiceDetailPage({
             }}
           />
 
-          {/* Dynamic hero image based on service category */}
+          {/* Dynamic hero image based on service category - diverse African context */}
           <div
             className="absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none"
             aria-hidden="true"
@@ -308,19 +356,19 @@ export default async function ServiceDetailPage({
               sizes="50vw"
               priority
             />
-            {/* Navy fade from left */}
+            {/* Green fade from left */}
             <div
               className="absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(to right, #0A2540 0%, #0A2540 20%, rgba(10,37,64,0.7) 55%, rgba(10,37,64,0.15) 100%)",
+                  "linear-gradient(to right, #1B5E20 0%, #1B5E20 20%, rgba(27,94,32,0.7) 55%, rgba(27,94,32,0.15) 100%)",
               }}
             />
-            {/* Navy fade from bottom */}
+            {/* Green fade from bottom */}
             <div
               className="absolute inset-0"
               style={{
-                background: "linear-gradient(to top, #0A2540 0%, transparent 40%)",
+                background: "linear-gradient(to top, #1B5E20 0%, transparent 40%)",
               }}
             />
           </div>
@@ -349,7 +397,7 @@ export default async function ServiceDetailPage({
               </div>
 
               <span className="inline-block font-body text-[10px] tracking-[0.2em] uppercase font-semibold text-gold border border-gold/40 px-2.5 py-1 rounded-sm mb-5">
-                {CATEGORY_LABELS[service.category]}
+                {CATEGORY_LABELS[service.category] || "Service"}
               </span>
 
               <h1
@@ -385,7 +433,7 @@ export default async function ServiceDetailPage({
             className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
             style={{
               background:
-                "linear-gradient(to bottom, transparent, rgba(10,37,64,0.8))",
+                "linear-gradient(to bottom, transparent, rgba(27,94,32,0.8))",
             }}
             aria-hidden="true"
           />
@@ -428,13 +476,13 @@ export default async function ServiceDetailPage({
                 <ol className="space-y-5">
                   {[
                     { n: "1", title: "Submit your request", body: "Fill in the form with a brief description. It takes less than 2 minutes." },
-                    { n: "2", title: "We review and contact you", body: "A registered practitioner reviews your submission and contacts you within one business day." },
-                    { n: "3", title: "We handle everything", body: "We complete the service, prepare all documentation, and deliver the final result to you." },
+                    { n: "2", title: "We review and contact you", body: "A registered ZIMRA practitioner reviews your submission and contacts you within one business day." },
+                    { n: "3", title: "We handle everything", body: "We complete the service, prepare all documentation, and deliver the final result to you. WE HELP YOU GROW." },
                   ].map(({ n, title, body }) => (
                     <li key={n} className="flex gap-5">
                       <span className="font-display text-3xl text-gold/30 font-bold leading-none flex-shrink-0 w-6 pt-0.5">{n}</span>
                       <div>
-                        <p className="font-body text-navy font-medium mb-1">{title}</p>
+                        <p className="font-body text-green-dark font-medium mb-1">{title}</p>
                         <p className="font-body text-slate/70 text-sm leading-relaxed">{body}</p>
                       </div>
                     </li>
@@ -451,7 +499,7 @@ export default async function ServiceDetailPage({
                   <div className="space-y-5">
                     {faqs.map((faq, i) => (
                       <div key={i} className="border-b border-gray-100 pb-5">
-                        <h2 className="font-display text-navy text-base font-semibold mb-2">
+                        <h2 className="font-display text-green-dark text-base font-semibold mb-2">
                           {faq.q}
                         </h2>
                         <p className="font-body text-slate text-sm leading-relaxed">{faq.a}</p>
@@ -464,21 +512,21 @@ export default async function ServiceDetailPage({
 
             <aside className="space-y-5">
               <div className="bg-white border border-gray-100 rounded-sm p-6 sticky top-6">
-                <h3 className="font-display text-navy text-lg font-semibold mb-2">Get started today</h3>
+                <h3 className="font-display text-green-dark text-lg font-semibold mb-2">Get started today</h3>
                 <p className="font-body text-slate/70 text-sm leading-relaxed mb-6">
                   Submit a request and we&apos;ll be in touch within one business day.
                 </p>
 
                 <Link
                   href={`/request?service=${service.slug}`}
-                  className="btn-gold block w-full font-body font-semibold text-navy px-6 py-3.5 rounded-sm text-sm tracking-wide text-center mb-4"
+                  className="btn-green block w-full font-body font-semibold text-white px-6 py-3.5 rounded-sm text-sm tracking-wide text-center mb-4"
                 >
                   Request this service
                 </Link>
 
                 <Link
                   href="/contact"
-                  className="block w-full font-body text-navy border border-navy/20 hover:border-navy/50 px-6 py-3.5 rounded-sm text-sm tracking-wide text-center transition-colors"
+                  className="block w-full font-body text-green-dark border border-green-dark/20 hover:border-green-dark/50 px-6 py-3.5 rounded-sm text-sm tracking-wide text-center transition-colors"
                 >
                   Ask a question first
                 </Link>
@@ -491,12 +539,13 @@ export default async function ServiceDetailPage({
 
                 <div className="mt-6 pt-5 border-t border-gray-100 space-y-2">
                   {[
-                    "Independent & certified team",
+                    "ZIMRA registered & certified team",
                     "Response within 1 business day",
                     "Detailed professional reports",
+                    "WE HELP YOU GROW",
                   ].map((t) => (
                     <div key={t} className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-primary flex-shrink-0" />
                       <span className="font-body text-slate/60 text-xs">{t}</span>
                     </div>
                   ))}
@@ -505,7 +554,7 @@ export default async function ServiceDetailPage({
 
               <Link
                 href="/services"
-                className="flex items-center gap-2 font-body text-slate/50 text-sm hover:text-navy transition-colors"
+                className="flex items-center gap-2 font-body text-slate/50 text-sm hover:text-green-dark transition-colors"
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                   <path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

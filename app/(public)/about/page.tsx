@@ -8,17 +8,17 @@ import Image from "next/image";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Premasse Business Services is a registered tax and business services firm based in Harare, Zimbabwe, serving SMEs and individuals across the country.",
+    "Premasse Business Services is a ZIMRA-registered tax and business services firm based in Harare, Zimbabwe, serving SMEs and individuals across the country. WE HELP YOU GROW.",
 };
 
 const VALUES = [
   {
-    title: "Registered practitioners",
-    body: "All our accountants are registered with the Public Accountants and Auditors Board (PAAB) of Zimbabwe. You deal with qualified professionals, not junior staff.",
+    title: "ZIMRA-registered practitioners",
+    body: "All our accountants are ZIMRA-registered professionals. You deal with qualified experts who understand Zimbabwe's tax system inside out.",
   },
   {
     title: "Local expertise",
-    body: "We understand Zimbabwe's tax legislation, ZIMRA processes, and the Companies and Other Business Entities Act inside and out. No guesswork.",
+    body: "We understand Zimbabwe's tax legislation, ZIMRA processes, NSSA, PRAZ, ZIMDEF, and the Companies and Other Business Entities Act inside and out. No guesswork.",
   },
   {
     title: "Transparent fees",
@@ -28,22 +28,27 @@ const VALUES = [
     title: "End-to-end handling",
     body: "We don't hand you a form and wish you luck. We prepare, submit, and follow up with ZIMRA and relevant authorities until the job is fully done.",
   },
+  {
+    title: "WE HELP YOU GROW",
+    body: "Beyond compliance, we provide business acumen and practical guidance to help startups and SMEs thrive in Zimbabwe's unique business environment.",
+  },
 ];
 
 const SERVICES_SUMMARY = [
-  "Registered Tax Accountant Consultations",
+  "ZIMRA Registered Tax Accountant Consultations",
   "Company Registration",
-  "ZIMRA / Tax Registration",
+  "NSSA · PRAZ · ZIMDEF Compliance",
+  "Accounting & Bookkeeping Services",
   "Tax Clearance Certificates (ITF263)",
-  "Accounting Services for SMEs",
+  "Startup Business Acumen",
 ];
 
 export default function AboutPage() {
   return (
     <>
       <main>
-        {/* Hero with image - matching homepage style */}
-        <section className="relative min-h-[70vh] bg-navy overflow-hidden flex items-center">
+        {/* Hero with image - diverse team */}
+        <section className="relative min-h-[70vh] bg-green-dark overflow-hidden flex items-center">
           {/* Architectural grid overlay */}
           <div
             className="absolute inset-0 pointer-events-none"
@@ -55,33 +60,33 @@ export default function AboutPage() {
             }}
           />
 
-          {/* Hero image — right-side bleed, professional African business context */}
+          {/* Hero image — right-side bleed, diverse African business context */}
           <div
             className="absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none"
             aria-hidden="true"
           >
             <Image
-              src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&q=85&auto=format&fit=crop"
-              alt="Professional team meeting"
+              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=85&auto=format&fit=crop"
+              alt="Diverse professional team collaborating"
               fill
               className="object-cover object-center"
               style={{ opacity: 1 }}
               sizes="50vw"
               priority
             />
-            {/* Navy fade from left */}
+            {/* Green fade from left */}
             <div
               className="absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(to right, #0A2540 0%, #0A2540 20%, rgba(10,37,64,0.7) 55%, rgba(10,37,64,0.15) 100%)",
+                  "linear-gradient(to right, #1B5E20 0%, #1B5E20 20%, rgba(27,94,32,0.7) 55%, rgba(27,94,32,0.15) 100%)",
               }}
             />
-            {/* Navy fade from bottom */}
+            {/* Green fade from bottom */}
             <div
               className="absolute inset-0"
               style={{
-                background: "linear-gradient(to top, #0A2540 0%, transparent 40%)",
+                background: "linear-gradient(to top, #1B5E20 0%, transparent 40%)",
               }}
             />
           </div>
@@ -115,7 +120,7 @@ export default function AboutPage() {
                 }}
               >
                 A firm built for{" "}
-                <em className="text-gold not-italic">Zimbabwean business.</em>
+                <em className="text-gold not-italic">Zimbabwean business growth.</em>
               </h1>
               <p
                 className="font-body text-white/60 leading-relaxed"
@@ -124,10 +129,7 @@ export default function AboutPage() {
                   maxWidth: "560px",
                 }}
               >
-                Premasse Business Services is a registered tax and business
-                services firm based in Harare. We help SMEs and individuals stay
-                compliant, get registered, and focus on growing their businesses
-                rather than chasing paperwork.
+                Premasse Business Services is a ZIMRA-registered tax and business services firm based in Harare. We help SMEs and individuals stay compliant, get registered, and grow their businesses rather than chasing paperwork. WE HELP YOU GROW.
               </p>
             </div>
           </div>
@@ -137,7 +139,7 @@ export default function AboutPage() {
             className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
             style={{
               background:
-                "linear-gradient(to bottom, transparent, rgba(10,37,64,0.8))",
+                "linear-gradient(to bottom, transparent, rgba(27,94,32,0.8))",
             }}
             aria-hidden="true"
           />
@@ -153,18 +155,14 @@ export default function AboutPage() {
                   Our mission
                 </span>
               </div>
-              <h2 className="font-display text-navy text-3xl md:text-4xl leading-tight mb-6">
+              <h2 className="font-display text-green-dark text-3xl md:text-4xl leading-tight mb-6">
                 Compliance shouldn&apos;t be a full-time job.
               </h2>
               <p className="font-body text-slate text-base leading-relaxed mb-4">
-                Too many Zimbabwean business owners spend hours navigating ZIMRA
-                portals, chasing ITF263 certificates, and trying to decode the
-                Companies Act — time that should be spent running their business.
+                Too many Zimbabwean business owners spend hours navigating ZIMRA portals, chasing compliance certificates, and trying to decode regulations — time that should be spent running and growing their business.
               </p>
               <p className="font-body text-slate text-base leading-relaxed">
-                Premasse exists to take that burden off your desk entirely. We
-                handle the tax registrations, clearances, and accounting so you
-                can concentrate on what you&apos;re actually good at.
+                Premasse exists to take that burden off your desk entirely. We handle the registrations, compliance across all authorities, and accounting so you can concentrate on what you&apos;re actually good at.
               </p>
             </div>
 
@@ -186,7 +184,7 @@ export default function AboutPage() {
               <div className="pt-4">
                 <Link
                   href="/services"
-                  className="font-body text-navy text-sm underline underline-offset-2 decoration-gold hover:decoration-2 transition-all"
+                  className="font-body text-green-dark text-sm underline underline-offset-2 decoration-gold hover:decoration-2 transition-all"
                 >
                   View all services →
                 </Link>
@@ -196,7 +194,7 @@ export default function AboutPage() {
         </div>
 
         {/* Values section */}
-        <div className="bg-navy py-24 px-6">
+        <div className="bg-green-dark py-24 px-6">
           <div className="mx-auto max-w-4xl">
             <div className="mb-14">
               <div className="flex items-center gap-3 mb-5">
@@ -214,7 +212,7 @@ export default function AboutPage() {
               {VALUES.map((v, i) => (
                 <div
                   key={v.title}
-                  className="bg-navy hover:bg-navy-light transition-colors duration-300 p-8"
+                  className="bg-green-dark hover:bg-green transition-colors duration-300 p-8"
                 >
                   <span className="font-display text-4xl text-gold/20 font-bold block mb-5 leading-none">
                     {String(i + 1).padStart(2, "0")}
@@ -241,7 +239,7 @@ export default function AboutPage() {
                   Find us
                 </span>
               </div>
-              <p className="font-display text-navy text-2xl font-semibold mb-1">
+              <p className="font-display text-green-dark text-2xl font-semibold mb-1">
                 Based in Harare, Zimbabwe.
               </p>
               <p className="font-body text-slate text-base">
@@ -249,7 +247,7 @@ export default function AboutPage() {
               </p>
               <a
                 href="mailto:info@premasse.co.zw"
-                className="font-body text-navy text-sm underline underline-offset-2 decoration-gold hover:decoration-2 transition-all mt-3 inline-block"
+                className="font-body text-green-dark text-sm underline underline-offset-2 decoration-gold hover:decoration-2 transition-all mt-3 inline-block"
               >
                 info@premasse.co.zw
               </a>
@@ -258,13 +256,13 @@ export default function AboutPage() {
             <div className="flex flex-col sm:flex-row gap-4 flex-shrink-0">
               <Link
                 href="/request"
-                className="btn-gold font-body font-semibold text-navy px-8 py-4 rounded-sm text-base tracking-wide text-center"
+                className="btn-gold font-body font-semibold text-green-dark px-8 py-4 rounded-sm text-base tracking-wide text-center"
               >
                 Request a service
               </Link>
               <Link
                 href="/contact"
-                className="font-body text-navy border border-navy/25 hover:border-navy px-8 py-4 rounded-sm text-base tracking-wide text-center transition-colors"
+                className="font-body text-green-dark border border-green-dark/25 hover:border-green-dark px-8 py-4 rounded-sm text-base tracking-wide text-center transition-colors"
               >
                 Contact us
               </Link>

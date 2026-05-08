@@ -46,7 +46,7 @@ export default function Navbar() {
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      isScrolled || isMenuOpen ? "bg-navy shadow-lg" : "absolute bg-transparent"
+      isScrolled || isMenuOpen ? "bg-green-dark shadow-lg" : "absolute bg-transparent"
     }`}>
       <nav className="mx-auto max-w-7xl px-6 lg:px-12 flex items-center justify-between h-20">
         {/* Logo */}
@@ -73,7 +73,7 @@ export default function Navbar() {
 
           <Link
             href="/request"
-            className="btn-gold text-navy text-sm font-body font-semibold px-5 py-2.5 rounded-sm tracking-wide"
+            className="btn-gold text-green-dark text-sm font-body font-semibold px-5 py-2.5 rounded-sm tracking-wide"
           >
             Request a service
           </Link>
@@ -86,13 +86,11 @@ export default function Navbar() {
           aria-label={isMenuOpen ? "Close menu" : "Open menu"}
         >
           {isMenuOpen ? (
-            // Close icon
             <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
               <line x1="3" y1="3" x2="19" y2="19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               <line x1="19" y1="3" x2="3" y2="19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           ) : (
-            // Hamburger icon
             <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
               <line x1="2" y1="5"  x2="20" y2="5"  stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               <line x1="2" y1="11" x2="20" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -103,7 +101,7 @@ export default function Navbar() {
 
         {/* Mobile menu overlay */}
         <div
-          className={`fixed inset-0 bg-navy/95 backdrop-blur-sm transition-all duration-300 md:hidden ${
+          className={`fixed inset-0 bg-green-dark/95 backdrop-blur-sm transition-all duration-300 md:hidden ${
             isMenuOpen 
               ? "opacity-100 visible" 
               : "opacity-0 invisible pointer-events-none"
@@ -114,7 +112,7 @@ export default function Navbar() {
 
         {/* Mobile menu panel */}
         <div
-          className={`fixed left-0 right-0 bg-navy transition-all duration-300 md:hidden ${
+          className={`fixed left-0 right-0 bg-green-dark transition-all duration-300 md:hidden ${
             isMenuOpen 
               ? "opacity-100 visible translate-y-0" 
               : "opacity-0 invisible -translate-y-4"
@@ -136,7 +134,7 @@ export default function Navbar() {
             <Link
               href="/request"
               onClick={() => setIsMenuOpen(false)}
-              className="btn-gold text-navy text-center font-body font-semibold px-5 py-3 rounded-sm tracking-wide mt-2"
+              className="btn-gold text-green-dark text-center font-body font-semibold px-5 py-3 rounded-sm tracking-wide mt-2"
             >
               Request a service
             </Link>
