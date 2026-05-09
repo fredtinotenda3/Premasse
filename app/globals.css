@@ -4,9 +4,9 @@
 
 @layer base {
   :root {
-    --green-dark:   #1B5E20;
-    --green:        #2E7D32;
-    --green-light:  #4CAF50;
+    --green-dark:   #0D3B0F;    /* Darker green - was #1B5E20 */
+    --green:        #1B5E20;    /* Medium dark green - was #2E7D32 */
+    --green-light:  #2E7D32;    /* Lighter but still dark - was #4CAF50 */
     --green-pale:   #E8F5E9;
     --gold:         #C9A84C;
     --gold-light:   #E8C96A;
@@ -58,7 +58,7 @@
   animation: fadeUp 0.6s ease forwards;
 }
 
-/* Gold shimmer on hover for CTA buttons */
+/* Gold shimmer on hover for CTA buttons - NO BLUR */
 @keyframes shimmer {
   0%   { background-position: -200% center; }
   100% { background-position:  200% center; }
@@ -78,8 +78,8 @@
 
 .btn-gold:hover {
   background-position: right center;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(201, 168, 76, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(201, 168, 76, 0.4);
 }
 
 .btn-gold:active {
@@ -100,8 +100,8 @@
 
 .btn-green:hover {
   background-position: right center;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(46, 125, 50, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(46, 125, 50, 0.4);
 }
 
 .btn-green:active {
