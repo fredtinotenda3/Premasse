@@ -4,8 +4,8 @@
 // Also used by the PaymentPanel component to refresh status on page load.
 
 import { NextRequest, NextResponse } from "next/server";
-import { auth }                     from "@/auth";
-import { prisma }                   from "@/lib/prisma";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { createPaynowClient, mapPaynowStatus } from "@/lib/paynow";
 
 export async function GET(req: NextRequest) {
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   }
 
   const payment = await prisma.payment.findUnique({
-    where:  { id: paymentId },
+    where: { id: paymentId },
     select: { id: true, pollUrl: true, status: true, requestId: true },
   });
 
@@ -39,15 +39,38 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const paynow  = createPaynowClient(payment.requestId);
-    const result  = await paynow.pollTransaction(payment.pollUrl);
-    const newStatus = mapPaynowStatus(result.status());
+    const paynow = createPaynowClient(payment.requestId);
+    const result = await paynow.pollTransaction(payment.pollUrl);
+    
+    // FIX: The Paynow SDK returns different structures based on version
+    // Try multiple ways to get the status
+    let paynowStatus: string;
+    
+    if (typeof result.status === 'function') {
+      // Old SDK version
+      paynowStatus = result.status();
+    } else if (typeof result.status === 'string') {
+      // Direct string property
+      paynowStatus = result.status;
+    } else if (result.data && typeof result.data.status === 'string') {
+      // Nested in data object
+      paynowStatus = result.data.status;
+    } else {
+      // Fallback - check the result object structure
+      console.log("[paynow/poll] Result structure:", JSON.stringify(result, null, 2));
+      // Assume still pending if we can't determine
+      paynowStatus = "pending";
+    }
+    
+    console.log(`[paynow/poll] Payment ${paymentId} status from Paynow: ${paynowStatus}`);
+    
+    const newStatus = mapPaynowStatus(paynowStatus);
 
     // If status changed, update DB
     if (newStatus !== payment.status) {
       await prisma.payment.update({
         where: { id: paymentId },
-        data:  {
+        data: {
           status: newStatus,
           paidAt: newStatus === "PAID" ? new Date() : undefined,
         },
