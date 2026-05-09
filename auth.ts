@@ -1,20 +1,16 @@
 // auth.ts
-// NextAuth v5 — Admin credentials + Client magic link via Resend.
-
 import NextAuth, { type DefaultSession } from "next-auth";
-import CredentialsProvider               from "next-auth/providers/credentials";
-import { PrismaAdapter }                 from "@auth/prisma-adapter";
-import { compare }                       from "bcryptjs";
-import { prisma }                        from "@/lib/prisma";
-import { z }                             from "zod";
-import { Resend }                        from "resend";
-
-// ── Type extensions ───────────────────────────────────────────────────────────
+import CredentialsProvider from "next-auth/providers/credentials";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { compare } from "bcryptjs";
+import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+import { Resend } from "resend";
 
 declare module "next-auth" {
   interface Session {
     user: {
-      id:   string;
+      id: string;
       role: "ADMIN" | "CLIENT";
     } & DefaultSession["user"];
   }
@@ -25,39 +21,36 @@ declare module "next-auth" {
 
 declare module "next-auth/jwt" {
   interface JWT {
-    id:   string;
+    id: string;
     role: "ADMIN" | "CLIENT";
   }
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 const credentialsSchema = z.object({
-  email:    z.string().email(),
+  email: z.string().email(),
   password: z.string().min(8),
 });
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-// ── NextAuth config ───────────────────────────────────────────────────────────
+const resendApiKey = process.env.RESEND_API_KEY;
+const resend = new Resend(resendApiKey);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma) as any,
   session: { strategy: "jwt" },
+  debug: true,
 
   pages: {
-    signIn:        "/login",
-    error:         "/login",
+    signIn: "/login",
+    error: "/login",
     verifyRequest: "/portal/verify",
   },
 
-  // Cookie configuration for better mobile support
   cookies: {
     sessionToken: {
       name: `next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameSite: "lax", // Important for mobile browsers
+        sameSite: "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
       },
@@ -65,12 +58,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 
   providers: [
-    // ── Admin: email + password ───────────────────────────────────────────────
     CredentialsProvider({
-      id:   "credentials",
+      id: "credentials",
       name: "credentials",
       credentials: {
-        email:    { label: "Email",    type: "email"    },
+        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
@@ -80,10 +72,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const { email, password } = parsed.data;
 
         const user = await prisma.user.findUnique({
-          where:   { email },
+          where: { email },
           include: {
             accounts: {
-              where:  { provider: "credentials" },
+              where: { provider: "credentials" },
               select: { access_token: true },
             },
           },
@@ -97,67 +89,79 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const match = await compare(password, hashedPassword);
         if (!match) return null;
 
-        console.info(`[auth] Admin login successful: ${email}`);
         return {
-          id:    user.id,
-          name:  user.name,
+          id: user.id,
+          name: user.name,
           email: user.email,
-          role:  user.role,
+          role: user.role,
         };
       },
     }),
 
-    // ── Client: magic link via Resend ─────────────────────────────────────────
     {
-      id:     "email",
-      name:   "Email",
-      type:   "email" as const,
-      from:   process.env.EMAIL_FROM ?? "Premasse <onboarding@resend.dev>",
+      id: "email",
+      name: "Email",
+      type: "email" as const,
+      from: process.env.EMAIL_FROM ?? "Premasse <onboarding@resend.dev>",
       server: {},
       maxAge: 24 * 60 * 60,
-      async sendVerificationRequest({
-        identifier: email,
-        url,
-      }: {
-        identifier: string;
-        url:        string;
-      }) {
-        // Only send magic links to existing CLIENT accounts
+      async sendVerificationRequest({ identifier: email, url }) {
+        console.log(`📧 Sending magic link to: ${email}`);
+        
+        // Check if user exists and is CLIENT
         const user = await prisma.user.findUnique({
-          where:  { email },
-          select: { role: true },
+          where: { email },
+          select: { role: true, name: true },
         });
-        if (!user || user.role !== "CLIENT") return;
+
+        if (!user) {
+          console.log(`❌ No user found for: ${email}`);
+          return;
+        }
+
+        if (user.role !== "CLIENT") {
+          console.log(`❌ User ${email} has role ${user.role}, not CLIENT`);
+          return;
+        }
+
+        console.log(`✅ Sending magic link to CLIENT: ${email}`);
 
         const { error } = await resend.emails.send({
-          from:    process.env.EMAIL_FROM ?? "Premasse <onboarding@resend.dev>",
-          to:      [email],
-          subject: "Your Premasse sign-in link",
+          from: process.env.EMAIL_FROM ?? "Premasse <onboarding@resend.dev>",
+          to: [email],
+          subject: "🔐 Your Premasse sign-in link",
           html: `
-            <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:40px 24px">
-              <h2 style="color:#1B5E20;font-size:22px;margin-bottom:8px">Sign in to Premasse</h2>
-              <p style="color:#4A5568;font-size:15px;line-height:1.6;margin-bottom:28px">
-                Click the button below to sign in to your Premasse client portal.
-                This link expires in 24 hours and can only be used once.
-              </p>
-              <a href="${url}"
-                style="display:inline-block;background:#1B5E20;color:#C9A84C;font-weight:600;
-                       padding:14px 28px;border-radius:2px;text-decoration:none;font-size:14px">
+            <div style="font-family: sans-serif; max-width: 500px; padding: 20px;">
+              <h1 style="color: #1B5E20;">Premasse</h1>
+              <p style="color: #C9A84C;">Business Services</p>
+              
+              <h2>Sign in to your account</h2>
+              
+              <p>Hello ${user.name?.split(" ")[0] ?? "there"},</p>
+              
+              <p>Click the button below to sign in to your Premasse client portal.</p>
+              
+              <a href="${url}" 
+                 style="display: inline-block; background-color: #1B5E20; color: #C9A84C; 
+                        padding: 12px 24px; text-decoration: none; border-radius: 4px;
+                        margin: 20px 0;">
                 Sign in to portal →
               </a>
-              <p style="color:#9CA3AF;font-size:12px;margin-top:28px">
-                If you didn't request this, you can safely ignore this email.
-              </p>
+              
+              <p>This link expires in 24 hours.</p>
+              
+              <hr />
+              <p style="color: #666; font-size: 12px;">Premasse Business Services · Harare, Zimbabwe</p>
             </div>
           `,
         });
 
         if (error) {
-          console.error("[auth] Magic link email failed:", error);
+          console.error(`❌ Failed to send magic link to ${email}:`, error);
           throw new Error("Failed to send sign-in email");
         }
 
-        console.info(`[auth] Magic link sent to: ${email}`);
+        console.log(`✅ Magic link sent to: ${email}`);
       },
     },
   ],
@@ -165,18 +169,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id   = user.id   ?? token.id;
-        token.role = user.role ?? token.role;
-        console.log("[auth/jwt] Token set:", { id: token.id, role: token.role, email: token.email });
+        token.id = user.id;
+        token.role = user.role;
       }
       return token;
     },
 
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.id   = token.id   as string;
+        session.user.id = token.id as string;
         session.user.role = token.role as "ADMIN" | "CLIENT";
-        console.log("[auth/session] Session set:", { id: session.user.id, role: session.user.role, email: session.user.email });
       }
       return session;
     },
