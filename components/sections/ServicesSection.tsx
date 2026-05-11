@@ -1,9 +1,12 @@
 import Link from "next/link";
+import Image from "next/image";
 
 const SERVICE_GROUPS = [
   {
     group: "Tax & Compliance",
     accent: "#C9A84C",
+    image:
+      "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=1400&q=90&auto=format&fit=crop",
     services: [
       {
         category: "Tax",
@@ -52,6 +55,8 @@ const SERVICE_GROUPS = [
   {
     group: "Business Formation & Growth",
     accent: "#C9A84C",
+    image:
+      "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=1400&q=90&auto=format&fit=crop",
     services: [
       {
         category: "Registration",
@@ -93,6 +98,8 @@ const SERVICE_GROUPS = [
   {
     group: "Stock-Taking & Inventory",
     accent: "#C9A84C",
+    image:
+      "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1400&q=90&auto=format&fit=crop",
     services: [
       {
         category: "Stock",
@@ -128,86 +135,250 @@ const SERVICE_GROUPS = [
 
 export default function ServicesSection() {
   return (
-    <section className="bg-cream py-28" id="services">
-      <div className="mx-auto max-w-7xl px-6 lg:px-12">
+    <section
+      className="relative bg-[#f7f4ee] py-28 overflow-hidden"
+      id="services"
+    >
+      {/* Ambient background */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-120px] left-[-80px] w-[340px] h-[340px] rounded-full bg-gold/10 blur-3xl" />
+        <div className="absolute bottom-[-140px] right-[-100px] w-[420px] h-[420px] rounded-full bg-emerald-100 blur-3xl" />
+      </div>
+
+      <div className="relative mx-auto max-w-7xl px-6 lg:px-12">
 
         {/* Section header */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20 items-end">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-24 items-end">
+          
           <div>
             <div className="flex items-center gap-3 mb-6">
               <div className="h-px w-10 bg-gold" />
+
               <span className="text-gold text-xs tracking-[0.25em] uppercase font-body font-medium">
                 What we do
               </span>
             </div>
-            <h2 className="font-display text-green-dark leading-[1.1]" style={{ fontSize: "clamp(2.2rem, 4vw, 3.5rem)" }}>
+
+            <h2
+              className="font-display text-green-dark leading-[1.05]"
+              style={{
+                fontSize: "clamp(2.4rem, 4vw, 4rem)",
+              }}
+            >
               Services built for
               <br />
-              <em className="text-gold">Zimbabwean business.</em>
+
+              <em className="text-gold">
+                Zimbabwean business.
+              </em>
             </h2>
           </div>
+
           <div className="lg:pb-2">
-            <p className="font-body text-slate text-base leading-relaxed max-w-sm">
-              Every service is handled by ZIMRA-registered practitioners who understand the local regulatory environment.
+            <p className="font-body text-slate text-base leading-relaxed max-w-md">
+              Every service is handled by ZIMRA-registered practitioners who
+              understand the local regulatory environment.
             </p>
+
             <Link
               href="/services"
-              className="inline-flex items-center gap-2 font-body text-green-dark text-sm mt-6 border-b border-green-dark/20 hover:border-green-dark pb-0.5 transition-colors duration-150"
+              className="
+                inline-flex
+                items-center
+                gap-2
+                font-body
+                text-green-dark
+                text-sm
+                mt-6
+                border-b
+                border-green-dark/20
+                hover:border-green-dark
+                pb-0.5
+                transition-colors
+                duration-150
+              "
             >
               View all services
+
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                <path
+                  d="M3 7h8M7 3l4 4-4 4"
+                  stroke="currentColor"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </Link>
           </div>
         </div>
 
         {/* Service groups */}
-        <div className="space-y-16">
+        <div className="space-y-24">
           {SERVICE_GROUPS.map((group) => (
             <div key={group.group}>
+              
               {/* Group label */}
-              <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center gap-4 mb-8">
                 <span className="font-body text-xs text-slate/40 tracking-[0.18em] uppercase font-medium">
                   {group.group}
                 </span>
+
                 <div className="flex-1 h-px bg-gray-200" />
               </div>
 
+              {/* Feature image */}
+              <div className="relative rounded-[2rem] overflow-hidden mb-10 min-h-[260px] lg:min-h-[360px] group shadow-[0_25px_80px_rgba(0,0,0,0.08)]">
+                
+                <Image
+                  src={group.image}
+                  alt={group.group}
+                  fill
+                  sizes="100vw"
+                  className="
+                    object-cover
+                    transition-transform
+                    duration-[4000ms]
+                    group-hover:scale-105
+                  "
+                />
+
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-[#062b22]/75 via-[#062b22]/25 to-gold/10" />
+
+                {/* Content */}
+                <div className="absolute inset-0 flex items-end p-8 lg:p-12">
+                  <div className="max-w-2xl">
+                    
+                    <div className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 backdrop-blur-md px-4 py-2 mb-5">
+                      <div className="w-2 h-2 rounded-full bg-gold" />
+
+                      <span className="text-gold text-[10px] tracking-[0.24em] uppercase font-body font-semibold">
+                        Professional Services
+                      </span>
+                    </div>
+
+                    <h3 className="font-display text-white text-3xl lg:text-5xl leading-tight mb-4">
+                      {group.group}
+                    </h3>
+
+                    <p className="text-white/75 font-body text-sm lg:text-base leading-relaxed max-w-xl">
+                      Trusted solutions tailored for Zimbabwean businesses,
+                      helping organizations remain compliant, efficient,
+                      and growth-focused.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Services grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-px bg-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {group.services.map((service) => (
                   <Link
                     key={service.slug}
                     href={`/services/${service.slug}`}
-                    className="group bg-white p-7 hover:bg-green-dark transition-colors duration-300 flex flex-col min-h-[200px]"
+                    className="
+                      group
+                      relative
+                      overflow-hidden
+                      rounded-[1.8rem]
+                      border
+                      border-black/[0.04]
+                      bg-white/80
+                      backdrop-blur-sm
+                      p-7
+                      transition-all
+                      duration-300
+                      hover:bg-green-dark
+                      hover:-translate-y-1
+                      hover:shadow-[0_25px_60px_rgba(0,0,0,0.12)]
+                    "
                   >
+                    {/* Hover glow */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-gold/10 to-transparent" />
+
                     {/* Category pill */}
-                    <span className="inline-block font-body text-[9px] tracking-[0.22em] uppercase font-semibold text-gold border border-gold/35 group-hover:border-gold/50 px-2 py-0.5 rounded-sm mb-5 w-fit">
+                    <span className="
+                      relative
+                      inline-block
+                      font-body
+                      text-[9px]
+                      tracking-[0.22em]
+                      uppercase
+                      font-semibold
+                      text-gold
+                      border
+                      border-gold/35
+                      group-hover:border-gold/50
+                      px-2.5
+                      py-1
+                      rounded-full
+                      mb-5
+                      w-fit
+                    ">
                       {service.category}
                     </span>
 
                     {/* Name */}
-                    <h3 className="font-display text-green-dark group-hover:text-white text-base font-semibold leading-snug mb-3 transition-colors duration-300">
+                    <h3 className="
+                      relative
+                      font-display
+                      text-green-dark
+                      group-hover:text-white
+                      text-lg
+                      font-semibold
+                      leading-snug
+                      mb-4
+                      transition-colors
+                      duration-300
+                    ">
                       {service.name}
                     </h3>
 
                     {/* Description */}
-                    <p className="font-body text-slate/60 group-hover:text-white/55 text-sm leading-relaxed flex-1 transition-colors duration-300">
+                    <p className="
+                      relative
+                      font-body
+                      text-slate/65
+                      group-hover:text-white/65
+                      text-sm
+                      leading-relaxed
+                      flex-1
+                      transition-colors
+                      duration-300
+                    ">
                       {service.description}
                     </p>
 
                     {/* Arrow */}
-                    <div className="mt-6 flex items-center gap-1.5 text-gold text-xs font-body font-medium">
-                      <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">Learn more</span>
+                    <div className="relative mt-7 flex items-center gap-2 text-gold text-xs font-body font-semibold tracking-wide uppercase">
+                      
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        Learn more
+                      </span>
+
                       <svg
                         width="14"
                         height="14"
                         viewBox="0 0 14 14"
                         fill="none"
-                        className="transform translate-x-0 group-hover:translate-x-1 transition-transform duration-200 opacity-0 group-hover:opacity-100"
+                        className="
+                          transform
+                          translate-x-0
+                          group-hover:translate-x-1
+                          transition-all
+                          duration-200
+                          opacity-0
+                          group-hover:opacity-100
+                        "
                       >
-                        <path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path
+                          d="M2 7h10M7 2l5 5-5 5"
+                          stroke="currentColor"
+                          strokeWidth="1.3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
                       </svg>
                     </div>
                   </Link>
@@ -218,15 +389,43 @@ export default function ServicesSection() {
         </div>
 
         {/* Bottom CTA */}
-        <div className="mt-14 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pt-10 border-t border-gray-200">
-          <p className="font-body text-slate/60 text-sm max-w-md">
-            Don&apos;t see what you need? Describe your situation and we&apos;ll advise on the right service.
-          </p>
+        <div className="mt-20 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 pt-12 border-t border-black/10">
+          
+          <div>
+            <p className="font-body text-slate/60 text-sm max-w-md leading-relaxed">
+              Don&apos;t see what you need? Describe your situation and
+              we&apos;ll advise on the right service for your business.
+            </p>
+          </div>
+
           <Link
             href="/request"
-            className="btn-gold text-green-dark font-body font-semibold px-7 py-3.5 rounded-sm text-sm tracking-wide shrink-0"
+            className="
+              group
+              relative
+              overflow-hidden
+              bg-gold
+              text-green-dark
+              font-body
+              font-semibold
+              px-8
+              py-4
+              rounded-2xl
+              text-sm
+              tracking-[0.14em]
+              uppercase
+              shrink-0
+              transition-all
+              duration-500
+              hover:-translate-y-1
+              hover:shadow-[0_20px_60px_rgba(201,168,76,0.35)]
+            "
           >
-            Request a service
+            <span className="relative z-10">
+              Request a Service
+            </span>
+
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
           </Link>
         </div>
       </div>

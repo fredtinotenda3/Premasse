@@ -3,39 +3,38 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { prisma } from "@/lib/prisma";
 import Script from "next/script";
+import { prisma } from "@/lib/prisma";
 import { ServiceCategory } from "@prisma/client";
+import {
+  ArrowUpRight,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://premasse.co.zw";
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://premasse.co.zw";
 
 export const metadata: Metadata = {
-  title: "Services — Tax, Compliance, Accounting & Business Growth Zimbabwe",
+  title:
+    "Services — Tax, Compliance, Accounting & Business Growth Zimbabwe",
   description:
     "Professional tax, compliance, accounting, and stock-taking services in Zimbabwe: company registration, NSSA, PRAZ, ZIMDEF compliance, ZIMRA tax registration, ITF263 tax clearance, SME accounting, bookkeeping, and startup business acumen. Harare-based ZIMRA-registered practitioners. WE HELP YOU GROW.",
-  alternates: { canonical: `${SITE_URL}/services` },
-  keywords: [
-    "tax services Zimbabwe",
-    "business services Harare",
-    "company registration Zimbabwe",
-    "tax clearance Zimbabwe",
-    "ZIMRA registration",
-    "accounting services Zimbabwe",
-    "bookkeeping services Zimbabwe",
-    "NSSA compliance Zimbabwe",
-    "PRAZ compliance Zimbabwe",
-    "ZIMDEF compliance Zimbabwe",
-    "startup business acumen Zimbabwe",
-    "stock taking Zimbabwe",
-    "physical stock counting Zimbabwe",
-    "inventory audit Zimbabwe",
-  ],
+  alternates: {
+    canonical: `${SITE_URL}/services`,
+  },
   openGraph: {
     title: "Services | Premasse Business Services Zimbabwe",
     description:
-      "Tax clearance, company registration, NSSA, PRAZ, ZIMDEF compliance, accounting, bookkeeping, and stock-taking services in Zimbabwe. WE HELP YOU GROW.",
+      "Tax clearance, company registration, NSSA, PRAZ, ZIMDEF compliance, accounting, bookkeeping, and stock-taking services in Zimbabwe.",
     url: `${SITE_URL}/services`,
-    images: [{ url: `${SITE_URL}/og-image.png`, width: 1200, height: 630 }],
+    images: [
+      {
+        url: `${SITE_URL}/og-image.png`,
+        width: 1200,
+        height: 630,
+      },
+    ],
   },
 };
 
@@ -77,187 +76,523 @@ export default async function ServicesPage() {
         id="services-structured-data"
         type="application/ld+json"
         strategy="afterInteractive"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListStructuredData) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(itemListStructuredData),
+        }}
       />
 
-      <main>
-        {/* Hero with image - larger, matching homepage height */}
-        <section className="relative min-h-[70vh] bg-green-dark overflow-hidden flex items-center">
-          {/* Architectural grid overlay */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            aria-hidden="true"
-            style={{
-              backgroundImage:
-                "linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px)",
-              backgroundSize: "80px 80px",
-            }}
-          />
+      <main className="bg-[#041f19] overflow-hidden">
+        
+        {/* HERO */}
+        <section className="relative min-h-screen flex items-center overflow-hidden">
+          
+          {/* Ambient background */}
+          <div className="absolute inset-0 pointer-events-none">
+            
+            {/* Gold glow */}
+            <div className="absolute top-[-140px] left-[-120px] w-[500px] h-[500px] rounded-full bg-[#C9A84C]/10 blur-3xl" />
 
-          {/* Hero image — right-side bleed, diverse team */}
-          <div
-            className="absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none"
-            aria-hidden="true"
-          >
-            <Image
-              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=85&auto=format&fit=crop"
-              alt="Diverse business team collaborating"
-              fill
-              className="object-cover object-center"
-              style={{ opacity: 1 }}
-              sizes="50vw"
-              priority
-            />
-            {/* Green fade from left */}
+            {/* Emerald glow */}
+            <div className="absolute bottom-[-220px] right-[-140px] w-[620px] h-[620px] rounded-full bg-emerald-500/10 blur-3xl" />
+
+            {/* Mesh grid */}
             <div
-              className="absolute inset-0"
+              className="absolute inset-0 opacity-[0.04]"
               style={{
-                background:
-                  "linear-gradient(to right, #1B5E20 0%, #1B5E20 20%, rgba(27,94,32,0.7) 55%, rgba(27,94,32,0.15) 100%)",
-              }}
-            />
-            {/* Green fade from bottom */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background: "linear-gradient(to top, #1B5E20 0%, transparent 40%)",
+                backgroundImage:
+                  "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)",
+                backgroundSize: "60px 60px",
               }}
             />
           </div>
 
-          {/* Diagonal gold accent */}
+          {/* Full background image */}
+          <div className="absolute inset-0">
+            
+            <Image
+              src="/images/services/services-hero.png"
+              alt="African business professionals"
+              fill
+              priority
+              sizes="100vw"
+              className="
+                object-cover
+                brightness-[1.02]
+                contrast-[1.05]
+                saturate-[1.05]
+              "
+            />
+
+            {/* Main cinematic overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#041f19]/92 via-[#041f19]/70 to-black/25" />
+
+            {/* Additional dark layer */}
+            <div className="absolute inset-0 bg-black/25" />
+
+            {/* Warm premium tone */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-transparent to-[#C9A84C]/10" />
+
+            {/* Soft vignette */}
+            <div className="absolute inset-0 shadow-[inset_0_0_120px_rgba(0,0,0,0.18)]" />
+          </div>
+
           <div
-            className="absolute inset-0 pointer-events-none"
-            aria-hidden="true"
-            style={{
-              background:
-                "linear-gradient(135deg, transparent 58%, rgba(201,168,76,0.03) 58%, rgba(201,168,76,0.03) 72%, transparent 72%)",
-            }}
-          />
+            className="
+              relative
+              z-10
+              mx-auto
+              max-w-7xl
+              px-6
+              lg:px-12
+              pt-32
+              sm:pt-36
+              pb-20
+              sm:pb-24
+              w-full
+            "
+          >
+            <div
+              className="
+                max-w-3xl
+                relative
+                z-20
+              "
+            >
+              
+              {/* Badge */}
+              <div className="inline-flex items-center gap-3 mb-8">
+                
+                <div className="flex items-center gap-2.5 rounded-full border border-[#C9A84C]/30 bg-[#C9A84C]/10 px-5 py-2.5 backdrop-blur-md">
+                  
+                  <Sparkles className="w-4 h-4 text-[#C9A84C]" />
 
-          {/* Top gold rule */}
-          <div className="absolute top-0 left-0 right-0 h-px bg-gold opacity-20" />
-
-          <div className="relative mx-auto max-w-7xl px-6 lg:px-12 pt-36 pb-28 w-full">
-            <div className="max-w-2xl">
-              {/* Label */}
-              <div
-                className="flex items-center gap-3 mb-8 animate-fade-up"
-                style={{ animationDelay: "0.05s", opacity: 0 }}
-              >
-                <div className="h-px w-10 bg-gold" />
-                <span className="text-gold text-xs tracking-[0.25em] uppercase font-body font-medium">
-                  What we offer
-                </span>
+                  <span className="font-body text-[#C9A84C] text-[11px] tracking-[0.24em] uppercase font-semibold">
+                    Professional Zimbabwean Business Services
+                  </span>
+                </div>
               </div>
 
-              {/* Headline */}
+              {/* Heading */}
               <h1
-                className="font-display text-white leading-[1.08] mb-6 animate-fade-up"
+                className="font-display text-white leading-[0.95] mb-8"
                 style={{
-                  fontSize: "clamp(3rem, 5.5vw, 5.2rem)",
-                  animationDelay: "0.15s",
-                  opacity: 0,
-                  letterSpacing: "-0.01em",
+                  fontSize: "clamp(3.2rem, 6vw, 6.5rem)",
+                  letterSpacing: "-0.05em",
                 }}
               >
-                Our services
+                Services built for
+                <br />
+
+                <span className="relative inline-block text-[#C9A84C] italic">
+                  Zimbabwean business.
+
+                  <span className="absolute left-0 bottom-2 w-full h-[12px] bg-[#C9A84C]/15 blur-sm rounded-full -z-10" />
+                </span>
               </h1>
 
               {/* Description */}
               <p
-                className="font-body text-white/60 leading-relaxed mb-12 animate-fade-up"
-                style={{
-                  fontSize: "1.125rem",
-                  maxWidth: "560px",
-                  animationDelay: "0.28s",
-                  opacity: 0,
-                }}
+                className="
+                  font-body
+                  text-white
+                  text-base
+                  sm:text-lg
+                  lg:text-xl
+                  leading-relaxed
+                  max-w-2xl
+                  mb-12
+                "
               >
-                Professional tax, compliance, accounting, and business growth services for
-                Zimbabwean SMEs and individuals. All work carried out by ZIMRA-registered
-                practitioners. <strong className="text-gold">WE HELP YOU GROW.</strong>
+                Tax, compliance, accounting, advisory, and stock-taking
+                services designed to help Zimbabwean businesses stay compliant,
+                financially organized, and growth-focused.
               </p>
+
+              {/* CTA */}
+              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                
+                <Link
+                  href="/request"
+                  className="
+                    group
+                    relative
+                    overflow-hidden
+                    w-full
+                    sm:w-auto
+                    bg-[#C9A84C]
+                    text-[#041f19]
+                    font-body
+                    font-semibold
+                    px-8
+                    py-4
+                    rounded-2xl
+                    text-sm
+                    tracking-[0.16em]
+                    uppercase
+                    text-center
+                    transition-all
+                    duration-500
+                    hover:-translate-y-1
+                    hover:shadow-[0_20px_60px_rgba(201,168,76,0.35)]
+                  "
+                >
+                  <span className="relative z-10 flex items-center justify-center gap-3">
+                    Request a Service
+
+                    <ArrowUpRight className="w-4 h-4" />
+                  </span>
+
+                  <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+                </Link>
+
+                <Link
+                  href="/contact"
+                  className="
+                    border
+                    w-full
+                    sm:w-auto
+                    border-white/10
+                    bg-white/[0.04]
+                    backdrop-blur-md
+                    text-white
+                    hover:text-[#C9A84C]
+                    transition-all
+                    duration-300
+                    px-8
+                    py-4
+                    rounded-2xl
+                    text-sm
+                    tracking-[0.16em]
+                    uppercase
+                    text-center
+                    hover:-translate-y-1
+                  "
+                >
+                  Speak to us
+                </Link>
+              </div>
+
+              {/* Trust strip */}
+              <div className="flex flex-wrap gap-4 sm:gap-6 mt-10 sm:mt-12">
+                {[
+                  "ZIMRA Registered",
+                  "SME Specialists",
+                  "Zimbabwean Business Advisory",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="flex items-center gap-2"
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#C9A84C]/70" />
+
+                    <span className="text-white/40 text-[11px] tracking-[0.18em] uppercase font-body">
+                      {item}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-
-          {/* Bottom fade */}
-          <div
-            className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
-            style={{
-              background:
-                "linear-gradient(to bottom, transparent, rgba(27,94,32,0.8))",
-            }}
-            aria-hidden="true"
-          />
         </section>
 
-        <div className="bg-cream py-20 px-6">
-          <div className="mx-auto max-w-7xl">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-gray-200">
-              {services.map((service) => (
+        {/* SERVICES GRID */}
+        <section className="relative py-24 sm:py-28">
+          
+          {/* Ambient glow */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute top-[20%] right-[-120px] w-[420px] h-[420px] rounded-full bg-[#C9A84C]/8 blur-3xl" />
+          </div>
+
+          <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
+
+            {/* Section heading */}
+            <div className="mb-14 sm:mb-16">
+              
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-px w-10 bg-[#C9A84C]" />
+
+                <span className="text-[#C9A84C] text-xs tracking-[0.22em] uppercase font-body font-semibold">
+                  What we offer
+                </span>
+              </div>
+
+              <h2
+                className="font-display text-white leading-[1]"
+                style={{
+                  fontSize: "clamp(2.6rem, 4vw, 4.8rem)",
+                  letterSpacing: "-0.04em",
+                }}
+              >
+                Tailored business
+                <br />
+
+                <span className="text-white/55">
+                  solutions.
+                </span>
+              </h2>
+            </div>
+
+            {/* Services cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {services.map((service, index) => (
                 <Link
                   key={service.id}
                   href={`/services/${service.slug}`}
-                  className="group bg-white p-8 hover:bg-green-dark transition-colors duration-300 flex flex-col"
+                  className={`
+                    group
+                    relative
+                    overflow-hidden
+                    rounded-[2rem]
+                    border
+                    border-white/10
+                    bg-white/[0.03]
+                    backdrop-blur-xl
+                    p-8
+                    transition-all
+                    duration-500
+                    hover:-translate-y-1
+                    hover:bg-white/[0.05]
+                    hover:border-[#C9A84C]/20
+                    hover:shadow-[0_30px_80px_rgba(0,0,0,0.25)]
+                    ${
+                      index === 0
+                        ? "xl:col-span-2 xl:min-h-[380px]"
+                        : ""
+                    }
+                  `}
                 >
-                  <span className="inline-block font-body text-[10px] tracking-[0.2em] uppercase font-semibold text-gold border border-gold/40 group-hover:border-gold/60 px-2.5 py-1 rounded-sm mb-6 w-fit">
-                    {CATEGORY_LABELS[service.category]}
-                  </span>
-                  <h2 className="font-display text-green-dark group-hover:text-white text-xl font-semibold leading-snug mb-4 transition-colors duration-300">
-                    {service.name}
-                  </h2>
-                  <p className="font-body text-slate group-hover:text-white/65 text-sm leading-relaxed flex-1 transition-colors duration-300">
-                    {service.description}
-                  </p>
-                  {service.price && (
-                    <p className="font-body text-gold text-sm font-medium mt-4">
-                      From ${service.price.toFixed(2)}
-                    </p>
-                  )}
-                  <div className="mt-8 flex items-center gap-2 text-gold text-sm font-body font-medium">
-                    <span>Learn more</span>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                      className="transform group-hover:translate-x-1 transition-transform duration-200"
+                  {/* Glow */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-[#C9A84C]/10 to-transparent" />
+
+                  {/* Accent line */}
+                  <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#C9A84C] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                  <div className="relative flex flex-col h-full">
+                    
+                    {/* Category */}
+                    <span
+                      className="
+                        inline-flex
+                        items-center
+                        gap-2
+                        text-[10px]
+                        tracking-[0.22em]
+                        uppercase
+                        font-semibold
+                        text-[#C9A84C]
+                        border
+                        border-[#C9A84C]/30
+                        bg-[#C9A84C]/5
+                        px-3
+                        py-1.5
+                        rounded-full
+                        w-fit
+                        mb-7
+                      "
                     >
-                      <path
-                        d="M3 8h10M9 4l4 4-4 4"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
+                      <ShieldCheck className="w-3 h-3" />
+
+                      {CATEGORY_LABELS[service.category]}
+                    </span>
+
+                    {/* Title */}
+                    <h2
+                      className={`
+                        font-display
+                        text-white
+                        leading-tight
+                        mb-5
+                        transition-colors
+                        duration-300
+                        ${
+                          index === 0
+                            ? "text-3xl sm:text-4xl"
+                            : "text-2xl"
+                        }
+                      `}
+                    >
+                      {service.name}
+                    </h2>
+
+                    {/* Description */}
+                    <p className="font-body text-white/60 text-sm md:text-base leading-relaxed flex-1">
+                      {service.description}
+                    </p>
+
+                    {/* Price */}
+                    {service.price && (
+                      <div className="mt-6">
+                        <span className="text-[#C9A84C] text-lg font-semibold">
+                          From ${service.price.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Footer */}
+                    <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between">
+                      
+                      <span className="text-white/45 text-sm">
+                        Learn more
+                      </span>
+
+                      <div
+                        className="
+                          w-11
+                          h-11
+                          rounded-full
+                          border
+                          border-white/10
+                          bg-white/[0.03]
+                          flex
+                          items-center
+                          justify-center
+                          transition-all
+                          duration-300
+                          group-hover:bg-[#C9A84C]
+                          group-hover:border-[#C9A84C]
+                        "
+                      >
+                        <ArrowUpRight className="w-4 h-4 text-white group-hover:text-[#041f19]" />
+                      </div>
+                    </div>
                   </div>
                 </Link>
               ))}
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="bg-green-dark py-16 px-6">
-          <div className="mx-auto max-w-7xl flex flex-col md:flex-row items-center justify-between gap-8">
-            <div>
-              <h2 className="font-display text-white text-2xl font-semibold mb-2">
-                Not sure which service you need?
-              </h2>
-              <p className="font-body text-white/60 text-base">
-                Submit a request and describe your situation — we&apos;ll figure it
-                out together. <strong className="text-gold">WE HELP YOU GROW.</strong>
-              </p>
-            </div>
-            <Link
-              href="/request"
-              className="btn-gold font-body font-semibold text-green-dark px-8 py-4 rounded-sm text-base tracking-wide shrink-0"
-            >
-              Request a service
-            </Link>
+        {/* CTA SECTION */}
+        <section className="relative py-20 sm:py-24">
+          
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute bottom-[-180px] left-[-120px] w-[520px] h-[520px] rounded-full bg-[#C9A84C]/8 blur-3xl" />
           </div>
-        </div>
+
+          <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
+            
+            <div
+              className="
+                relative
+                overflow-hidden
+                rounded-[2.5rem]
+                border
+                border-white/10
+                bg-white/[0.04]
+                backdrop-blur-2xl
+                p-8
+                sm:p-10
+                lg:p-16
+                shadow-[0_40px_120px_rgba(0,0,0,0.35)]
+              "
+            >
+              
+              {/* Internal glow */}
+              <div className="absolute top-[-80px] right-[-80px] w-[240px] h-[240px] rounded-full bg-[#C9A84C]/10 blur-3xl" />
+
+              <div className="relative flex flex-col xl:flex-row items-start xl:items-center justify-between gap-12">
+                
+                {/* Left */}
+                <div className="max-w-3xl">
+                  
+                  <div className="flex items-center gap-3 mb-6">
+                    
+                    <div className="h-px w-10 bg-[#C9A84C]" />
+
+                    <span className="text-[#C9A84C] text-xs tracking-[0.22em] uppercase font-body font-semibold">
+                      Let&apos;s work together
+                    </span>
+                  </div>
+
+                  <h2
+                    className="font-display text-white leading-[0.95] mb-6"
+                    style={{
+                      fontSize: "clamp(2.4rem, 4vw, 5rem)",
+                      letterSpacing: "-0.04em",
+                    }}
+                  >
+                    Not sure which
+                    <br />
+
+                    <span className="text-[#C9A84C] italic">
+                      service you need?
+                    </span>
+                  </h2>
+
+                  <p className="font-body text-white/65 text-base sm:text-lg leading-relaxed max-w-2xl">
+                    Tell us about your business or situation and our specialists
+                    will guide you toward the right compliance, accounting,
+                    advisory, or growth solution.
+                  </p>
+                </div>
+
+                {/* Right */}
+                <div className="w-full xl:w-auto flex flex-col sm:flex-row gap-4">
+                  
+                  <Link
+                    href="/request"
+                    className="
+                      group
+                      relative
+                      overflow-hidden
+                      w-full
+                      sm:w-auto
+                      bg-[#C9A84C]
+                      text-[#041f19]
+                      font-body
+                      font-semibold
+                      px-8
+                      py-4
+                      rounded-2xl
+                      text-sm
+                      tracking-[0.16em]
+                      uppercase
+                      text-center
+                      transition-all
+                      duration-500
+                      hover:-translate-y-1
+                      hover:shadow-[0_20px_60px_rgba(201,168,76,0.35)]
+                    "
+                  >
+                    <span className="relative z-10 flex items-center justify-center gap-3">
+                      Request a Service
+
+                      <ArrowUpRight className="w-4 h-4" />
+                    </span>
+
+                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+                  </Link>
+
+                  <Link
+                    href="/contact"
+                    className="
+                      border
+                      w-full
+                      sm:w-auto
+                      border-white/10
+                      bg-white/[0.04]
+                      backdrop-blur-md
+                      text-white
+                      hover:text-[#C9A84C]
+                      transition-all
+                      duration-300
+                      px-8
+                      py-4
+                      rounded-2xl
+                      text-sm
+                      tracking-[0.16em]
+                      uppercase
+                      text-center
+                      hover:-translate-y-1
+                    "
+                  >
+                    Speak to us
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
     </>
   );

@@ -7,110 +7,313 @@ import Script from "next/script";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ServiceCategory } from "@prisma/client";
+import {
+  ArrowUpRight,
+  CheckCircle2,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://premasse.co.zw";
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://premasse.co.zw";
 
-// Dynamic image mapping based on service category - using diverse African professional images
+// ─────────────────────────────────────────────────────────────
+// Dynamic Images (LOCAL ASSETS)
+// ─────────────────────────────────────────────────────────────
+
 const CATEGORY_IMAGES: Record<ServiceCategory, string> = {
-  TAX_ACCOUNTING: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=1200&q=85&auto=format&fit=crop",
-  COMPANY_REG: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1200&q=85&auto=format&fit=crop",
-  ZIMRA_TAX_REG: "https://images.unsplash.com/photo-1554224154-26032ffc0ad7?w=1200&q=85&auto=format&fit=crop",
-  TAX_CLEARANCE: "https://images.unsplash.com/photo-1554224155-1696413565d7?w=1200&q=85&auto=format&fit=crop",
-  SME_ACCOUNTING: "https://images.unsplash.com/photo-1554224155-9090266daf94?w=1200&q=85&auto=format&fit=crop",
-  STOCK_TAKING: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1200&q=85&auto=format&fit=crop",
-  COMPLIANCE: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=1200&q=85&auto=format&fit=crop",
-  BUSINESS_ACUMEN: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=85&auto=format&fit=crop",
+  TAX_ACCOUNTING:
+    "/images/services/tax-accounting.png",
+
+  COMPANY_REG:
+    "/images/services/company-registration.png",
+
+  ZIMRA_TAX_REG:
+    "/images/services/zimra-registration.png",
+
+  TAX_CLEARANCE:
+    "/images/services/tax-clearance.png",
+
+  SME_ACCOUNTING:
+    "/images/services/accounting.png",
+
+  STOCK_TAKING:
+    "/images/services/stock-taking.png",
+
+  COMPLIANCE:
+    "/images/services/compliance.png",
+
+  BUSINESS_ACUMEN:
+    "/images/services/business-acumen.png",
 };
 
-const SEO_CONFIG: Record<ServiceCategory, {
-  titleKeyword:    string;
-  metaDescription: string;
-  h1:              string;
-  keywords:        string[];
-}> = {
+// ─────────────────────────────────────────────────────────────
+// SEO CONFIG
+// ─────────────────────────────────────────────────────────────
+
+const SEO_CONFIG: Record<
+  ServiceCategory,
+  {
+    titleKeyword: string;
+    metaDescription: string;
+    h1: string;
+    keywords: string[];
+  }
+> = {
   TAX_CLEARANCE: {
-    titleKeyword:    "ITF263 Tax Clearance Certificate Zimbabwe",
-    metaDescription: "Get your ZIMRA ITF263 Tax Clearance Certificate in Zimbabwe fast. Required for government tenders, contracts, and business transactions. Apply online with Premasse.",
-    h1:              "Tax Clearance Certificate (ITF263) Zimbabwe",
-    keywords: [
-      "tax clearance certificate Zimbabwe", "ITF263 Zimbabwe", "ZIMRA tax clearance",
-      "tax clearance Harare", "ITF263 application Zimbabwe", "ZIMRA clearance certificate",
-    ],
+    titleKeyword:
+      "ITF263 Tax Clearance Certificate Zimbabwe",
+    metaDescription:
+      "Get your ZIMRA ITF263 Tax Clearance Certificate in Zimbabwe fast.",
+    h1:
+      "Tax Clearance Certificate (ITF263) Zimbabwe",
+    keywords: ["tax clearance Zimbabwe"],
   },
+
   COMPANY_REG: {
-    titleKeyword:    "Company Registration Zimbabwe",
-    metaDescription: "Register your company in Zimbabwe under COBE. Includes name reservation, certificate of incorporation, and CR14. Fast, professional company registration in Harare.",
-    h1:              "Company Registration Zimbabwe",
-    keywords: [
-      "company registration Zimbabwe", "register a company Zimbabwe", "company registration Harare",
-      "COBE company registration", "register private limited company Zimbabwe", "CR14 Zimbabwe",
-    ],
+    titleKeyword:
+      "Company Registration Zimbabwe",
+    metaDescription:
+      "Register your company in Zimbabwe professionally.",
+    h1:
+      "Company Registration Zimbabwe",
+    keywords: ["company registration Zimbabwe"],
   },
+
   ZIMRA_TAX_REG: {
-    titleKeyword:    "ZIMRA Tax Registration Zimbabwe",
-    metaDescription: "ZIMRA tax registration services in Zimbabwe. BP number, VAT registration, and PAYE registration for businesses. Expert help from registered practitioners in Harare.",
-    h1:              "ZIMRA Tax Registration Zimbabwe",
-    keywords: [
-      "ZIMRA registration Zimbabwe", "ZIMRA BP number Zimbabwe", "VAT registration Zimbabwe",
-      "PAYE registration Zimbabwe", "tax registration Harare", "ZIMRA account Zimbabwe",
-    ],
+    titleKeyword:
+      "ZIMRA Tax Registration Zimbabwe",
+    metaDescription:
+      "Professional ZIMRA tax registration services in Zimbabwe.",
+    h1:
+      "ZIMRA Tax Registration Zimbabwe",
+    keywords: ["ZIMRA registration Zimbabwe"],
   },
+
   TAX_ACCOUNTING: {
-    titleKeyword:    "Tax Accountant Consultation Zimbabwe",
-    metaDescription: "One-on-one consultation with a registered ZIMRA tax accountant in Zimbabwe. Get expert tax advice for your business or personal affairs in Harare.",
-    h1:              "Registered ZIMRA Tax Accountant Consultation Zimbabwe",
-    keywords: [
-      "tax accountant Zimbabwe", "tax consultant Harare", "ZIMRA registered accountant Zimbabwe",
-      "tax advice Zimbabwe", "registered accountant Harare", "tax planning Zimbabwe",
-    ],
+    titleKeyword:
+      "Registered ZIMRA Tax Accountant Consultation Zimbabwe",
+    metaDescription:
+      "Professional tax consultations with ZIMRA-registered practitioners.",
+    h1:
+      "Registered ZIMRA Tax Accountant Consultation Zimbabwe",
+    keywords: ["tax accountant Zimbabwe"],
   },
+
   SME_ACCOUNTING: {
-    titleKeyword:    "SME Accounting & Bookkeeping Services Zimbabwe",
-    metaDescription: "Accounting and bookkeeping services for small businesses in Zimbabwe. Monthly bookkeeping, payroll, management accounts, and annual financial statements in Harare.",
-    h1:              "SME Accounting & Bookkeeping Services Zimbabwe",
-    keywords: [
-      "SME accounting Zimbabwe", "bookkeeping Zimbabwe", "payroll services Zimbabwe",
-      "accounting services Harare", "small business accounting Zimbabwe", "management accounts Zimbabwe",
-    ],
+    titleKeyword:
+      "SME Accounting & Bookkeeping Services Zimbabwe",
+    metaDescription:
+      "Professional SME accounting and bookkeeping services.",
+    h1:
+      "SME Accounting & Bookkeeping Services Zimbabwe",
+    keywords: ["SME accounting Zimbabwe"],
   },
+
   STOCK_TAKING: {
-    titleKeyword:    "Physical Stock Counting & Inventory Services Zimbabwe",
-    metaDescription: "Professional physical stock counting, stock reconciliation, warehouse audits, and inventory control services in Zimbabwe. Independent, accurate, and certified stock-taking for businesses in Harare.",
-    h1:              "Physical Stock-Taking & Inventory Services Zimbabwe",
-    keywords: [
-      "physical stock counting Zimbabwe", "stock taking Zimbabwe", "inventory audit Zimbabwe",
-      "stock reconciliation Zimbabwe", "warehouse stock audit Zimbabwe", "stock variance investigation Zimbabwe",
-      "year end stock count Zimbabwe", "retail stock count Zimbabwe", "inventory control Zimbabwe",
-    ],
+    titleKeyword:
+      "Physical Stock-Taking & Inventory Services Zimbabwe",
+    metaDescription:
+      "Professional stock-taking and inventory audit services.",
+    h1:
+      "Physical Stock-Taking & Inventory Services Zimbabwe",
+    keywords: ["stock taking Zimbabwe"],
   },
+
   COMPLIANCE: {
-    titleKeyword:    "NSSA, PRAZ & ZIMDEF Compliance Services Zimbabwe",
-    metaDescription: "Professional compliance services for Zimbabwean businesses. NSSA registration and contributions, PRAZ procurement compliance, and ZIMDEF levy management. Stay compliant with all statutory requirements.",
-    h1:              "Statutory Compliance Services Zimbabwe",
-    keywords: [
-      "NSSA compliance Zimbabwe", "PRAZ registration Zimbabwe", "ZIMDEF compliance Zimbabwe",
-      "NSSA contributions Zimbabwe", "procurement compliance Zimbabwe", "statutory compliance Harare",
-      "labour compliance Zimbabwe", "ZIMDEF levy Zimbabwe",
-    ],
+    titleKeyword:
+      "NSSA, PRAZ & ZIMDEF Compliance Services Zimbabwe",
+    metaDescription:
+      "Professional statutory compliance services.",
+    h1:
+      "Statutory Compliance Services Zimbabwe",
+    keywords: ["NSSA compliance Zimbabwe"],
   },
+
   BUSINESS_ACUMEN: {
-    titleKeyword:    "Startup Business Acumen & Growth Training Zimbabwe",
-    metaDescription: "Practical business acumen training for startups in Zimbabwe. Learn day-to-day operations, financial management, compliance, and growth strategies. WE HELP YOU GROW.",
-    h1:              "Startup Business Acumen & Growth Training Zimbabwe",
-    keywords: [
-      "business acumen training Zimbabwe", "startup training Harare", "business growth Zimbabwe",
-      "entrepreneurship training Zimbabwe", "SME business skills Zimbabwe", "business operations training",
-    ],
+    titleKeyword:
+      "Startup Business Acumen & Growth Training Zimbabwe",
+    metaDescription:
+      "Business growth and startup training for Zimbabwean entrepreneurs.",
+    h1:
+      "Startup Business Acumen & Growth Training Zimbabwe",
+    keywords: ["business acumen Zimbabwe"],
   },
 };
+
+// ─────────────────────────────────────────────────────────────
+// LABELS
+// ─────────────────────────────────────────────────────────────
+
+const CATEGORY_LABELS: Record<ServiceCategory, string> = {
+  TAX_ACCOUNTING: "Tax",
+  COMPANY_REG: "Registration",
+  ZIMRA_TAX_REG: "ZIMRA",
+  TAX_CLEARANCE: "Clearance",
+  SME_ACCOUNTING: "Accounting",
+  STOCK_TAKING: "Stock-Taking",
+  COMPLIANCE: "Compliance",
+  BUSINESS_ACUMEN: "Growth",
+};
+
+// ─────────────────────────────────────────────────────────────
+// PREPARE LISTS
+// ─────────────────────────────────────────────────────────────
+
+const WHAT_TO_PREPARE: Record<
+  ServiceCategory,
+  string[]
+> = {
+  TAX_ACCOUNTING: [
+    "Recent financial statements",
+    "Income source details",
+    "Any ZIMRA correspondence",
+    "Questions you want addressed",
+  ],
+
+  COMPANY_REG: [
+    "Proposed company names",
+    "Director ID copies",
+    "Physical address",
+    "Business activity details",
+  ],
+
+  ZIMRA_TAX_REG: [
+    "Certificate of incorporation",
+    "National ID or passport",
+    "Business address",
+    "Business activity description",
+  ],
+
+  TAX_CLEARANCE: [
+    "BP number",
+    "Updated tax returns",
+    "Settled tax obligations",
+    "Registered business details",
+  ],
+
+  SME_ACCOUNTING: [
+    "Bank statements",
+    "Expense records",
+    "Payroll details",
+    "Current accounting records",
+  ],
+
+  STOCK_TAKING: [
+    "Warehouse/store layout",
+    "Preferred count date",
+    "Stock categories",
+    "Inventory system access",
+  ],
+
+  COMPLIANCE: [
+    "Business registration documents",
+    "BP number",
+    "Employee records",
+    "Compliance history",
+  ],
+
+  BUSINESS_ACUMEN: [
+    "Business idea overview",
+    "Current challenges",
+    "Growth goals",
+    "Questions you need help with",
+  ],
+};
+
+// ─────────────────────────────────────────────────────────────
+// FAQS
+// ─────────────────────────────────────────────────────────────
+
+const FAQS: Record<
+  ServiceCategory,
+  { q: string; a: string }[]
+> = {
+  COMPANY_REG: [
+    {
+      q: "How long does company registration take?",
+      a:
+        "Typically 5–15 business days depending on approvals.",
+    },
+  ],
+
+  TAX_ACCOUNTING: [
+    {
+      q: "What does the consultation include?",
+      a:
+        "Tax planning, compliance guidance, and recommendations.",
+    },
+  ],
+
+  TAX_CLEARANCE: [
+    {
+      q: "How long does it take?",
+      a:
+        "Usually 5–10 business days when all requirements are satisfied.",
+    },
+  ],
+
+  ZIMRA_TAX_REG: [
+    {
+      q: "How do I get a BP number?",
+      a:
+        "Premasse handles the full registration process for you.",
+    },
+  ],
+
+  SME_ACCOUNTING: [
+    {
+      q: "Do SMEs need bookkeeping?",
+      a:
+        "Yes — proper records improve compliance and growth decisions.",
+    },
+  ],
+
+  STOCK_TAKING: [
+    {
+      q: "Can stock counts happen after hours?",
+      a:
+        "Yes — we can work outside operating hours if needed.",
+    },
+  ],
+
+  COMPLIANCE: [
+    {
+      q: "Can you help if we are behind on compliance?",
+      a:
+        "Absolutely. We help businesses become fully compliant.",
+    },
+  ],
+
+  BUSINESS_ACUMEN: [
+    {
+      q: "Is this suitable for beginners?",
+      a:
+        "Yes — ideal for startups and first-time entrepreneurs.",
+    },
+  ],
+};
+
+export const revalidate = 60;
+
+// ─────────────────────────────────────────────────────────────
+// STATIC PARAMS
+// ─────────────────────────────────────────────────────────────
 
 export async function generateStaticParams() {
   const services = await prisma.service.findMany({
-    where:  { isActive: true },
+    where: { isActive: true },
     select: { slug: true },
   });
-  return services.map((s) => ({ slug: s.slug }));
+
+  return services.map((s) => ({
+    slug: s.slug,
+  }));
 }
+
+// ─────────────────────────────────────────────────────────────
+// METADATA
+// ─────────────────────────────────────────────────────────────
 
 export async function generateMetadata({
   params,
@@ -118,155 +321,35 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+
   const service = await prisma.service.findUnique({
-    where:  { slug },
-    select: { name: true, description: true, category: true },
+    where: { slug },
+    select: {
+      name: true,
+      description: true,
+      category: true,
+    },
   });
 
-  if (!service) return { title: "Service not found" };
+  if (!service) {
+    return {
+      title: "Service not found",
+    };
+  }
 
-  const seo          = SEO_CONFIG[service.category] || SEO_CONFIG.TAX_ACCOUNTING;
-  const canonicalUrl = `${SITE_URL}/services/${slug}`;
+  const seo =
+    SEO_CONFIG[service.category] ||
+    SEO_CONFIG.TAX_ACCOUNTING;
 
   return {
-    title:       seo.titleKeyword,
+    title: seo.titleKeyword,
     description: seo.metaDescription,
-    keywords:    seo.keywords,
-    alternates:  { canonical: canonicalUrl },
-    openGraph: {
-      title:       `${seo.titleKeyword} | Premasse`,
-      description: seo.metaDescription,
-      url:         canonicalUrl,
-      type:        "website",
-      locale:      "en_ZW",
-      images: [{
-        url:    `${SITE_URL}/og-image.png`,
-        width:  1200,
-        height: 630,
-        alt:    `${seo.titleKeyword} — Premasse Business Services`,
-      }],
-    },
-    twitter: {
-      card:        "summary_large_image",
-      title:       `${seo.titleKeyword} | Premasse`,
-      description: seo.metaDescription,
-      images:      [`${SITE_URL}/og-image.png`],
-    },
   };
 }
 
-const CATEGORY_LABELS: Record<ServiceCategory, string> = {
-  TAX_ACCOUNTING: "Tax",
-  COMPANY_REG:    "Registration",
-  ZIMRA_TAX_REG:  "ZIMRA",
-  TAX_CLEARANCE:  "Clearance",
-  SME_ACCOUNTING: "Accounting",
-  STOCK_TAKING:   "Stock-Taking",
-  COMPLIANCE:     "Compliance",
-  BUSINESS_ACUMEN: "Growth",
-};
-
-const WHAT_TO_PREPARE: Record<ServiceCategory, string[]> = {
-  TAX_ACCOUNTING: [
-    "Recent financial statements or bank statements",
-    "Details of income sources",
-    "Any existing ZIMRA correspondence",
-    "List of questions or issues you want to address",
-  ],
-  COMPANY_REG: [
-    "Proposed company name (3 options in order of preference)",
-    "Names and ID copies of all directors and shareholders",
-    "Physical and postal address",
-    "Intended business activities",
-  ],
-  ZIMRA_TAX_REG: [
-    "Certificate of incorporation (for companies)",
-    "National ID or passport",
-    "Physical business address",
-    "Nature of business activities",
-  ],
-  TAX_CLEARANCE: [
-    "BP number (ZIMRA taxpayer number)",
-    "Tax returns up to date",
-    "Any outstanding tax payments settled",
-    "Business or personal details as registered with ZIMRA",
-  ],
-  SME_ACCOUNTING: [
-    "Bank statements (last 3–6 months)",
-    "Sales and expense records",
-    "Existing accounting software access (if any)",
-    "Payroll details (if employees exist)",
-  ],
-  STOCK_TAKING: [
-    "Site address and layout (warehouse, retail store, or factory)",
-    "Preferred date and time for the stock count",
-    "Access to your stock management or ERP system (if applicable)",
-    "List of stock categories or product lines to be counted",
-    "Any previous stock count reports for comparison",
-  ],
-  COMPLIANCE: [
-    "Business registration documents (CR14, certificate of incorporation)",
-    "ZIMRA BP number (if already registered for tax)",
-    "Employee list (for NSSA/ZIMDEF)",
-    "Previous compliance correspondence (if any)",
-    "Business operations description",
-  ],
-  BUSINESS_ACUMEN: [
-    "Brief description of your business idea or current operations",
-    "Specific challenges you're facing",
-    "Goals for the next 6-12 months",
-    "Any existing business documentation",
-    "Your questions or areas where you need guidance",
-  ],
-};
-
-const FAQS: Record<ServiceCategory, { q: string; a: string }[]> = {
-  TAX_CLEARANCE: [
-    { q: "How long does it take to get a tax clearance certificate in Zimbabwe?", a: "With all documents in order, ZIMRA typically processes ITF263 applications within 5–10 business days. Premasse handles the entire application process on your behalf." },
-    { q: "What is an ITF263 tax clearance certificate?", a: "An ITF263 is a certificate issued by ZIMRA confirming that a taxpayer is up to date with their tax obligations. It is required for government tenders, contracts, and many business transactions in Zimbabwe." },
-    { q: "What do I need to get a tax clearance certificate in Zimbabwe?", a: "You need your BP number, up-to-date tax returns, and any outstanding tax payments must be settled. Premasse will guide you through exactly what is required for your situation." },
-  ],
-  COMPANY_REG: [
-    { q: "How long does company registration take in Zimbabwe?", a: "Under COBE (Companies and Other Business Entities Act), company registration typically takes 5–15 business days. Premasse handles name reservation, incorporation, and all documentation." },
-    { q: "How much does it cost to register a company in Zimbabwe?", a: "Government fees vary by company type. Contact Premasse for a full cost breakdown including our professional fees, which are agreed upfront before any work begins." },
-    { q: "What documents do I need to register a company in Zimbabwe?", a: "You need a proposed company name, ID copies of all directors and shareholders, a physical address, and details of intended business activities. Premasse manages the entire process." },
-  ],
-  ZIMRA_TAX_REG: [
-    { q: "How do I get a BP number in Zimbabwe?", a: "A BP (Business Partner) number is assigned by ZIMRA when you register for tax. Premasse handles the full ZIMRA registration process including BP number, VAT, and PAYE registration." },
-    { q: "When do I need to register for VAT in Zimbabwe?", a: "You must register for VAT in Zimbabwe when your taxable turnover reaches the prescribed threshold. Premasse advises on whether you need VAT registration and handles the process." },
-    { q: "What is PAYE in Zimbabwe and do I need to register?", a: "PAYE (Pay As You Earn) is the tax deducted from employee salaries. Any business with employees must register for PAYE with ZIMRA. Premasse handles PAYE registration and ongoing compliance." },
-  ],
-  TAX_ACCOUNTING: [
-    { q: "What does a tax accountant consultation cover?", a: "A Premasse tax consultation covers your current tax obligations, potential savings, compliance gaps, and a clear action plan. All consultations are with ZIMRA-registered practitioners." },
-    { q: "How much does a tax consultation cost in Zimbabwe?", a: "Fees are agreed upfront before the consultation. Contact Premasse for current rates — we price fairly for SMEs and individuals." },
-    { q: "Do I need a registered accountant in Zimbabwe?", a: "For tax advice and submissions, it is strongly recommended to use a ZIMRA-registered accountant. Premasse practitioners are fully registered with ZIMRA and meet all regulatory requirements." },
-  ],
-  SME_ACCOUNTING: [
-    { q: "What accounting services do small businesses in Zimbabwe need?", a: "Most SMEs need monthly bookkeeping, payroll processing, VAT returns, quarterly management accounts, and annual financial statements. Premasse provides all of these." },
-    { q: "How much does SME accounting cost in Zimbabwe?", a: "Premasse offers SME-friendly pricing agreed upfront. Contact us for a quote based on your business size and requirements — no hourly surprises." },
-    { q: "What is the difference between bookkeeping and accounting?", a: "Bookkeeping is the daily recording of transactions. Accounting interprets those records to produce financial statements, tax returns, and business insights. Premasse provides both." },
-  ],
-  STOCK_TAKING: [
-    { q: "What is a physical stock count and why does your business need one?", a: "A physical stock count is an independent verification of all inventory held by your business. It confirms that what is in your system matches what is physically on the shelves or in the warehouse. Regular stock counts help detect theft, errors, and system weaknesses before they become costly." },
-    { q: "How long does a physical stock count take in Zimbabwe?", a: "The duration depends on the size and complexity of your inventory. A small retail store may take half a day, while a large warehouse could take several days. Premasse will give you a time estimate after an initial assessment of your site." },
-    { q: "Can you conduct stock counts outside business hours?", a: "Yes. Premasse can conduct stock counts after hours, over weekends, or during scheduled downtime to minimise disruption to your operations." },
-    { q: "Do you provide a certified stock count report?", a: "Yes. All Premasse stock-taking engagements include a detailed, signed report suitable for management review and external auditors. The report covers count methodology, variances identified, and recommendations." },
-  ],
-  COMPLIANCE: [
-    { q: "What is NSSA compliance and why does my business need it?", a: "NSSA (National Social Security Authority) compliance involves registering your business and employees with NSSA and submitting monthly pension and workers' compensation contributions. Compliance is mandatory for all employers in Zimbabwe." },
-    { q: "What is PRAZ compliance?", a: "PRAZ (Procurement Regulatory Authority of Zimbabwe) compliance applies to businesses that want to supply goods or services to government entities. It involves registering on the PRAZ procurement portal and meeting specific requirements for each procurement category." },
-    { q: "What is ZIMDEF and who needs to register?", a: "ZIMDEF (Zimbabwe Manpower Development Fund) levy is a 1% levy on payroll that funds skills training and development. All employers in Zimbabwe with at least one employee must register for ZIMDEF and submit monthly returns." },
-    { q: "Can Premasse help if my business isn't yet compliant with these statutory bodies?", a: "Absolutely. We assess your current compliance status, identify gaps, and handle all back-registrations and submissions to bring you up to date. WE HELP YOU GROW without compliance worries." },
-  ],
-  BUSINESS_ACUMEN: [
-    { q: "What does business acumen training cover?", a: "Our training covers day-to-day business operations, financial literacy, compliance basics, customer acquisition, cash flow management, and growth strategies. We tailor content to your specific startup needs." },
-    { q: "Is this training suitable for complete beginners?", a: "Yes. Our startup business acumen program is designed for first-time entrepreneurs and small business owners who need practical, actionable knowledge — not theory." },
-    { q: "How is the training delivered?", a: "We offer one-on-one consultations, small group workshops, and customised training plans based on your business type and goals. WE HELP YOU GROW at your own pace." },
-    { q: "What's the investment for business acumen training?", a: "We offer SME-friendly pricing with upfront agreements. Contact us for a no-obligation discussion about your specific needs and we'll provide a clear quote." },
-  ],
-};
-
-export const revalidate = 60;
+// ─────────────────────────────────────────────────────────────
+// PAGE
+// ─────────────────────────────────────────────────────────────
 
 export default async function ServiceDetailPage({
   params,
@@ -279,45 +362,33 @@ export default async function ServiceDetailPage({
     where: { slug },
   });
 
-  if (!service || !service.isActive) notFound();
+  if (!service || !service.isActive) {
+    notFound();
+  }
 
-  const seo          = SEO_CONFIG[service.category] || SEO_CONFIG.TAX_ACCOUNTING;
-  const preparations = WHAT_TO_PREPARE[service.category] ?? [];
-  const faqs         = FAQS[service.category] ?? [];
-  const canonicalUrl = `${SITE_URL}/services/${slug}`;
-  const categoryImage = CATEGORY_IMAGES[service.category] || CATEGORY_IMAGES.TAX_ACCOUNTING;
+  const seo =
+    SEO_CONFIG[service.category] ||
+    SEO_CONFIG.TAX_ACCOUNTING;
 
-  const serviceStructuredData = {
+  const preparations =
+    WHAT_TO_PREPARE[service.category] ?? [];
+
+  const faqs =
+    FAQS[service.category] ?? [];
+
+  const categoryImage =
+    CATEGORY_IMAGES[service.category] ||
+    CATEGORY_IMAGES.TAX_ACCOUNTING;
+
+  const canonicalUrl =
+    `${SITE_URL}/services/${slug}`;
+
+  const structuredData = {
     "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type":       "Service",
-        name:          seo.titleKeyword,
-        description:   service.description,
-        url:           canonicalUrl,
-        provider: {
-          "@type": "AccountingService",
-          name:    "Premasse Business Services",
-          url:     SITE_URL,
-        },
-        areaServed: {
-          "@type": "Country",
-          name:    "Zimbabwe",
-        },
-        serviceType: CATEGORY_LABELS[service.category] || "Business Services",
-      },
-      ...(faqs.length > 0 ? [{
-        "@type": "FAQPage",
-        mainEntity: faqs.map((faq) => ({
-          "@type":          "Question",
-          name:             faq.q,
-          acceptedAnswer: {
-            "@type": "Answer",
-            text:    faq.a,
-          },
-        })),
-      }] : []),
-    ],
+    "@type": "Service",
+    name: seo.titleKeyword,
+    description: service.description,
+    url: canonicalUrl,
   };
 
   return (
@@ -326,245 +397,434 @@ export default async function ServiceDetailPage({
         id={`structured-data-${slug}`}
         type="application/ld+json"
         strategy="afterInteractive"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceStructuredData) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            structuredData
+          ),
+        }}
       />
-      <main>
-        {/* Hero with dynamic image based on service category */}
-        <section className="relative min-h-[70vh] bg-green-dark overflow-hidden flex items-center">
-          {/* Architectural grid overlay */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            aria-hidden="true"
-            style={{
-              backgroundImage:
-                "linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px)",
-              backgroundSize: "80px 80px",
-            }}
-          />
 
-          {/* Dynamic hero image based on service category - diverse African context */}
-          <div
-            className="absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none"
-            aria-hidden="true"
-          >
-            <Image
-              src={categoryImage}
-              alt={service.name}
-              fill
-              className="object-cover object-center"
-              style={{ opacity: 1 }}
-              sizes="50vw"
-              priority
-            />
-            {/* Green fade from left */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(to right, #1B5E20 0%, #1B5E20 20%, rgba(27,94,32,0.7) 55%, rgba(27,94,32,0.15) 100%)",
-              }}
-            />
-            {/* Green fade from bottom */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background: "linear-gradient(to top, #1B5E20 0%, transparent 40%)",
-              }}
-            />
+      <main className="bg-[#041f19] overflow-hidden">
+
+        {/* HERO */}
+        {/* HERO */}
+<section className="relative min-h-screen flex items-center overflow-hidden">
+
+  {/* Atmosphere */}
+  <div className="absolute inset-0 pointer-events-none">
+
+    {/* Gold glow */}
+    <div className="absolute top-[-140px] left-[-120px] w-[500px] h-[500px] rounded-full bg-[#C9A84C]/10 blur-3xl animate-pulse" />
+
+    {/* Emerald glow */}
+    <div className="absolute bottom-[-220px] right-[-140px] w-[620px] h-[620px] rounded-full bg-emerald-500/10 blur-3xl animate-pulse" />
+
+    {/* Grid */}
+    <div
+      className="absolute inset-0 opacity-[0.04]"
+      style={{
+        backgroundImage:
+          "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)",
+        backgroundSize: "60px 60px",
+      }}
+    />
+  </div>
+
+  {/* Background Image */}
+  <div className="absolute inset-0">
+
+    <Image
+      src={categoryImage}
+      alt={service.name}
+      fill
+      priority
+      sizes="100vw"
+      className="
+        object-cover
+        brightness-[1.02]
+        contrast-[1.05]
+        saturate-[1.05]
+        scale-[1.03]
+        animate-[slowZoom_18s_ease-in-out_infinite_alternate]
+      "
+    />
+
+    {/* Cinematic overlays */}
+    <div className="absolute inset-0 bg-gradient-to-r from-[#041f19]/95 via-[#041f19]/78 to-black/35" />
+
+    <div className="absolute inset-0 bg-black/20" />
+
+    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-transparent to-[#C9A84C]/10" />
+
+    <div className="absolute inset-0 shadow-[inset_0_0_120px_rgba(0,0,0,0.22)]" />
+  </div>
+
+  <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-12 pt-32 sm:pt-36 pb-24 w-full">
+
+    <div className="max-w-3xl animate-fade-up">
+
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-white/35 text-xs tracking-[0.18em] uppercase mb-8">
+
+        <Link
+          href="/services"
+          className="hover:text-white/60 transition-colors"
+        >
+          Services
+        </Link>
+
+        <span>/</span>
+
+        <span className="text-white/60">
+          {service.name}
+        </span>
+      </div>
+
+      {/* Badge */}
+      <div className="inline-flex items-center gap-3 mb-8">
+
+        <div className="flex items-center gap-2.5 rounded-full border border-[#C9A84C]/30 bg-[#C9A84C]/10 px-5 py-2.5 backdrop-blur-md shadow-[0_10px_40px_rgba(201,168,76,0.08)]">
+
+          <Sparkles className="w-4 h-4 text-[#C9A84C]" />
+
+          <span className="font-body text-[#C9A84C] text-[11px] tracking-[0.24em] uppercase font-semibold">
+            {
+              CATEGORY_LABELS[
+                service.category
+              ]
+            }
+          </span>
+        </div>
+      </div>
+
+      {/* Heading */}
+      <h1
+        className="font-display text-white leading-[0.95] mb-8"
+        style={{
+          fontSize: "clamp(3.2rem, 6vw, 6.4rem)",
+          letterSpacing: "-0.05em",
+        }}
+      >
+        {seo.h1}
+      </h1>
+
+      {/* Description */}
+      <p className="font-body text-white text-base sm:text-lg lg:text-xl leading-relaxed max-w-2xl mb-12">
+        {service.description}
+      </p>
+
+      {/* CTA */}
+      <div className="flex flex-wrap gap-4">
+
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-[#C9A84C]" />
+
+          <span className="text-white/50 text-[11px] tracking-[0.18em] uppercase">
+            ZIMRA Registered
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-[#C9A84C]" />
+
+          <span className="text-white/50 text-[11px] tracking-[0.18em] uppercase">
+            One business day response
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-[#C9A84C]" />
+
+          <span className="text-white/50 text-[11px] tracking-[0.18em] uppercase">
+            Zimbabwean business specialists
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+        {/* CONTENT */}
+        <section className="relative bg-[#041f19] py-24 sm:py-28 px-6 overflow-hidden">
+
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute top-[10%] right-[-120px] w-[420px] h-[420px] rounded-full bg-[#C9A84C]/8 opacity-70" />
           </div>
 
-          {/* Diagonal gold accent */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            aria-hidden="true"
-            style={{
-              background:
-                "linear-gradient(135deg, transparent 58%, rgba(201,168,76,0.03) 58%, rgba(201,168,76,0.03) 72%, transparent 72%)",
-            }}
-          />
+          <div className="relative z-10 mx-auto max-w-7xl grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-10">
 
-          {/* Top gold rule */}
-          <div className="absolute top-0 left-0 right-0 h-px bg-gold opacity-20" />
+            {/* LEFT */}
+            <div className="space-y-8">
 
-          <div className="relative mx-auto max-w-7xl px-6 lg:px-12 pt-36 pb-28 w-full">
-            <div className="max-w-2xl">
-              <div className="flex items-center gap-2 font-body text-white/30 text-xs mb-8">
-                <Link href="/services" className="hover:text-white/60 transition-colors">
-                  Services
-                </Link>
-                <span>/</span>
-                <span className="text-white/60">{service.name}</span>
-              </div>
+              {/* About */}
+              <GlassPanel>
+                <SectionLabel title="About this service" />
 
-              <span className="inline-block font-body text-[10px] tracking-[0.2em] uppercase font-semibold text-gold border border-gold/40 px-2.5 py-1 rounded-sm mb-5">
-                {CATEGORY_LABELS[service.category] || "Service"}
-              </span>
-
-              <h1
-                className="font-display text-white leading-[1.08] mb-6"
-                style={{
-                  fontSize: "clamp(2.5rem, 4.5vw, 4.2rem)",
-                  letterSpacing: "-0.01em",
-                }}
-              >
-                {seo.h1}
-              </h1>
-
-              <p
-                className="font-body text-white/60 leading-relaxed"
-                style={{
-                  fontSize: "1.125rem",
-                  maxWidth: "560px",
-                }}
-              >
-                {service.description}
-              </p>
-
-              {service.price && (
-                <p className="font-body text-gold text-base font-medium mt-4">
-                  From ${service.price.toFixed(2)} USD
+                <p className="text-white/70 leading-relaxed text-base sm:text-lg">
+                  {service.description}
                 </p>
-              )}
-            </div>
-          </div>
+              </GlassPanel>
 
-          {/* Bottom fade */}
-          <div
-            className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
-            style={{
-              background:
-                "linear-gradient(to bottom, transparent, rgba(27,94,32,0.8))",
-            }}
-            aria-hidden="true"
-          />
-        </section>
-
-        <div className="bg-cream py-20 px-6">
-          <div className="mx-auto max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-12">
-            <div className="md:col-span-2 space-y-10">
-
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-px w-8 bg-gold" />
-                  <span className="font-body text-gold text-xs tracking-[0.2em] uppercase font-medium">About this service</span>
-                </div>
-                <p className="font-body text-slate text-base leading-relaxed">{service.description}</p>
-              </div>
-
+              {/* Prepare */}
               {preparations.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="h-px w-8 bg-gold" />
-                    <span className="font-body text-gold text-xs tracking-[0.2em] uppercase font-medium">What to prepare</span>
+                <GlassPanel>
+                  <SectionLabel title="What to prepare" />
+
+                  <div className="space-y-5">
+                    {preparations.map(
+                      (item) => (
+                        <div
+                          key={item}
+                          className="
+                            flex
+                            items-start
+                            gap-4
+                            rounded-2xl
+                            border
+                            border-white/10
+                            bg-white/[0.03]
+                            p-5
+                          "
+                        >
+                          <CheckCircle2 className="w-5 h-5 text-[#C9A84C] shrink-0 mt-0.5" />
+
+                          <span className="text-white/70 leading-relaxed">
+                            {item}
+                          </span>
+                        </div>
+                      )
+                    )}
                   </div>
-                  <ul className="space-y-3">
-                    {preparations.map((item) => (
-                      <li key={item} className="flex items-start gap-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-gold flex-shrink-0 mt-2" />
-                        <span className="font-body text-slate text-base leading-relaxed">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                </GlassPanel>
               )}
 
-              <div>
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="h-px w-8 bg-gold" />
-                  <span className="font-body text-gold text-xs tracking-[0.2em] uppercase font-medium">How it works</span>
-                </div>
-                <ol className="space-y-5">
-                  {[
-                    { n: "1", title: "Submit your request", body: "Fill in the form with a brief description. It takes less than 2 minutes." },
-                    { n: "2", title: "We review and contact you", body: "A registered ZIMRA practitioner reviews your submission and contacts you within one business day." },
-                    { n: "3", title: "We handle everything", body: "We complete the service, prepare all documentation, and deliver the final result to you. WE HELP YOU GROW." },
-                  ].map(({ n, title, body }) => (
-                    <li key={n} className="flex gap-5">
-                      <span className="font-display text-3xl text-gold/30 font-bold leading-none flex-shrink-0 w-6 pt-0.5">{n}</span>
-                      <div>
-                        <p className="font-body text-green-dark font-medium mb-1">{title}</p>
-                        <p className="font-body text-slate/70 text-sm leading-relaxed">{body}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-
+              {/* FAQ */}
               {faqs.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="h-px w-8 bg-gold" />
-                    <span className="font-body text-gold text-xs tracking-[0.2em] uppercase font-medium">Frequently asked questions</span>
-                  </div>
+                <GlassPanel>
+                  <SectionLabel title="Frequently asked questions" />
+
                   <div className="space-y-5">
-                    {faqs.map((faq, i) => (
-                      <div key={i} className="border-b border-gray-100 pb-5">
-                        <h2 className="font-display text-green-dark text-base font-semibold mb-2">
-                          {faq.q}
-                        </h2>
-                        <p className="font-body text-slate text-sm leading-relaxed">{faq.a}</p>
-                      </div>
-                    ))}
+                    {faqs.map(
+                      (faq, i) => (
+                        <div
+                          key={i}
+                          className="
+                            rounded-2xl
+                            border
+                            border-white/10
+                            bg-white/[0.03]
+                            p-6
+                          "
+                        >
+                          <h2 className="text-white text-lg font-semibold mb-3">
+                            {faq.q}
+                          </h2>
+
+                          <p className="text-white/65 leading-relaxed">
+                            {faq.a}
+                          </p>
+                        </div>
+                      )
+                    )}
                   </div>
-                </div>
+                </GlassPanel>
               )}
             </div>
 
-            <aside className="space-y-5">
-              <div className="bg-white border border-gray-100 rounded-sm p-6 sticky top-6">
-                <h3 className="font-display text-green-dark text-lg font-semibold mb-2">Get started today</h3>
-                <p className="font-body text-slate/70 text-sm leading-relaxed mb-6">
-                  Submit a request and we&apos;ll be in touch within one business day.
-                </p>
+            {/* SIDEBAR */}
+            <aside className="space-y-6">
 
-                <Link
-                  href={`/request?service=${service.slug}`}
-                  className="btn-green block w-full font-body font-semibold text-white px-6 py-3.5 rounded-sm text-sm tracking-wide text-center mb-4"
-                >
-                  Request this service
-                </Link>
+              <div
+                className="
+                  sticky
+                  top-6
+                  overflow-hidden
+                  rounded-[2.5rem]
+                  border
+                  border-white/10
+                  bg-white/[0.04]
+                  p-8
+                  shadow-[0_40px_120px_rgba(0,0,0,0.25)]
+                "
+              >
 
-                <Link
-                  href="/contact"
-                  className="block w-full font-body text-green-dark border border-green-dark/20 hover:border-green-dark/50 px-6 py-3.5 rounded-sm text-sm tracking-wide text-center transition-colors"
-                >
-                  Ask a question first
-                </Link>
+                <div className="absolute top-[-80px] right-[-80px] w-[220px] h-[220px] rounded-full bg-[#C9A84C]/10 opacity-70" />
 
-                {service.price && (
-                  <p className="font-body text-slate/40 text-xs text-center mt-4">
-                    From ${service.price.toFixed(2)} USD · quote provided on review
+                <div className="relative">
+
+                  <h3 className="font-display text-white text-3xl leading-tight mb-4">
+                    Ready to get started?
+                  </h3>
+
+                  <p className="text-white/60 leading-relaxed mb-8">
+                    Submit your request and one of our specialists
+                    will contact you within one business day.
                   </p>
-                )}
 
-                <div className="mt-6 pt-5 border-t border-gray-100 space-y-2">
-                  {[
-                    "ZIMRA registered & certified team",
-                    "Response within 1 business day",
-                    "Detailed professional reports",
-                    "WE HELP YOU GROW",
-                  ].map((t) => (
-                    <div key={t} className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-primary flex-shrink-0" />
-                      <span className="font-body text-slate/60 text-xs">{t}</span>
+                  <Link
+                    href={`/request?service=${service.slug}`}
+                    className="
+                      group
+                      relative
+                      overflow-hidden
+                      w-full
+                      bg-[#C9A84C]
+                      text-[#041f19]
+                      font-semibold
+                      px-8
+                      py-4
+                      rounded-2xl
+                      text-sm
+                      tracking-[0.16em]
+                      uppercase
+                      text-center
+                      transition-all
+                      duration-500
+                      hover:-translate-y-1
+                      hover:shadow-[0_20px_60px_rgba(201,168,76,0.35)]
+                      inline-flex
+                      items-center
+                      justify-center
+                      gap-3
+                      mb-4
+                    "
+                  >
+                    Request this service
+
+                    <ArrowUpRight className="w-4 h-4" />
+                  </Link>
+
+                  <Link
+                    href="/contact"
+                    className="
+                      border
+                      border-white/10
+                      bg-white/[0.04]
+                      text-white
+                      hover:text-[#C9A84C]
+                      transition-all
+                      duration-300
+                      px-8
+                      py-4
+                      rounded-2xl
+                      text-sm
+                      tracking-[0.16em]
+                      uppercase
+                      text-center
+                      block
+                    "
+                  >
+                    Ask a question
+                  </Link>
+
+                  {/* Price */}
+                  {service.price && (
+                    <div className="mt-8 pt-6 border-t border-white/10">
+                      <p className="text-[#C9A84C] text-2xl font-semibold">
+                        From $
+                        {service.price.toFixed(
+                          2
+                        )}
+                      </p>
+
+                      <p className="text-white/35 text-xs mt-2">
+                        Final quotation provided after review
+                      </p>
                     </div>
-                  ))}
+                  )}
+
+                  {/* Trust */}
+                  <div className="mt-8 pt-6 border-t border-white/10 space-y-4">
+
+                    {[
+                      "ZIMRA registered specialists",
+                      "One business day response",
+                      "Professional documentation",
+                      "WE HELP YOU GROW",
+                    ].map((item) => (
+                      <div
+                        key={item}
+                        className="flex items-center gap-3"
+                      >
+                        <ShieldCheck className="w-4 h-4 text-[#C9A84C]" />
+
+                        <span className="text-white/55 text-sm">
+                          {item}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
+              {/* Back */}
               <Link
                 href="/services"
-                className="flex items-center gap-2 font-body text-slate/50 text-sm hover:text-green-dark transition-colors"
+                className="
+                  flex
+                  items-center
+                  gap-3
+                  text-white/45
+                  hover:text-white
+                  transition-colors
+                  duration-300
+                  text-sm
+                "
               >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                All services
+                ← Back to all services
               </Link>
             </aside>
           </div>
-        </div>
+        </section>
       </main>
     </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// GLASS PANEL
+// ─────────────────────────────────────────────────────────────
+
+function GlassPanel({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="
+        relative
+        overflow-hidden
+        rounded-[2.5rem]
+        border
+        border-white/10
+        bg-white/[0.04]
+        p-8
+        sm:p-10
+        shadow-[0_40px_120px_rgba(0,0,0,0.25)]
+      "
+    >
+      {children}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// SECTION LABEL
+// ─────────────────────────────────────────────────────────────
+
+function SectionLabel({
+  title,
+}: {
+  title: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 mb-8">
+      <div className="h-px w-10 bg-[#C9A84C]" />
+
+      <span className="text-[#C9A84C] text-xs tracking-[0.22em] uppercase font-semibold">
+        {title}
+      </span>
+    </div>
   );
 }
