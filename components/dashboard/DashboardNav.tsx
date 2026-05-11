@@ -1,250 +1,519 @@
-// components/dashboard/DashboardNav.tsx
-
 "use client";
 
+// components/dashboard/DashboardNav.tsx
+// Premium cinematic admin navigation.
+
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import {
+  useState,
+  useEffect,
+} from "react";
+
 import { signOut } from "next-auth/react";
+
 import { usePathname } from "next/navigation";
+
+import {
+  BarChart3,
+  BriefcaseBusiness,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Sparkles,
+  X,
+} from "lucide-react";
 
 const NAV_ITEMS = [
   {
     label: "Overview",
     href: "/dashboard",
     exact: true,
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
-        <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
-        <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
-        <rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
-      </svg>
-    ),
+    icon: LayoutDashboard,
   },
+
   {
     label: "Requests",
     href: "/dashboard/requests",
     exact: false,
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <rect x="2" y="2" width="12" height="3" rx="1" stroke="currentColor" strokeWidth="1.3"/>
-        <rect x="2" y="7" width="12" height="3" rx="1" stroke="currentColor" strokeWidth="1.3"/>
-        <rect x="2" y="12" width="7" height="2" rx="1" stroke="currentColor" strokeWidth="1.3"/>
-      </svg>
-    ),
+    icon: BriefcaseBusiness,
   },
+
   {
     label: "Analytics",
     href: "/dashboard/analytics",
     exact: false,
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path
-          d="M2 12L6 7l3 3 3-4 2-2"
-          stroke="currentColor"
-          strokeWidth="1.3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path d="M2 14h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-      </svg>
-    ),
+    icon: BarChart3,
   },
+
   {
     label: "Services",
     href: "/dashboard/services",
     exact: false,
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3"/>
-        <path d="M8 5v3l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-      </svg>
-    ),
+    icon: Sparkles,
   },
 ];
 
-export default function DashboardNav({ 
-  session 
-}: { 
+export default function DashboardNav({
+  session,
+}: {
   session: any;
 }) {
-  const pathname = usePathname();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname =
+    usePathname();
 
-  // Close menu when clicking escape key
+  const [
+    isMobileMenuOpen,
+    setIsMobileMenuOpen,
+  ] = useState(false);
+
+  // ESC key
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setIsMobileMenuOpen(false);
+    const handleEsc = (
+      e: KeyboardEvent
+    ) => {
+      if (e.key === "Escape") {
+        setIsMobileMenuOpen(
+          false
+        );
+      }
     };
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
+
+    window.addEventListener(
+      "keydown",
+      handleEsc
+    );
+
+    return () =>
+      window.removeEventListener(
+        "keydown",
+        handleEsc
+      );
   }, []);
 
-  // Prevent body scroll when mobile menu is open
+  // Prevent body scroll
   useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
+    document.body.style.overflow =
+      isMobileMenuOpen
+        ? "hidden"
+        : "unset";
+
     return () => {
-      document.body.style.overflow = "unset";
+      document.body.style.overflow =
+        "unset";
     };
   }, [isMobileMenuOpen]);
 
-  const isActive = (href: string, exact: boolean) => {
-    return exact ? pathname === href : pathname.startsWith(href);
+  const isActive = (
+    href: string,
+    exact: boolean
+  ) => {
+    return exact
+      ? pathname === href
+      : pathname.startsWith(
+          href
+        );
   };
 
   return (
     <>
-      {/* Mobile menu button - visible only on mobile */}
+      {/* MOBILE BUTTON */}
       <button
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-green-dark/95 backdrop-blur-sm rounded-md shadow-lg text-white"
-        aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+        onClick={() =>
+          setIsMobileMenuOpen(
+            !isMobileMenuOpen
+          )
+        }
+        className="
+          lg:hidden
+          fixed
+          top-4
+          left-4
+          z-[60]
+          w-11
+          h-11
+          rounded-2xl
+          border
+          border-white/10
+          bg-[#041f19]/80
+          backdrop-blur-xl
+          text-white
+          flex
+          items-center
+          justify-center
+          shadow-[0_10px_40px_rgba(0,0,0,0.25)]
+        "
+        aria-label={
+          isMobileMenuOpen
+            ? "Close menu"
+            : "Open menu"
+        }
       >
+
         {isMobileMenuOpen ? (
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-            <line x1="3" y1="3" x2="19" y2="19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            <line x1="19" y1="3" x2="3" y2="19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
+          <X className="w-5 h-5" />
         ) : (
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-            <line x1="2" y1="5" x2="20" y2="5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            <line x1="2" y1="11" x2="20" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            <line x1="2" y1="17" x2="20" y2="17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
+          <Menu className="w-5 h-5" />
         )}
       </button>
 
-      {/* Mobile menu overlay */}
+      {/* MOBILE OVERLAY */}
       <div
-        className={`fixed inset-0 bg-green-dark/95 backdrop-blur-sm transition-all duration-300 lg:hidden ${
-          isMobileMenuOpen 
-            ? "opacity-100 visible" 
-            : "opacity-0 invisible pointer-events-none"
-        }`}
-        onClick={() => setIsMobileMenuOpen(false)}
+        className={`
+          fixed
+          inset-0
+          z-40
+          bg-black/70
+          backdrop-blur-md
+          transition-all
+          duration-300
+          lg:hidden
+          ${
+            isMobileMenuOpen
+              ? "opacity-100 visible"
+              : "opacity-0 invisible pointer-events-none"
+          }
+        `}
+        onClick={() =>
+          setIsMobileMenuOpen(
+            false
+          )
+        }
       />
 
-      {/* Mobile menu panel */}
+      {/* MOBILE PANEL */}
       <div
-        className={`fixed left-0 right-0 bg-green-dark transition-all duration-300 lg:hidden ${
-          isMobileMenuOpen 
-            ? "opacity-100 visible translate-y-0" 
-            : "opacity-0 invisible -translate-y-4"
-        }`}
-        style={{ top: "80px" }}
+        className={`
+          fixed
+          top-0
+          left-0
+          z-50
+          h-screen
+          w-[300px]
+          border-r
+          border-white/10
+          bg-[#041f19]
+          backdrop-blur-2xl
+          transition-transform
+          duration-500
+          lg:hidden
+          ${
+            isMobileMenuOpen
+              ? "translate-x-0"
+              : "-translate-x-full"
+          }
+        `}
       >
-        <div className="flex flex-col p-6 gap-4">
-          {NAV_ITEMS.map(({ label, href, exact, icon }) => {
-            const active = isActive(href, exact);
-            return (
-              <Link
-                key={href}
-                href={href}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`flex items-center gap-3 text-base font-body py-2 border-b border-white/10 transition-colors duration-200 ${
-                  active ? "text-gold" : "text-white/80 hover:text-white"
-                }`}
-              >
-                <span className={active ? "text-gold" : ""}>{icon}</span>
-                {label}
-              </Link>
-            );
-          })}
-          
-          {/* User info in mobile menu */}
-          <div className="pt-4 mt-2 border-t border-white/10">
-            <p className="font-body text-white text-sm font-medium truncate mb-1">
-              {session?.user?.name ?? "Admin"}
-            </p>
-            <p className="font-body text-white/40 text-xs truncate mb-4">
-              {session?.user?.email}
-            </p>
-            
-            <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="w-full flex items-center gap-3 text-base font-body text-white/80 hover:text-white transition-colors duration-200 py-2"
+
+        <div className="flex flex-col h-full">
+
+          {/* Logo */}
+          <div className="px-6 py-8 border-b border-white/10">
+
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-4"
+              onClick={() =>
+                setIsMobileMenuOpen(
+                  false
+                )
+              }
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 11l3-3-3-3M13 8H6"
-                  stroke="currentColor"
-                  strokeWidth="1.3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Sign out
-            </button>
+
+              <div className="w-12 h-12 rounded-2xl border border-[#C9A84C]/20 bg-[#C9A84C]/10 flex items-center justify-center">
+
+                <Sparkles className="w-5 h-5 text-[#C9A84C]" />
+              </div>
+
+              <div>
+
+                <span className="font-display text-white text-xl font-bold block">
+                  Premasse
+                </span>
+
+                <span className="text-[#C9A84C] text-[10px] tracking-[0.22em] uppercase font-semibold">
+                  Admin dashboard
+                </span>
+              </div>
+            </Link>
+          </div>
+
+          {/* Nav */}
+          <div className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+
+            {NAV_ITEMS.map(
+              ({
+                label,
+                href,
+                exact,
+                icon: Icon,
+              }) => {
+                const active =
+                  isActive(
+                    href,
+                    exact
+                  );
+
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() =>
+                      setIsMobileMenuOpen(
+                        false
+                      )
+                    }
+                    className={`
+                      group
+                      flex
+                      items-center
+                      gap-4
+                      rounded-2xl
+                      px-4
+                      py-3.5
+                      transition-all
+                      duration-300
+                      ${
+                        active
+                          ? "bg-white/[0.06] text-white border border-white/10"
+                          : "text-white/50 hover:text-white hover:bg-white/[0.03]"
+                      }
+                    `}
+                  >
+
+                    <Icon
+                      className={`w-5 h-5 ${
+                        active
+                          ? "text-[#C9A84C]"
+                          : ""
+                      }`}
+                    />
+
+                    <span className="text-sm font-medium">
+                      {label}
+                    </span>
+                  </Link>
+                );
+              }
+            )}
+          </div>
+
+          {/* User */}
+          <div className="p-4 border-t border-white/10">
+
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+
+              <p className="text-white text-sm font-medium truncate mb-1">
+                {session?.user
+                  ?.name ??
+                  "Admin"}
+              </p>
+
+              <p className="text-white/35 text-xs truncate mb-5">
+                {
+                  session?.user
+                    ?.email
+                }
+              </p>
+
+              <button
+                onClick={() =>
+                  signOut({
+                    callbackUrl:
+                      "/login",
+                  })
+                }
+                className="
+                  w-full
+                  flex
+                  items-center
+                  justify-center
+                  gap-3
+                  rounded-2xl
+                  border
+                  border-white/10
+                  bg-white/[0.03]
+                  py-3
+                  text-white/60
+                  hover:text-white
+                  hover:border-[#C9A84C]/20
+                  transition-all
+                  duration-300
+                "
+              >
+
+                <LogOut className="w-4 h-4" />
+
+                <span className="text-sm">
+                  Sign out
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Desktop Sidebar navigation - Full height */}
-      <aside className="hidden lg:flex lg:flex-col lg:h-screen w-64 bg-green-dark shadow-2xl fixed lg:relative">
+      {/* DESKTOP SIDEBAR */}
+      <aside
+        className="
+          hidden
+          lg:flex
+          lg:flex-col
+          lg:h-screen
+          w-[290px]
+          border-r
+          border-white/10
+          bg-[#041f19]/70
+          backdrop-blur-2xl
+          sticky
+          top-0
+        "
+      >
+
         <div className="flex flex-col h-full">
+
           {/* Logo */}
-          <div className="px-6 py-6 border-b border-white/10 shrink-0">
-            <Link href="/" className="flex flex-col leading-none">
-              <span className="font-display text-lg font-bold text-white tracking-wide">
-                Premasse
-              </span>
-              <span className="text-[9px] tracking-[0.2em] uppercase text-gold font-body font-medium mt-0.5">
-                Admin
-              </span>
+          <div className="px-7 py-8 border-b border-white/10">
+
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-4"
+            >
+
+              <div className="w-12 h-12 rounded-2xl border border-[#C9A84C]/20 bg-[#C9A84C]/10 flex items-center justify-center shadow-[0_10px_30px_rgba(201,168,76,0.12)]">
+
+                <Sparkles className="w-5 h-5 text-[#C9A84C]" />
+              </div>
+
+              <div>
+
+                <span className="font-display text-white text-xl font-bold block">
+                  Premasse
+                </span>
+
+                <span className="text-[#C9A84C] text-[10px] tracking-[0.22em] uppercase font-semibold">
+                  Admin dashboard
+                </span>
+              </div>
             </Link>
           </div>
 
-          {/* Nav links - Scrollable if needed */}
-          <div className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
-            {NAV_ITEMS.map(({ label, href, exact, icon }) => {
-              const active = isActive(href, exact);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body transition-colors duration-150 ${
-                    active
-                      ? "bg-white/10 text-white"
-                      : "text-white/55 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  <span className={active ? "text-gold" : ""}>{icon}</span>
-                  <span className="truncate">{label}</span>
-                </Link>
-              );
-            })}
+          {/* Nav */}
+          <div className="flex-1 px-5 py-6 space-y-2 overflow-y-auto">
+
+            {NAV_ITEMS.map(
+              ({
+                label,
+                href,
+                exact,
+                icon: Icon,
+              }) => {
+                const active =
+                  isActive(
+                    href,
+                    exact
+                  );
+
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`
+                      group
+                      relative
+                      overflow-hidden
+                      flex
+                      items-center
+                      gap-4
+                      rounded-2xl
+                      px-4
+                      py-3.5
+                      transition-all
+                      duration-300
+                      ${
+                        active
+                          ? "bg-white/[0.06] border border-white/10 text-white"
+                          : "text-white/50 hover:text-white hover:bg-white/[0.03]"
+                      }
+                    `}
+                  >
+
+                    {active && (
+                      <div className="absolute inset-y-0 left-0 w-1 bg-[#C9A84C]" />
+                    )}
+
+                    <Icon
+                      className={`w-5 h-5 ${
+                        active
+                          ? "text-[#C9A84C]"
+                          : ""
+                      }`}
+                    />
+
+                    <span className="text-sm font-medium">
+                      {label}
+                    </span>
+                  </Link>
+                );
+              }
+            )}
           </div>
 
-          {/* User info + sign out - Sticky at bottom */}
-          <div className="px-3 py-4 border-t border-white/10 shrink-0">
-            <div className="px-3 py-2 mb-1">
-              <p className="font-body text-white text-sm font-medium truncate">
-                {session?.user?.name ?? "Admin"}
-              </p>
-              <p className="font-body text-white/40 text-xs truncate">
-                {session?.user?.email}
-              </p>
-            </div>
+          {/* User */}
+          <div className="p-5 border-t border-white/10">
 
-            <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body text-white/45 hover:text-white hover:bg-white/5 transition-colors duration-150"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 11l3-3-3-3M13 8H6"
-                  stroke="currentColor"
-                  strokeWidth="1.3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Sign out
-            </button>
+            <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] backdrop-blur-xl p-5">
+
+              <p className="text-white text-sm font-medium truncate mb-1">
+                {session?.user
+                  ?.name ??
+                  "Admin"}
+              </p>
+
+              <p className="text-white/35 text-xs truncate mb-5">
+                {
+                  session?.user
+                    ?.email
+                }
+              </p>
+
+              <button
+                onClick={() =>
+                  signOut({
+                    callbackUrl:
+                      "/login",
+                  })
+                }
+                className="
+                  w-full
+                  group
+                  relative
+                  overflow-hidden
+                  bg-[#C9A84C]
+                  text-[#041f19]
+                  font-semibold
+                  px-5
+                  py-3.5
+                  rounded-2xl
+                  text-sm
+                  tracking-[0.14em]
+                  uppercase
+                  transition-all
+                  duration-500
+                  hover:-translate-y-1
+                  hover:shadow-[0_20px_60px_rgba(201,168,76,0.35)]
+                "
+              >
+
+                <span className="relative z-10 flex items-center justify-center gap-3">
+
+                  <LogOut className="w-4 h-4" />
+
+                  Sign out
+                </span>
+
+                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+              </button>
+            </div>
           </div>
         </div>
       </aside>

@@ -1,208 +1,627 @@
 // app/(admin)/dashboard/services/page.tsx
 
-import { Metadata }    from "next";
-import { prisma }      from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth-helpers";
+import { Metadata } from "next";
 import { revalidatePath } from "next/cache";
+
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth-helpers";
+
 import { ServiceCategory } from "@prisma/client";
 
-export const metadata: Metadata = { title: "Services — Admin" };
-export const dynamic = "force-dynamic";
+import {
+  ArrowRight,
+  BriefcaseBusiness,
+  CheckCircle2,
+  Sparkles,
+  XCircle,
+} from "lucide-react";
 
-const CATEGORY_LABELS: Record<ServiceCategory, string> = {
-  TAX_ACCOUNTING: "Tax",
-  COMPANY_REG:    "Registration",
-  ZIMRA_TAX_REG:  "ZIMRA",
-  TAX_CLEARANCE:  "Clearance",
-  SME_ACCOUNTING: "Accounting",
-  STOCK_TAKING:   "Stock-Taking",
+export const metadata: Metadata =
+  {
+    title:
+      "Services — Admin",
+  };
+
+export const dynamic =
+  "force-dynamic";
+
+const CATEGORY_LABELS: Record<
+  ServiceCategory,
+  string
+> = {
+  TAX_ACCOUNTING:
+    "Tax",
+
+  COMPANY_REG:
+    "Registration",
+
+  ZIMRA_TAX_REG:
+    "ZIMRA",
+
+  TAX_CLEARANCE:
+    "Clearance",
+
+  SME_ACCOUNTING:
+    "Accounting",
+
+  STOCK_TAKING:
+    "Stock-Taking",
 };
 
-async function toggleService(formData: FormData) {
+// ─────────────────────────────────────────────────────────────
+// Toggle service
+// ─────────────────────────────────────────────────────────────
+
+async function toggleService(
+  formData: FormData
+) {
   "use server";
+
   await requireAdmin();
 
-  const id       = formData.get("id")       as string;
-  const isActive = formData.get("isActive") === "true";
+  const id =
+    formData.get(
+      "id"
+    ) as string;
 
-  await prisma.service.update({
-    where: { id },
-    data:  { isActive: !isActive },
-  });
+  const isActive =
+    formData.get(
+      "isActive"
+    ) === "true";
 
-  revalidatePath("/dashboard/services");
+  await prisma.service.update(
+    {
+      where: { id },
+
+      data: {
+        isActive:
+          !isActive,
+      },
+    }
+  );
+
+  revalidatePath(
+    "/dashboard/services"
+  );
 }
+
+// ─────────────────────────────────────────────────────────────
+// Page
+// ─────────────────────────────────────────────────────────────
 
 export default async function ServicesPage() {
   await requireAdmin();
 
-  const services = await prisma.service.findMany({
-    orderBy: { sortOrder: "asc" },
-    include: {
-      _count: { select: { requests: true } },
-    },
-  });
+  const services =
+    await prisma.service.findMany(
+      {
+        orderBy: {
+          sortOrder:
+            "asc",
+        },
+
+        include: {
+          _count: {
+            select: {
+              requests:
+                true,
+            },
+          },
+        },
+      }
+    );
+
+  const activeCount =
+    services.filter(
+      (s) => s.isActive
+    ).length;
+
+  const inactiveCount =
+    services.length -
+    activeCount;
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      <div className="mb-6 sm:mb-8">
-        <h1 className="font-display text-navy text-xl sm:text-2xl font-semibold mb-1">
-          Services
+    <div className="max-w-7xl mx-auto">
+
+      {/* Header */}
+      <div className="mb-10">
+
+        <div className="inline-flex items-center gap-3 mb-6">
+
+          <div className="flex items-center gap-2.5 rounded-full border border-[#C9A84C]/30 bg-[#C9A84C]/10 px-5 py-2.5 backdrop-blur-md shadow-[0_10px_40px_rgba(201,168,76,0.08)]">
+
+            <Sparkles className="w-4 h-4 text-[#C9A84C]" />
+
+            <span className="font-body text-[#C9A84C] text-[11px] tracking-[0.24em] uppercase font-semibold">
+              Services
+            </span>
+          </div>
+        </div>
+
+        <h1
+          className="font-display text-white leading-[0.95] mb-4"
+          style={{
+            fontSize:
+              "clamp(2.8rem, 5vw, 5rem)",
+
+            letterSpacing:
+              "-0.05em",
+          }}
+        >
+          Service
+          <br />
+
+          <span className="text-[#C9A84C] italic">
+            management.
+          </span>
         </h1>
-        <p className="font-body text-slate/60 text-sm">
-          {services.length} service{services.length !== 1 ? "s" : ""} configured.
-          Toggle active/inactive to show or hide from the public site.
+
+        <p className="text-white/60 text-base sm:text-lg max-w-2xl leading-relaxed">
+          Configure, activate,
+          and manage all public
+          services offered on
+          the Premasse
+          platform.
         </p>
       </div>
 
-      {/* Mobile card view */}
-      <div className="block sm:hidden space-y-4">
-        {services.map((service) => (
-          <div
-            key={service.id}
-            className="bg-white border border-gray-100 rounded-sm p-4 hover:shadow-md transition-shadow duration-200"
-          >
-            <div className="mb-3">
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="font-body text-navy text-sm font-semibold flex-1">
-                  {service.name}
-                </h3>
-                <span
-                  className={`inline-block font-body font-semibold text-[10px] px-2.5 py-1 rounded-sm border uppercase tracking-widest ml-2 shrink-0 ${
-                    service.isActive
-                      ? "bg-green-50 text-green-800 border-green-200"
-                      : "bg-gray-100 text-gray-500 border-gray-200"
-                  }`}
-                >
-                  {service.isActive ? "Active" : "Inactive"}
-                </span>
-              </div>
-              <p className="font-body text-slate/40 text-xs truncate">
-                /{service.slug}
-              </p>
-            </div>
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10">
 
-            <div className="grid grid-cols-2 gap-3 mb-3 pt-2 border-t border-gray-50">
-              <div>
-                <p className="font-body text-slate/40 text-[10px] uppercase tracking-wider mb-1">
-                  Category
-                </p>
-                <span className="font-body text-[10px] tracking-[0.15em] uppercase font-semibold text-gold border border-gold/30 px-2 py-0.5 rounded-sm inline-block">
-                  {CATEGORY_LABELS[service.category]}
-                </span>
-              </div>
-              <div>
-                <p className="font-body text-slate/40 text-[10px] uppercase tracking-wider mb-1">
-                  Price
-                </p>
-                <p className="font-body text-slate/60 text-sm">
-                  {service.price ? `$${service.price.toFixed(2)}` : "Quote-based"}
-                </p>
-              </div>
-            </div>
+        <StatCard
+          label="Total services"
+          value={services.length}
+          icon={
+            BriefcaseBusiness
+          }
+        />
 
-            <div className="flex items-center justify-between pt-2 border-t border-gray-50">
-              <div>
-                <p className="font-body text-slate/40 text-[10px] uppercase tracking-wider mb-1">
-                  Total requests
-                </p>
-                <p className="font-body text-slate/60 text-sm">
-                  {service._count.requests}
-                </p>
-              </div>
-              <form action={toggleService}>
-                <input type="hidden" name="id" value={service.id} />
-                <input type="hidden" name="isActive" value={String(service.isActive)} />
-                <button
-                  type="submit"
-                  className="font-body text-xs text-slate/50 border border-gray-200 hover:border-gray-300 hover:text-navy px-3 py-1.5 rounded-sm transition-colors duration-150"
-                >
-                  {service.isActive ? "Deactivate" : "Activate"}
-                </button>
-              </form>
-            </div>
-          </div>
-        ))}
+        <StatCard
+          label="Active"
+          value={activeCount}
+          icon={
+            CheckCircle2
+          }
+        />
+
+        <StatCard
+          label="Inactive"
+          value={
+            inactiveCount
+          }
+          icon={XCircle}
+        />
       </div>
 
-      {/* Desktop table view */}
-      <div className="hidden sm:block">
-        <div className="bg-white border border-gray-100 rounded-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-3xl">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  {["Service", "Category", "Price", "Requests", "Status", ""].map((h) => (
+      {/* Mobile */}
+      <div className="block lg:hidden space-y-5">
+
+        {services.map(
+          (service) => (
+            <div
+              key={service.id}
+              className="
+                group
+                relative
+                overflow-hidden
+                rounded-[2rem]
+                border
+                border-white/10
+                bg-white/[0.03]
+                backdrop-blur-xl
+                p-5
+                shadow-[0_30px_80px_rgba(0,0,0,0.18)]
+                hover:border-[#C9A84C]/20
+                hover:-translate-y-1
+                transition-all
+                duration-500
+              "
+            >
+
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-[#C9A84C]/5 via-transparent to-transparent" />
+
+              <div className="relative">
+
+                <div className="flex items-start justify-between gap-4 mb-5">
+
+                  <div className="min-w-0">
+
+                    <h3 className="text-white text-base font-medium">
+                      {
+                        service.name
+                      }
+                    </h3>
+
+                    <p className="text-white/35 text-xs truncate mt-1">
+                      /
+                      {
+                        service.slug
+                      }
+                    </p>
+                  </div>
+
+                  <span
+                    className={`inline-flex items-center justify-center rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.18em] font-semibold whitespace-nowrap ${
+                      service.isActive
+                        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+                        : "border-white/10 bg-white/[0.04] text-white/45"
+                    }`}
+                  >
+                    {service.isActive
+                      ? "Active"
+                      : "Inactive"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-4 mb-5">
+
+                  <div>
+
+                    <p className="text-white/30 text-[10px] uppercase tracking-[0.18em] mb-2">
+                      Category
+                    </p>
+
+                    <span className="inline-flex items-center rounded-full border border-[#C9A84C]/20 bg-[#C9A84C]/10 px-3 py-1 text-[#C9A84C] text-[10px] uppercase tracking-[0.16em] font-semibold">
+                      {
+                        CATEGORY_LABELS[
+                          service
+                            .category
+                        ]
+                      }
+                    </span>
+                  </div>
+
+                  <div>
+
+                    <p className="text-white/30 text-[10px] uppercase tracking-[0.18em] mb-2">
+                      Price
+                    </p>
+
+                    <p className="text-white/70 text-sm">
+                      {service.price
+                        ? `$${service.price.toFixed(
+                            2
+                          )}`
+                        : "Quote-based"}
+                    </p>
+                  </div>
+
+                  <div>
+
+                    <p className="text-white/30 text-[10px] uppercase tracking-[0.18em] mb-2">
+                      Requests
+                    </p>
+
+                    <p className="text-white text-sm">
+                      {
+                        service
+                          ._count
+                          .requests
+                      }
+                    </p>
+                  </div>
+                </div>
+
+                <form
+                  action={
+                    toggleService
+                  }
+                >
+
+                  <input
+                    type="hidden"
+                    name="id"
+                    value={
+                      service.id
+                    }
+                  />
+
+                  <input
+                    type="hidden"
+                    name="isActive"
+                    value={String(
+                      service.isActive
+                    )}
+                  />
+
+                  <button
+                    type="submit"
+                    className="
+                      w-full
+                      inline-flex
+                      items-center
+                      justify-center
+                      gap-2
+                      rounded-2xl
+                      border
+                      border-white/10
+                      bg-white/[0.03]
+                      px-4
+                      py-3
+                      text-white/70
+                      hover:text-white
+                      hover:border-[#C9A84C]/20
+                      transition-all
+                      duration-300
+                    "
+                  >
+
+                    {service.isActive
+                      ? "Deactivate service"
+                      : "Activate service"}
+
+                    <ArrowRight className="w-4 h-4 text-[#C9A84C]" />
+                  </button>
+                </form>
+              </div>
+            </div>
+          )
+        )}
+      </div>
+
+      {/* Desktop */}
+      <div
+        className="
+          hidden
+          lg:block
+          relative
+          overflow-hidden
+          rounded-[2.5rem]
+          border
+          border-white/10
+          bg-white/[0.03]
+          backdrop-blur-2xl
+          shadow-[0_40px_120px_rgba(0,0,0,0.22)]
+        "
+      >
+
+        <div className="absolute top-[-100px] right-[-100px] w-[260px] h-[260px] rounded-full bg-[#C9A84C]/10 blur-3xl" />
+
+        <div className="relative overflow-x-auto">
+
+          <table className="w-full min-w-[980px]">
+
+            <thead>
+
+              <tr className="border-b border-white/10">
+
+                {[
+                  "Service",
+                  "Category",
+                  "Price",
+                  "Requests",
+                  "Status",
+                  "",
+                ].map(
+                  (h) => (
                     <th
                       key={h}
-                      className="font-body text-left text-xs text-slate/50 font-medium uppercase tracking-widest px-5 py-3"
+                      className="
+                        text-left
+                        text-white/35
+                        text-[11px]
+                        font-semibold
+                        uppercase
+                        tracking-[0.18em]
+                        px-8
+                        py-5
+                      "
                     >
                       {h}
                     </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {services.map((service) => (
-                  <tr key={service.id} className="hover:bg-gray-50/60 transition-colors duration-100">
-                    <td className="px-5 py-4">
-                      <p className="font-body text-navy text-sm font-medium">
-                        {service.name}
+                  )
+                )}
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-white/5">
+
+              {services.map(
+                (
+                  service
+                ) => (
+                  <tr
+                    key={
+                      service.id
+                    }
+                    className="group hover:bg-white/[0.02] transition-colors duration-300"
+                  >
+
+                    {/* Service */}
+                    <td className="px-8 py-6">
+
+                      <p className="text-white text-sm font-medium mb-1">
+                        {
+                          service.name
+                        }
                       </p>
-                      <p className="font-body text-slate/40 text-xs truncate max-w-55 mt-0.5">
-                        /{service.slug}
+
+                      <p className="text-white/35 text-xs truncate max-w-[240px]">
+                        /
+                        {
+                          service.slug
+                        }
                       </p>
                     </td>
-                    <td className="px-5 py-4">
-                      <span className="font-body text-[10px] tracking-[0.15em] uppercase font-semibold text-gold border border-gold/30 px-2 py-0.5 rounded-sm whitespace-nowrap">
-                        {CATEGORY_LABELS[service.category]}
+
+                    {/* Category */}
+                    <td className="px-8 py-6">
+
+                      <span className="inline-flex items-center rounded-full border border-[#C9A84C]/20 bg-[#C9A84C]/10 px-3 py-1 text-[#C9A84C] text-[10px] uppercase tracking-[0.16em] font-semibold whitespace-nowrap">
+                        {
+                          CATEGORY_LABELS[
+                            service
+                              .category
+                          ]
+                        }
                       </span>
                     </td>
-                    <td className="px-5 py-4">
-                      <p className="font-body text-slate/60 text-sm">
-                        {service.price ? `$${service.price.toFixed(2)}` : "Quote-based"}
+
+                    {/* Price */}
+                    <td className="px-8 py-6">
+
+                      <p className="text-white/70 text-sm">
+                        {service.price
+                          ? `$${service.price.toFixed(
+                              2
+                            )}`
+                          : "Quote-based"}
                       </p>
                     </td>
-                    <td className="px-5 py-4">
-                      <p className="font-body text-slate/60 text-sm">
-                        {service._count.requests}
+
+                    {/* Requests */}
+                    <td className="px-8 py-6">
+
+                      <p className="text-white text-sm">
+                        {
+                          service
+                            ._count
+                            .requests
+                        }
                       </p>
                     </td>
-                    <td className="px-5 py-4">
+
+                    {/* Status */}
+                    <td className="px-8 py-6">
+
                       <span
-                        className={`inline-block font-body font-semibold text-[10px] px-2.5 py-1 rounded-sm border uppercase tracking-widest whitespace-nowrap ${
+                        className={`inline-flex items-center justify-center rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.18em] font-semibold whitespace-nowrap ${
                           service.isActive
-                            ? "bg-green-50 text-green-800 border-green-200"
-                            : "bg-gray-100 text-gray-500 border-gray-200"
+                            ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+                            : "border-white/10 bg-white/[0.04] text-white/45"
                         }`}
                       >
-                        {service.isActive ? "Active" : "Inactive"}
+                        {service.isActive
+                          ? "Active"
+                          : "Inactive"}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-right">
-                      <form action={toggleService}>
-                        <input type="hidden" name="id" value={service.id} />
-                        <input type="hidden" name="isActive" value={String(service.isActive)} />
+
+                    {/* Action */}
+                    <td className="px-8 py-6 text-right">
+
+                      <form
+                        action={
+                          toggleService
+                        }
+                      >
+
+                        <input
+                          type="hidden"
+                          name="id"
+                          value={
+                            service.id
+                          }
+                        />
+
+                        <input
+                          type="hidden"
+                          name="isActive"
+                          value={String(
+                            service.isActive
+                          )}
+                        />
+
                         <button
                           type="submit"
-                          className="font-body text-xs text-slate/50 border border-gray-200 hover:border-gray-300 hover:text-navy px-3 py-1.5 rounded-sm transition-colors duration-150 whitespace-nowrap"
+                          className="
+                            inline-flex
+                            items-center
+                            gap-2
+                            rounded-2xl
+                            border
+                            border-white/10
+                            bg-white/[0.03]
+                            px-4
+                            py-2.5
+                            text-white/60
+                            hover:text-white
+                            hover:border-[#C9A84C]/20
+                            transition-all
+                            duration-300
+                          "
                         >
-                          {service.isActive ? "Deactivate" : "Activate"}
+
+                          {service.isActive
+                            ? "Deactivate"
+                            : "Activate"}
+
+                          <ArrowRight className="w-4 h-4 text-[#C9A84C]" />
                         </button>
                       </form>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                )
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <p className="font-body text-slate/40 text-xs mt-4 px-1">
-        Deactivating a service hides it from the public services page and request form.
-        Existing requests for that service are not affected.
+      {/* Footer */}
+      <p className="text-white/30 text-xs mt-5 px-1 leading-relaxed">
+        Deactivating a service
+        hides it from the
+        public website and
+        request forms.
+        Existing client
+        requests remain
+        unaffected.
       </p>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Stat card
+// ─────────────────────────────────────────────────────────────
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: number;
+  icon: React.ElementType;
+}) {
+  return (
+    <div
+      className="
+        group
+        relative
+        overflow-hidden
+        rounded-[2rem]
+        border
+        border-white/10
+        bg-white/[0.03]
+        backdrop-blur-xl
+        p-6
+        shadow-[0_30px_80px_rgba(0,0,0,0.18)]
+        hover:border-[#C9A84C]/20
+        hover:-translate-y-1
+        transition-all
+        duration-500
+      "
+    >
+
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-[#C9A84C]/10 to-transparent" />
+
+      <div className="relative">
+
+        <div className="w-14 h-14 rounded-2xl border border-white/10 bg-white/[0.04] flex items-center justify-center mb-8">
+
+          <Icon className="w-6 h-6 text-[#C9A84C]" />
+        </div>
+
+        <p className="font-display text-white text-4xl leading-none mb-3">
+          {value}
+        </p>
+
+        <p className="text-white/55 text-sm uppercase tracking-[0.16em]">
+          {label}
+        </p>
+      </div>
     </div>
   );
 }

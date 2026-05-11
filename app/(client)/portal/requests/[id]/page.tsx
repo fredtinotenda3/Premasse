@@ -123,20 +123,21 @@ const STATUS_CONFIG: Record<
 export default async function PortalRequestDetailPage({
   params,
 }: {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;  // ← FIXED: params is a Promise
 }) {
   const session = await auth();
 
   if (!session?.user)
     redirect("/portal/login");
 
+  // ← FIXED: await params before using
+  const { id } = await params;
+
   const request =
     await prisma.serviceRequest.findUnique(
       {
         where: {
-          id: params.id,
+          id: id,  // ← FIXED: use the awaited id
         },
 
         include: {

@@ -8,7 +8,7 @@ import crypto from "crypto";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-// ── Client factory ───────────────────────────────────────────────────────────
+// ─── Client factory ──────────────────────────────────────────────────────────
 
 export function createPaynowClient(requestId: string): Paynow {
   const integrationId = process.env.PAYNOW_INTEGRATION_ID;
@@ -40,13 +40,28 @@ export function createPaynowClient(requestId: string): Paynow {
   return paynow;
 }
 
-// ── Merchant reference ───────────────────────────────────────────────────────
+// ─── Merchant reference ──────────────────────────────────────────────────────
+// IMPORTANT: Paynow merchant reference cannot contain hyphens or special chars
+// We replace hyphens with underscores to be safe
 
 export function buildMerchantRef(paymentId: string): string {
-  return `PREMASSE-${paymentId}`;
+  // Replace hyphens with underscores (Paynow doesn't like hyphens)
+  const safePaymentId = paymentId.replace(/-/g, '_');
+  return `PREMASSE_${safePaymentId}`;
 }
 
-// ── Hash verification ────────────────────────────────────────────────────────
+// ─── Extract paymentId from merchant reference ───────────────────────────────
+
+export function extractPaymentIdFromMerchantRef(merchantRef: string): string | null {
+  // Format: PREMASSE_{paymentId}
+  if (!merchantRef.startsWith("PREMASSE_")) return null;
+  const paymentId = merchantRef.replace("PREMASSE_", "");
+  // Restore hyphens (CUID format: cmoy4c3vq0002da0h0l15vfwi)
+  // CUIDs don't have hyphens actually, so this is safe
+  return paymentId;
+}
+
+// ─── Hash verification ───────────────────────────────────────────────────────
 
 export function verifyPaynowHash(
   payload: Record<string, string>
@@ -73,7 +88,7 @@ export function verifyPaynowHash(
   return receivedHash.toUpperCase() === expectedHash;
 }
 
-// ── Parse webhook body ───────────────────────────────────────────────────────
+// ─── Parse webhook body ──────────────────────────────────────────────────────
 
 export function parseWebhookBody(
   body: string
@@ -81,37 +96,40 @@ export function parseWebhookBody(
   return Object.fromEntries(new URLSearchParams(body));
 }
 
-// ── Map Paynow status ────────────────────────────────────────────────────────
-
-// In lib/paynow.ts, update the mapPaynowStatus function:
+// ─── Map Paynow status (improved with more statuses and case-insensitive) ────
 
 export function mapPaynowStatus(
   paynowStatus: string
 ): "AWAITING_PAYMENT" | "PAID" | "FAILED" | "CANCELLED" {
-  const status = paynowStatus.toLowerCase();
-  console.log(`[paynow] Mapping status: "${paynowStatus}" → lower: "${status}"`);
+  const status = paynowStatus.toLowerCase().trim();
+  console.log(`[paynow] Mapping status: "${paynowStatus}" → normalized: "${status}"`);
   
-  switch (status) {
-    case "paid":
-    case "awaiting delivery":
-    case "completed":
-      return "PAID";
-    case "cancelled":
-    case "canceled":
-      return "CANCELLED";
-    case "failed":
-    case "disputed":
-    case "error":
-      return "FAILED";
-    case "pending":
-    case "created":
-    case "awaited":
-    default:
-      return "AWAITING_PAYMENT";
+  // Paid statuses - Paynow returns various strings
+  if (["paid", "awaiting delivery", "completed", "success", "ok", "confirmed"].includes(status)) {
+    return "PAID";
   }
+  
+  // Cancelled statuses
+  if (["cancelled", "canceled", "cancelled by user", "expired"].includes(status)) {
+    return "CANCELLED";
+  }
+  
+  // Failed statuses
+  if (["failed", "disputed", "error", "rejected", "declined"].includes(status)) {
+    return "FAILED";
+  }
+  
+  // Pending / awaiting
+  if (["pending", "created", "awaited", "sent", "processing", "initiated"].includes(status)) {
+    return "AWAITING_PAYMENT";
+  }
+  
+  // Default to awaiting payment (don't lose the payment)
+  console.warn(`[paynow] Unknown status "${paynowStatus}", defaulting to AWAITING_PAYMENT`);
+  return "AWAITING_PAYMENT";
 }
 
-// ── Test Paynow connection ───────────────────────────────────────────────────
+// ─── Test Paynow connection ──────────────────────────────────────────────────
 
 export async function testPaynowConnection(): Promise<boolean> {
   try {

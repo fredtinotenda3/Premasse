@@ -126,41 +126,83 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         console.log(`✅ Sending magic link to CLIENT: ${email}`);
 
-        const { error } = await resend.emails.send({
+        const { data, error } = await resend.emails.send({
           from: process.env.EMAIL_FROM ?? "Premasse <onboarding@resend.dev>",
           to: [email],
           subject: "🔐 Your Premasse sign-in link",
           html: `
-            <div style="font-family: sans-serif; max-width: 500px; padding: 20px;">
-              <h1 style="color: #1B5E20;">Premasse</h1>
-              <p style="color: #C9A84C;">Business Services</p>
-              
-              <h2>Sign in to your account</h2>
-              
-              <p>Hello ${user.name?.split(" ")[0] ?? "there"},</p>
-              
-              <p>Click the button below to sign in to your Premasse client portal.</p>
-              
-              <a href="${url}" 
-                 style="display: inline-block; background-color: #1B5E20; color: #C9A84C; 
-                        padding: 12px 24px; text-decoration: none; border-radius: 4px;
-                        margin: 20px 0;">
-                Sign in to portal →
-              </a>
-              
-              <p>This link expires in 24 hours.</p>
-              
-              <hr />
-              <p style="color: #666; font-size: 12px;">Premasse Business Services · Harare, Zimbabwe</p>
-            </div>
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="color-scheme" content="light">
+              <meta name="supported-color-schemes" content="light">
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px; background: #f5f5f5; }
+                .container { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+                .header { text-align: center; margin-bottom: 32px; }
+                .logo { font-size: 28px; font-weight: bold; color: #1B5E20; margin: 0; }
+                .sub { color: #C9A84C; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+                h2 { color: #1B5E20; font-size: 22px; margin: 0 0 16px; }
+                p { color: #4A5568; line-height: 1.6; margin: 0 0 16px; }
+                .button { display: inline-block; background: #C9A84C; color: #1B5E20; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: bold; margin: 16px 0; }
+                .warning { background: #FFF3E0; border-left: 3px solid #FF9800; padding: 12px 16px; margin: 24px 0; border-radius: 8px; font-size: 13px; }
+                .warning-title { font-weight: bold; color: #E65100; margin-bottom: 8px; }
+                hr { border: none; border-top: 1px solid #E2E8F0; margin: 24px 0 16px; }
+                .footer { text-align: center; color: #A0AEC0; font-size: 12px; }
+                .spam-instruction { background: #E8F5E9; padding: 12px; border-radius: 8px; margin: 16px 0; font-size: 13px; text-align: center; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1 class="logo">Premasse</h1>
+                  <div class="sub">Business Services</div>
+                </div>
+                
+                <h2>Sign in to your portal</h2>
+                
+                <p>Hello ${user.name?.split(" ")[0] ?? "there"},</p>
+                
+                <p>Click the button below to sign in to your Premasse client portal. This link expires in 24 hours.</p>
+                
+                <div style="text-align: center;">
+                  <a href="${url}" class="button">Sign in to portal →</a>
+                </div>
+                
+                <!-- SPAM PREVENTION INSTRUCTION -->
+                <div class="spam-instruction">
+                  <strong>📧 Didn't receive the email?</strong><br>
+                  Check your <strong>Spam/Junk folder</strong> and mark this email as "Not Spam".<br>
+                  Then add <strong>noreply@resend.dev</strong> to your contacts.
+                </div>
+                
+                <div class="warning">
+                  <div class="warning-title">⚠️ Important Security Notice</div>
+                  <div>This link is one-time use and expires in 24 hours. If you didn't request this email, you can safely ignore it.</div>
+                </div>
+                
+                <hr>
+                
+                <div class="footer">
+                  <p>Premasse Business Services · Harare, Zimbabwe</p>
+                  <p style="font-size: 11px;">This is an automated message. Please do not reply to this email.</p>
+                </div>
+              </div>
+            </body>
+            </html>
           `,
         });
 
         if (error) {
-          console.error(`❌ Failed to send magic link to ${email}:`, error);
-          throw new Error("Failed to send sign-in email");
+          console.error(`❌ Resend error for ${email}:`, JSON.stringify(error, null, 2));
+          throw new Error(`Failed to send email: ${error.message}`);
         }
-
+        
+        if (data) {
+          console.log(`✅ Resend success for ${email}:`, JSON.stringify(data, null, 2));
+        }
+        
         console.log(`✅ Magic link sent to: ${email}`);
       },
     },

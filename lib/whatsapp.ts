@@ -1,38 +1,31 @@
 // lib/whatsapp.ts
-// WhatsApp notification sender.
-// Uses Twilio WhatsApp API — the most reliable option for Zimbabwe.
-// Alternative: Africa's Talking (has local Zimbabwe presence, cheaper rates).
+// WhatsApp notification sender with graceful fallback for sandbox mode.
+// Uses Twilio WhatsApp API.
 //
-// Setup:
-//   1. Create a Twilio account at twilio.com
-//   2. Enable WhatsApp Sandbox (free for testing) or buy a WhatsApp-enabled number
-//   3. Add to .env.local:
-//      TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//      TWILIO_AUTH_TOKEN=your_auth_token
-//      TWILIO_WHATSAPP_FROM=whatsapp:+14155238886  (sandbox) or your number
+// IMPORTANT: For business-initiated messages in production, you MUST:
+//   1. Submit message templates to WhatsApp Business for approval
+//   2. OR have the client message you first (then you can reply freely within 24h)
 //
-// Cost: ~$0.005 per message sent. For 100 clients/month = ~$0.50.
+// For initial testing: Use Twilio Sandbox (clients must join sandbox first)
 
 import twilio from "twilio";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://premasse.co.zw";
 
-// ── Client singleton ──────────────────────────────────────────────────────────
+// ─── Client singleton ────────────────────────────────────────────────────────
 
 function getTwilioClient() {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken  = process.env.TWILIO_AUTH_TOKEN;
 
   if (!accountSid || !authToken) {
-    throw new Error(
-      "TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN must be set in .env.local"
-    );
+    return null; // Graceful degradation - WhatsApp not configured
   }
 
   return twilio(accountSid, authToken);
 }
 
-// ── Phone normalisation ───────────────────────────────────────────────────────
+// ─── Phone normalisation ─────────────────────────────────────────────────────
 // Converts Zimbabwean format (0771234567, +263771234567) to E.164 (+263771234567)
 
 export function normaliseZimbabwePhone(phone: string): string {
@@ -52,30 +45,33 @@ export function normaliseZimbabwePhone(phone: string): string {
   return phone.startsWith("+") ? phone : `+${digits}`;
 }
 
-// ── Message templates ─────────────────────────────────────────────────────────
-// WhatsApp requires pre-approved templates for business-initiated messages.
-// These plain-text messages work in the sandbox and for session messages
-// (within 24h of client contacting you first).
-// For production: submit templates at business.whatsapp.com
+// ─── Check if WhatsApp is configured ─────────────────────────────────────────
+
+export function isWhatsAppConfigured(): boolean {
+  const fromNumber = process.env.TWILIO_WHATSAPP_FROM;
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  return !!(fromNumber && accountSid);
+}
 
 export type WhatsAppResult =
   | { success: true;  sid: string }
   | { success: false; error: string };
 
-// ── Send a WhatsApp message ───────────────────────────────────────────────────
+// ─── Send a WhatsApp message (with graceful degradation) ─────────────────────
 
 async function sendWhatsApp(
   to:   string,
   body: string
 ): Promise<WhatsAppResult> {
   const fromNumber = process.env.TWILIO_WHATSAPP_FROM;
-  if (!fromNumber) {
-    console.warn("[whatsapp] TWILIO_WHATSAPP_FROM not set — skipping WhatsApp");
+  const client = getTwilioClient();
+  
+  if (!client || !fromNumber) {
+    console.warn("[whatsapp] WhatsApp not configured — skipping message");
     return { success: false, error: "WhatsApp not configured" };
   }
 
   try {
-    const client  = getTwilioClient();
     const message = await client.messages.create({
       from: fromNumber,
       to:   `whatsapp:${normaliseZimbabwePhone(to)}`,
@@ -86,11 +82,20 @@ async function sendWhatsApp(
     return { success: true, sid: message.sid };
   } catch (err: any) {
     console.error("[whatsapp] Send failed:", err?.message ?? err);
+    
+    // Check if it's a template error (common in sandbox mode)
+    if (err?.message?.includes("not part of an existing conversation")) {
+      return { 
+        success: false, 
+        error: "WhatsApp: Client must message first (sandbox mode) or templates must be approved for production." 
+      };
+    }
+    
     return { success: false, error: err?.message ?? "Unknown error" };
   }
 }
 
-// ── Notification: request received ───────────────────────────────────────────
+// ─── Notification: request received ──────────────────────────────────────────
 
 export async function sendRequestReceivedWhatsApp(params: {
   clientName:  string;
@@ -98,6 +103,10 @@ export async function sendRequestReceivedWhatsApp(params: {
   serviceName: string;
   requestId:   string;
 }): Promise<WhatsAppResult> {
+  if (!isWhatsAppConfigured()) {
+    return { success: false, error: "WhatsApp not configured" };
+  }
+
   const body = [
     `Hello ${params.clientName.split(" ")[0]},`,
     ``,
@@ -117,7 +126,7 @@ export async function sendRequestReceivedWhatsApp(params: {
   return sendWhatsApp(params.clientPhone, body);
 }
 
-// ── Notification: status updated ─────────────────────────────────────────────
+// ─── Notification: status updated ────────────────────────────────────────────
 
 const STATUS_MESSAGES: Record<string, string> = {
   IN_REVIEW:        "Our team is currently reviewing your request.",
@@ -136,6 +145,10 @@ export async function sendStatusUpdateWhatsApp(params: {
   requestId:   string;
   adminNote?:  string;
 }): Promise<WhatsAppResult> {
+  if (!isWhatsAppConfigured()) {
+    return { success: false, error: "WhatsApp not configured" };
+  }
+
   const statusMessage = STATUS_MESSAGES[params.newStatus];
   if (!statusMessage) {
     return { success: false, error: "No WhatsApp template for this status" };
@@ -172,7 +185,7 @@ export async function sendStatusUpdateWhatsApp(params: {
   return sendWhatsApp(params.clientPhone, lines.join("\n"));
 }
 
-// ── Notification: payment confirmed ──────────────────────────────────────────
+// ─── Notification: payment confirmed ─────────────────────────────────────────
 
 export async function sendPaymentConfirmedWhatsApp(params: {
   clientName:  string;
@@ -181,6 +194,10 @@ export async function sendPaymentConfirmedWhatsApp(params: {
   amount:      number;
   requestId:   string;
 }): Promise<WhatsAppResult> {
+  if (!isWhatsAppConfigured()) {
+    return { success: false, error: "WhatsApp not configured" };
+  }
+
   const body = [
     `Hello ${params.clientName.split(" ")[0]},`,
     ``,
@@ -200,9 +217,7 @@ export async function sendPaymentConfirmedWhatsApp(params: {
   return sendWhatsApp(params.clientPhone, body);
 }
 
-// ── Admin: new request alert ──────────────────────────────────────────────────
-// Sends a WhatsApp to the admin when a new request arrives.
-// Much faster than email for a one-person operation.
+// ─── Admin: new request alert ────────────────────────────────────────────────
 
 export async function sendAdminNewRequestWhatsApp(params: {
   clientName:  string;
@@ -210,8 +225,13 @@ export async function sendAdminNewRequestWhatsApp(params: {
   serviceName: string;
   requestId:   string;
 }): Promise<WhatsAppResult> {
+  if (!isWhatsAppConfigured()) {
+    return { success: false, error: "WhatsApp not configured" };
+  }
+
   const adminPhone = process.env.ADMIN_WHATSAPP_PHONE;
   if (!adminPhone) {
+    console.warn("[whatsapp] ADMIN_WHATSAPP_PHONE not set — skipping admin alert");
     return { success: false, error: "ADMIN_WHATSAPP_PHONE not set" };
   }
 

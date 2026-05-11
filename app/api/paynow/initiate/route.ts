@@ -10,7 +10,6 @@ import { prisma }                   from "@/lib/prisma";
 import {
   createPaynowClient,
   buildMerchantRef,
-  mapPaynowStatus,
 }                                   from "@/lib/paynow";
 
 // ── Validation schema ─────────────────────────────────────────────────────────

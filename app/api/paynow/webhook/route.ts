@@ -8,6 +8,7 @@ import {
   verifyPaynowHash,
   parseWebhookBody,
   mapPaynowStatus,
+  extractPaymentIdFromMerchantRef,
 } from "@/lib/paynow";
 
 export async function POST(req: NextRequest) {
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 4. Extract Paynow fields
-  const paynowReference = payload["reference"];   // Our merchant ref: "PREMASSE-<paymentId>"
+  const paynowReference = payload["reference"];   // Our merchant ref: "PREMASSE_{paymentId}"
   const paynowStatus = payload["status"];         // "Paid", "Cancelled", "Failed"
   const paynowRef = payload["paynowreference"];   // Paynow's own reference number
 
@@ -45,8 +46,11 @@ export async function POST(req: NextRequest) {
   }
 
   // 5. Extract our paymentId from the merchant reference
-  // Format: "PREMASSE-<cuid>"
-  const paymentId = paynowReference.replace("PREMASSE-", "");
+  const paymentId = extractPaymentIdFromMerchantRef(paynowReference);
+  if (!paymentId) {
+    console.warn(`[paynow/webhook] Invalid merchant reference format: ${paynowReference}`);
+    return new NextResponse("OK", { status: 200 });
+  }
 
   console.log(`[paynow/webhook] Processing payment: ${paymentId}, status: ${paynowStatus}`);
 

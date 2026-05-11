@@ -373,8 +373,17 @@ export default async function PortalLoginPage({
                 </button>
               </form>
 
+              {/* SPAM WARNING - ADDED HERE */}
+              <div className="mt-6 rounded-xl border border-amber-500/20 bg-amber-500/10 px-5 py-4">
+                <p className="text-amber-300 text-xs text-center leading-relaxed">
+                  <span className="font-bold">📧 Email not arriving?</span><br />
+                  Check your <span className="font-semibold">Spam/Junk folder</span> and mark 
+                  noreply@resend.dev as safe.
+                </p>
+              </div>
+
               {/* Register */}
-              <div className="mt-8 pt-6 border-t border-white/10 text-center">
+              <div className="mt-6 pt-6 border-t border-white/10 text-center">
 
                 <p className="text-white/45 text-sm">
 
