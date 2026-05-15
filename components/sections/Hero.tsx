@@ -41,7 +41,7 @@ export default function Hero() {
             <div className="relative z-10 max-w-2xl">
               
               {/* Badge */}
-              <div className="inline-flex items-center gap-3 mb-8 animate-fade-up">
+              {/* <div className="inline-flex items-center gap-3 mb-8 animate-fade-up">
                 <div className="flex items-center gap-2.5 border border-[#C9A84C]/40 bg-[#C9A84C]/10 backdrop-blur-md px-5 py-2.5 rounded-full">
                   
                   <div className="w-2 h-2 rounded-full bg-[#C9A84C]" />
@@ -50,7 +50,7 @@ export default function Hero() {
                     ZIMRA Registered · Harare, Zimbabwe
                   </span>
                 </div>
-              </div>
+              </div> */}
 
               {/* Headline */}
               <h1

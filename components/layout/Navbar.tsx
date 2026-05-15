@@ -100,15 +100,15 @@ export default function Navbar() {
               "
             >
               <Image
-                src="/images/logos/logo.svg"
+                src="/images/logos/pre-logo.svg"
                 alt="Premasse Business Services"
-                width={125}
-                height={38}
+                width={210}
+                height={58}
                 priority
                 className="
                   h-auto
                   w-auto
-                  max-h-10
+                  max-h-[58px]
                   object-contain
                 "
               />

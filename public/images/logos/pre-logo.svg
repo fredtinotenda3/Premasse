@@ -1,0 +1,123 @@
+<svg
+  width="1200"
+  height="320"
+  viewBox="0 0 1200 320"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <defs>
+    <!-- Gold Gradient -->
+    <linearGradient id="goldGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F7E7A1"/>
+      <stop offset="35%" stop-color="#D4AF37"/>
+      <stop offset="70%" stop-color="#B8891F"/>
+      <stop offset="100%" stop-color="#FFE08A"/>
+    </linearGradient>
+
+    <!-- Glow -->
+    <filter id="goldGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect
+    x="5"
+    y="5"
+    width="1190"
+    height="310"
+    rx="32"
+    fill="#062B22"
+    stroke="url(#goldGradient)"
+    stroke-width="2"
+  />
+
+  <!-- Bottom Glow Line -->
+  <rect
+    x="40"
+    y="286"
+    width="1120"
+    height="2"
+    rx="1"
+    fill="url(#goldGradient)"
+    opacity="0.6"
+  />
+
+  <!-- Left Icon -->
+  <g transform="translate(60 40)" filter="url(#goldGlow)">
+    
+    <!-- Vertical Pillars -->
+    <rect x="22" y="40" width="10" height="150" rx="4" fill="url(#goldGradient)"/>
+    <rect x="42" y="40" width="10" height="150" rx="4" fill="url(#goldGradient)"/>
+    <rect x="62" y="40" width="10" height="150" rx="4" fill="url(#goldGradient)"/>
+
+    <!-- Base -->
+    <rect x="12" y="188" width="72" height="10" rx="5" fill="url(#goldGradient)"/>
+
+    <!-- Top -->
+    <rect x="8" y="24" width="80" height="10" rx="5" fill="url(#goldGradient)"/>
+
+    <!-- Capital Lines -->
+    <rect x="0" y="0" width="96" height="8" rx="4" fill="url(#goldGradient)"/>
+    <rect x="6" y="10" width="84" height="6" rx="3" fill="url(#goldGradient)"/>
+    <rect x="12" y="18" width="72" height="5" rx="2.5" fill="url(#goldGradient)"/>
+
+    <!-- P Curve -->
+    <path
+      d="
+        M72 0
+        C140 0 170 28 170 76
+        C170 124 140 150 88 150
+        L72 150
+        L72 124
+        L88 124
+        C124 124 142 106 142 76
+        C142 46 124 28 88 28
+        L72 28
+        Z
+      "
+      fill="url(#goldGradient)"
+    />
+  </g>
+
+  <!-- Divider -->
+  <line
+    x1="260"
+    y1="48"
+    x2="260"
+    y2="250"
+    stroke="url(#goldGradient)"
+    stroke-width="2"
+    opacity="0.6"
+  />
+
+  <!-- Main Text -->
+  <text
+    x="300"
+    y="118"
+    fill="#FFFFFF"
+    font-size="82"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-weight="700"
+    letter-spacing="1"
+  >
+    PREMASSE
+  </text>
+
+  <!-- Subtitle -->
+  <text
+    x="304"
+    y="176"
+    fill="url(#goldGradient)"
+    font-size="30"
+    font-family="Arial, sans-serif"
+    letter-spacing="6"
+    font-weight="700"
+  >
+    BUSINESS SERVICES
+  </text>
+</svg>

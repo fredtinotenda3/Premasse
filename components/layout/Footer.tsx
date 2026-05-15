@@ -74,7 +74,7 @@ export default function Footer() {
                 "
               >
                 <Image
-                  src="/images/logos/logo.svg"
+                  src="/images/logos/pre-logo.svg"
                   alt="Premasse Business Services"
                   width={140}
                   height={40}
